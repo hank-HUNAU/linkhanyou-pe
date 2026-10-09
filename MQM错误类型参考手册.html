@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MQM 错误类型参考手册 · 完整版与两种简化版</title>
+<style>
+:root{--p:#2f5fe0;--pd:#2348b0;--pl:#eef3ff;--bg:#f4f6fb;--card:#fff;--bd:#e3e8f2;--tx:#1f2430;--tx2:#5a6478;--mut:#9099ad;--g:#16a34a;--gb:#e8f7ee;--r:#dc2626;--rb:#fdecec;--a:#d97706;--ab:#fef3e2;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--tx);font-size:15px;line-height:1.7;padding:30px 18px 80px}
+.wrap{max-width:980px;margin:0 auto}
+h1{font-size:24px;margin-bottom:4px}
+.sub{color:var(--mut);font-size:13px;margin-bottom:24px}
+h2{font-size:19px;margin:34px 0 12px;padding-left:12px;border-left:4px solid var(--p)}
+h3{font-size:15.5px;margin:18px 0 8px}
+p{margin-bottom:8px}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--bd);border-radius:10px;overflow:hidden;font-size:14px;box-shadow:0 1px 3px rgba(30,41,72,.06)}
+th,td{padding:9px 12px;border-bottom:1px solid var(--bd);text-align:left;vertical-align:top}
+th{background:#f8f9fd;color:var(--tx2);font-size:13px}
+tr:last-child td{border-bottom:none}
+.dim{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px 18px;margin-bottom:12px;box-shadow:0 1px 3px rgba(30,41,72,.06)}
+.dim h3{margin-top:0;display:flex;align-items:center;gap:8px}
+.dim h3 .en{color:var(--mut);font-weight:400;font-size:13px}
+.chip{display:inline-block;background:var(--pl);color:var(--p);border-radius:999px;padding:1px 10px;font-size:12px;font-weight:600}
+.subs{margin-top:8px;font-size:13.5px;color:var(--tx2)}
+.subs code{background:#f0f2f8;border:1px solid #dfe4ef;border-radius:4px;padding:0 6px;margin:0 3px;display:inline-block;font-size:12.5px}
+.warn{background:var(--ab);border-radius:8px;padding:10px 14px;font-size:13.5px;margin:10px 0}
+.ok{background:var(--gb);border-radius:8px;padding:10px 14px;font-size:13.5px;margin:10px 0}
+.formula{background:#1f2430;color:#e6ebf5;border-radius:10px;padding:14px 16px;font-family:Consolas,monospace;font-size:13.5px;margin:10px 0;overflow-x:auto}
+.sev-c{background:var(--rb);color:var(--r);padding:1px 8px;border-radius:99px;font-size:12px;font-weight:700}
+.sev-m{background:var(--ab);color:var(--a);padding:1px 8px;border-radius:99px;font-size:12px;font-weight:700}
+.sev-n{background:#f0f2f8;color:var(--tx2);padding:1px 8px;border-radius:99px;font-size:12px;font-weight:700}
+.src{font-size:12.5px;color:var(--mut);margin-top:26px;line-height:1.9}
+.card2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:760px){.card2{grid-template-columns:1fr}}
+.vcard{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:18px;box-shadow:0 1px 3px rgba(30,41,72,.06)}
+.vcard h3{margin-top:0}
+.vcard ul{padding-left:18px;font-size:13.5px;color:var(--tx2)}
+.vcard li{margin-bottom:4px}
+.badge{font-size:12px;font-weight:700;padding:2px 10px;border-radius:999px}
+.badge.a{background:var(--gb);color:var(--g)}
+.badge.b{background:var(--pl);color:var(--p)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>MQM 错误类型参考手册</h1>
+<p class="sub">多维度质量度量标准（Multidimensional Quality Metrics, MQM 2.0）· 完整七大维度 + 两种简化版 ｜ 配套：译后编辑实训平台</p>
+
+<h2>一、MQM 全部七大维度（完整版）</h2>
+<p>MQM 由欧盟 QT21 项目与行业共同开发（Lommel 等），是国际翻译质量评估的事实标准（Google、Microsoft、Airbnb 等均采用）。它是一个<strong>层级化类型库</strong>：顶层 7 个维度，每个维度下再分子类（MQM-Full 数百条），并要求对每条错误标注<strong>严重度</strong>（Critical / Major / Minor）。日常使用最广的是两层子集 <strong>MQM-Core</strong>（即下表内容），取代了此前的 MQM/DQF 合并版。</p>
+
+<div class="dim">
+  <h3>1. 术语 <span class="en">Terminology</span> <span class="chip">规范维度</span></h3>
+  <p>译文术语不符合领域规范或组织术语库，或目标语术语不是源语术语的正确规范等价物。</p>
+  <div class="subs">子类：<code>与术语库不一致</code><code>术语使用前后不一致</code><code>错误等价术语</code><code>生造术语</code></div>
+</div>
+<div class="dim">
+  <h3>2. 准确性 <span class="en">Accuracy</span> <span class="chip">核心维度</span></h3>
+  <p>译文未能准确传达原文命题内容——歪曲、遗漏或添加信息。译后编辑中权重最高。</p>
+  <div class="subs">子类：<code>增译 Addition</code><code>漏译 Omission</code><code>误译 Mistranslation</code>（含<code>假朋友</code><code>技术关系误表征</code><code>机翻幻觉 MT hallucination</code>）<code>未翻译 Untranslated</code><code>TM匹配不当</code></div>
+</div>
+<div class="dim">
+  <h3>3. 语言规范（流利性） <span class="en">Linguistic conventions / Fluency</span></h3>
+  <p>目标语文本本身的语言正确性问题（不对照原文即可判定）。</p>
+  <div class="subs">子类：<code>语法 Grammar</code><code>拼写 Spelling</code><code>标点 Punctuation</code><code>大小写/机械正确性 Capitalization</code><code>字符编码</code><code>语内不一致 Inconsistency</code></div>
+</div>
+<div class="dim">
+  <h3>4. 风格 <span class="en">Style</span></h3>
+  <p>语法上可接受，但违反组织风格指南或语言风格不当。</p>
+  <div class="subs">子类：<code>生硬/别扭 Awkward</code><code>违反公司风格</code><code>风格前后不一致</code><code>语域不当 Register</code><code>不地道 Unidiomatic</code></div>
+</div>
+<div class="dim">
+  <h3>5. 地区惯例 <span class="en">Locale conventions</span></h3>
+  <p>违反目标市场对数据元素的内容或格式要求。</p>
+  <div class="subs">子类：<code>日期/时间格式</code><code>数字与小数</code><code>货币格式</code><code>度量单位</code><code>地址/邮编</code><code>电话号码</code><code>快捷键</code></div>
+</div>
+<div class="dim">
+  <h3>6. 受众适宜性 <span class="en">Audience appropriateness（v1 称 Verity）</span></h3>
+  <p>内容对目标地区/目标受众无效、不适当或违反预期用途（文化适配、合规性、事实正确性）。</p>
+  <div class="subs">子类：<code>文化冒犯/不当联想</code><code>法律合规</code><code>事实性错误</code><code>违反客户指南</code></div>
+</div>
+<div class="dim">
+  <h3>7. 设计与标记 <span class="en">Design &amp; markup</span></h3>
+  <p>译文产品的物理呈现问题，本地化工程与 DTP 环节的高频错误源。</p>
+  <div class="subs">子类：<code>标记/标签错误</code><code>占位符/变量</code><code>链接与交叉引用</code><code>截断/文本膨胀</code><code>字符与段落格式</code><code>页面布局</code></div>
+</div>
+<div class="warn"><b>严重度（三个框架通用机制）：</b><span class="sev-n">Minor 轻微</span> 不影响信息传达的小问题（如单处标点）；<span class="sev-m">Major 严重</span> 影响理解或专业性的问题（如术语错译、漏译半句）；<span class="sev-c">Critical 致命</span> 造成错误决策、安全/法律风险（如数字方向译反、条款漏译）。常用默认扣分权重：Minor −1、Major −5、Critical −25（按千词计），团队可自行配置；并设通过阈值决定批次是否返工。</div>
+
+<h2>二、简化版 A：教学讲解版（课堂 / 自我检查用）</h2>
+<div class="card2">
+<div class="vcard">
+  <h3><span class="badge a">版本 A</span> 八类速查（中文授课口径）</h3>
+  <ul>
+    <li><b>① 误译</b>——词义选错、假朋友、逻辑关系译反（含大模型<b>幻觉</b>：无中生有）</li>
+    <li><b>② 漏译 / 增译</b>——信息缺一半、无中生有加戏（Accuracy 的两头）</li>
+    <li><b>③ 术语问题</b>——错译 + 前后不一致，两项合并记忆</li>
+    <li><b>④ 数字与单位</b>——数量级、单位换算、日期货币格式</li>
+    <li><b>⑤ 语法与搭配</b>——主谓一致、时态、介词、冠词</li>
+    <li><b>⑥ 拼写与标点</b>——大小写、双引号、机械性低错</li>
+    <li><b>⑦ 风格与语域</b>——口语 vs 书面、欧化长句、不地道表达</li>
+    <li><b>⑧ 格式与标记</b>——占位符、标签、排版（本地化场景）</li>
+  </ul>
+  <p style="font-size:12.5px;color:var(--mut);margin-top:8px">对应关系：①②→Accuracy，③→Terminology，④→Locale convention，⑤⑥→Fluency，⑦→Style，⑧→Design&amp;markup；受众适宜性并入①⑦在课堂上口头延伸。</p>
+</div>
+<div class="vcard">
+  <h3><span class="badge a">版本 A</span> 使用方法</h3>
+  <ul>
+    <li>课堂讲解：每类配 1 个平台内置语料的真实例子（如"能耗降低30%"漏 less、"close→关闭"误译）</li>
+    <li>学生自查：交卷前按 ①→⑧ 过一遍，先查 ①②③④（准确类），再查 ⑤⑥⑦⑧（语言与形式类）</li>
+    <li>点评标签：教材 7 类可直接替换为这 8 类，覆盖更全且与 MQM 对齐</li>
+  </ul>
+  <div class="ok">适用：翻译课堂、培训讲座、学生互评。只分类、不扣分。</div>
+</div>
+</div>
+
+<h2>三、简化版 B：实训评分版（平台打分 / 质量验收用）</h2>
+<div class="card2">
+<div class="vcard">
+  <h3><span class="badge b">版本 B</span> 错误分级与扣分权重</h3>
+  <table>
+    <tr><th>维度</th><th>典型错误</th><th>常见级别</th></tr>
+    <tr><td>准确性</td><td>误译/漏译/增译/幻觉</td><td><span class="sev-c">Critical</span>~<span class="sev-m">Major</span></td></tr>
+    <tr><td>术语</td><td>错译/不一致</td><td><span class="sev-m">Major</span></td></tr>
+    <tr><td>数字单位</td><td>数量级/单位/日期</td><td><span class="sev-c">Critical</span></td></tr>
+    <tr><td>语言规范</td><td>语法/拼写/标点</td><td><span class="sev-n">Minor</span>~<span class="sev-m">Major</span></td></tr>
+    <tr><td>风格</td><td>语域/欧化/不地道</td><td><span class="sev-n">Minor</span></td></tr>
+    <tr><td>格式标记</td><td>占位符/标签/排版</td><td><span class="sev-m">Major</span></td></tr>
+  </table>
+  <p style="font-size:12.5px;color:var(--mut);margin-top:8px">默认权重：Minor −1 ｜ Major −5 ｜ Critical −25（每千词），可按内容风险调整。</p>
+</div>
+<div class="vcard">
+  <h3><span class="badge b">版本 B</span> 计分与阈值</h3>
+  <div class="formula">质量分 = 100 − Σ(错误数 × 权重) ÷ 千词数<br>
+  例：2000 字任务中 1 处 Critical + 3 处 Major + 5 处 Minor<br>
+  = 100 − (25×1 + 5×3 + 1×5) × 0.5 = 70 分</div>
+  <ul>
+    <li><b>通过阈值（可配置）</b>：≥95 直接交付；85–94 轻度返修；&lt;85 重做译后编辑</li>
+    <li><b>一票否决</b>：任一 Critical 可直接判不通过（受监管内容建议启用）</li>
+    <li><b>平台落地</b>：教师端逐段打标签+级别 → 自动汇总质量分 → 与修订率/相似度并列展示</li>
+  </ul>
+  <div class="ok">适用：实训平台评分、企业 LQA 抽检、译员绩效。分类 + 分级 + 加权 = 可比较的质量数据。</div>
+</div>
+</div>
+
+<p class="src">参考来源：MQM 官方类型库（qt21.eu，Lommel et al. 2014）；TAUS DQF 错误类型学；ISO 18587:2017 译后编辑服务要求；Krings (2001) <i>Repairing Texts</i>；崔启亮 (2015)；冯全功、崔启亮 (2016)；王华树、刘世界 (2022)。本手册由译后编辑实训平台配套生成。</p>
+</div>
+</body>
+</html>

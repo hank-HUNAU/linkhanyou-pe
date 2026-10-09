@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>教师后台 · 译后编辑实训平台</title>
+<link rel="stylesheet" href="style.css">
+<style>
+body{background:#f5f5f7;font:15px/1.65 -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;color:#1d1d1f;padding:0 0 40px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+.card{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:16px;margin:14px 0}
+h1{font-size:21px;margin:14px 0 4px}h2{font-size:17px;margin:0 0 8px}h3{font-size:15px;margin:12px 0 6px}
+.muted{color:#86868b;font-size:13px}
+.btn{border-radius:980px;background:#0071e3;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:14px;cursor:pointer;margin:0 6px 6px 0;text-decoration:none;display:inline-block}
+.btn.ghost{background:#fff;color:#0071e3;border:1px solid #3a5fce}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.item{border:1px solid rgba(0,0,0,.08);border-radius:10px;padding:10px;background:#fbfcfe}
+.tagpill{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px;background:#eef4ff;color:#4338ca;margin-right:4px}
+.warn{background:#fff7e8;border:1px solid #f0d9a8;border-radius:10px;padding:10px 14px;font-size:14px;margin:10px 0}
+</style>
+<!-- Apple 设计语言 -->
+</head>
+<body>
+<div id="mtpe-nav"></div>
+<script src="nav.js"></script>
+
+<div class="wrap">
+ <div id="gate" class="card" style="display:none">
+ <h2> 教师后台</h2>
+ <p class="muted">本页为教师视图。请点击右上角「教师登录」输入口令。</p>
+ <button class="btn" onclick="askTeacherLogin()">教师登录</button>
+ </div>
+
+ <div id="console" style="display:none">
+ <h1> 教师后台</h1>
+ <p class="muted">教学管理与课堂演示在此收拢；学习资源（评析卡片、术语表、MQM 手册）对学生保持可见，教师端只负责编排、发布与批改。</p>
+
+ <div class="card">
+ <h2> 课堂视角切换</h2>
+ <div class="muted">上课演示时请切换到学生视角（演示模式不计时、逐段显示错误点评与参考译文）。</div>
+ <div style="margin-top:8px">
+ <a class="btn ghost" href="index.html"> 学生视角 · 教学演示</a>
+ <a class="btn ghost" href="annotate.html"> 学生视角 · 标注实训</a>
+ <a class="btn ghost" href="pe-exam.html"> 学生视角 · 模拟参赛</a>
+ <a class="btn ghost" href="#" onclick="toggleTeacher();return false"> 退出教师模式</a>
+ </div>
+ </div>
+
+ <div class="card">
+ <h2> 课堂教学 · 评析卡片与讲义导出</h2>
+ <div class="muted">卡片按错误类型分组（M1-M9），可一键导出为 Markdown / HTML 讲义。</div>
+ <div style="margin:8px 0">
+ <button class="btn" onclick="exportLesson('md')">导出讲义（Markdown）</button>
+ <button class="btn ghost" onclick="exportLesson('html')">导出讲义（HTML）</button>
+ <span class="muted" id="card-count"></span>
+ </div>
+ <div id="cards" class="grid"></div>
+ </div>
+
+ <div class="card">
+ <h2> 批改与仲裁</h2>
+ <div class="grid">
+ <div class="item"><b>校对汇总 / 仲裁</b><br><span class="muted">拖入全班学生 JSON，查看对 LLM 预标注的采纳/驳回统计与待仲裁清单</span><br>
+ <a class="btn ghost" href="review.html" style="margin-top:8px">打开汇总页</a></div>
+ <div class="item"><b>我的统计（本机）</b><br><span class="muted">查看本机练习与考试历史、错误敏感度画像</span><br>
+ <a class="btn ghost" href="index.html" onclick="localStorage.setItem('mtpe_goto','stats')" style="margin-top:8px">查看统计</a></div>
+ </div>
+ </div>
+
+ <div class="card">
+ <h2> 基线与校准</h2>
+ <div class="grid">
+ <div class="item"><b>Agent 实测基线</b><br><span class="muted">MQM-B 口径，第 8 届初赛抽样 12 句：机翻 76.3 Agent 100.0（净 +23.7）。学生目标：稳定高于机翻基线的错误消除率。</span></div>
+ <div class="item"><b>模拟晋级线</b><br><span class="muted">84 分（1000 人模拟池第 80 百分位，TER×1.2 口径）；口径局限：对自由重写文本偏低估，仅供纵向对比。</span></div>
+ <div class="item"><b>真实成绩重拟合</b><br><span class="muted">用本班真实成绩替换模拟画像参数（脚本 fit_real_scores.py + 真实成绩模板.csv）</span></div>
+ </div>
+ </div>
+
+ <div class="warn">
+ <b>关于口令</b>：教师登录是<b>角色切换</b>，不是安全鉴权（口令摘要存于前端，可被查看）。仅用于收拢管理功能。
+ 若公开发布本平台，请用 <code>build_public_bundle.py</code> 剥离教师端与真题内容，或部署为私有仓库 / 课堂内部分发。
+ </div>
+ </div>
+</div>
+
+<script src="data.js"></script>
+<script src="corpus.js"></script>
+<script>
+(function () {
+ const gate = document.getElementById('gate');
+ const con = document.getElementById('console');
+ if (window.mtpeIsTeacher && mtpeIsTeacher()) { con.style.display = ''; } else { gate.style.display = ''; }
+})();
+
+/* 教学卡片：corpus.js 中的 tea_official 任务 */
+function teachCards() {
+ const t = (typeof CORPUS_TASKS !== 'undefined') ? CORPUS_TASKS.find(x => x.id === 'tea_official') : null;
+ return t ? t.segs : [];
+}
+function renderCards() {
+ const cards = teachCards();
+ document.getElementById('card-count').textContent = `共 ${cards.length} 张卡片`;
+ const byType = {};
+ cards.forEach(g => {
+ const type = (g.notes && g.notes[0] && g.notes[0].type) || '未分类';
+ (byType[type] = byType[type] || []).push(g);
+ });
+ document.getElementById('cards').innerHTML = Object.entries(byType).map(([type, arr]) => `
+ <div class="item">
+ <div><span class="tagpill">${esc(type)}</span><b> ${arr.length} 例</b></div>
+ <div class="muted" style="margin-top:6px">
+ ${arr.slice(0, 2).map(g => '· 机翻「' + esc((g.mt || '').slice(0, 22)) + '」 ' + esc((g.ref || '').slice(0, 22))).join('<br>')}
+ ${arr.length > 2 ? '<br>· …' : ''}
+ </div>
+ </div>`).join('') || '<div class="muted">未加载到教学卡片</div>';
+}
+function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function exportLesson(kind) {
+ const cards = teachCards();
+ if (!cards.length) { alert('未加载到教学卡片'); return; }
+ if (kind === 'md') {
+ let md = '# 译后编辑课堂讲义（官方评析卡片）\n\n> 导出：' + new Date().toLocaleString('zh-CN', { hour12: false }) + '\n\n';
+ cards.forEach((g, i) => {
+ const t = (g.notes && g.notes[0] && g.notes[0].type) || '';
+ const note = (g.notes && g.notes[0] && g.notes[0].text) || '';
+ md += `## ${i + 1}. ${t}\n- 机翻译文：${g.mt}\n- 参考改法：${g.ref}\n- 评析：${note}\n\n`;
+ });
+ dl('课堂讲义.md', md, 'text/markdown');
+ } else {
+ let h = '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>译后编辑课堂讲义</title><!-- Apple 设计语言 -->
+</head><body style="font:15px/1.7 sans-serif;max-width:820px;margin:0 auto;padding:24px">';
+ h += '<h1>译后编辑课堂讲义（官方评析卡片）</h1><p style="color:#86868b">导出：' + new Date().toLocaleString('zh-CN', { hour12: false }) + '</p>';
+ cards.forEach((g, i) => {
+ const t = (g.notes && g.notes[0] && g.notes[0].type) || '';
+ const note = (g.notes && g.notes[0] && g.notes[0].text) || '';
+ h += `<h2>${i + 1}. ${esc(t)}</h2><p><b>机翻译文：</b>${esc(g.mt)}</p><p><b>参考改法：</b>${esc(g.ref)}</p><p><b>评析：</b>${esc(note)}</p><hr>`;
+ });
+ h += '</body></html>';
+ dl('课堂讲义.html', h, 'text/html');
+ }
+}
+function dl(name, content, type) {
+ const b = new Blob([content], { type: type + ';charset=utf-8' });
+ const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name; a.click();
+}
+renderCards();
+</script>
+</body>
+</html>

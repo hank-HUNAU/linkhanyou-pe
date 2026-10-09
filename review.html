@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>教师端 · 标注校对汇总与仲裁</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--line:#e5e8f0;--ink:#1c2333;--muted:#707a8f;--acc:#3a5fce;--ok:#1a9c6b;--warn:#c2820a;--bad:#c0392b;--ab:#eef4ff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:15px/1.65 -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;background:var(--bg);color:var(--ink);padding:24px;max-width:1100px;margin:0 auto}
+h1{font-size:21px}h2{font-size:17px;margin:18px 0 10px}h3{font-size:15px;margin:12px 0 6px}
+.sub{color:var(--muted);font-size:13px;margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.btn{border-radius:980px;background:var(--acc);color:#fff;border:none;border-radius:10px;padding:8px 16px;font-size:14px;cursor:pointer;margin-right:8px}
+.btn.ghost{background:#fff;color:var(--acc);border:1px solid var(--acc)}
+.btn.r{background:var(--bad)}
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
+th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+th{background:#f0f3fa}
+.drop{border:2px dashed var(--acc);border-radius:14px;padding:26px;text-align:center;color:var(--muted);background:#fff}
+.drop.over{background:var(--ab)}
+.tagpill{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px;background:var(--ab);color:#4338ca;margin-right:4px}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+.muted{color:var(--muted);font-size:13px}
+.empty{color:var(--muted);padding:14px}
+</style>
+<!-- Apple 设计语言 -->
+</head>
+<body>
+<h1>教师端 · 标注校对汇总与仲裁</h1>
+<div class="sub">纯静态页：拖入学生从 <b>annotate.html</b> 导出的 JSON（含 <code>llm_reviews</code> 校对记录） 自动汇总学生成绩、对 LLM 预标注的采纳/驳回统计、生成待仲裁清单 导出仲裁结果交回数据侧回灌 mtpe.db。</div>
+
+<div class="card">
+ <div class="drop" id="drop">把学生导出的一个或多个 JSON 拖到这里，或 <button class="btn ghost" onclick="document.getElementById('file').click()">选择文件</button>
+ <input type="file" id="file" multiple accept=".json" style="display:none"></div>
+</div>
+
+<div class="card" id="students-card" style="display:none">
+ <h2> 学生成绩与校对量</h2>
+ <div id="students"></div>
+</div>
+
+<div class="card" id="pre-card" style="display:none">
+ <h2> LLM 预标注的集体判定（预标注质量体检）</h2>
+ <div class="muted">同一条预标注被多名学生判定时：多数采纳 保留；多数驳回 该预标注错误，进入负样本与提示词改进；分歧 教师终审。</div>
+ <div id="prestats"></div>
+</div>
+
+<div class="card" id="arb-card" style="display:none">
+ <h2> 待仲裁清单（学生驳回 / 判定分歧）</h2>
+ <div id="arb"></div>
+ <div style="margin-top:12px"><button class="btn" onclick="exportArb()">导出仲裁结果 JSON</button>
+ <span class="muted">导出后交数据侧回灌（pair_annotations：status 已校对-学生仲裁）</span></div>
+</div>
+
+<script>
+let FILES = []; // [{name, data}]
+let PREMAP = null; // {pair_key: [pre...]}
+
+/* 载入平台生成的 LLM 预标注（可选，用于显示预标注原文） */
+function loadPre(){
+ try{
+ const s = document.createElement('script');
+ s.src = 'annotate-data.js';
+ s.onload = () => { if (typeof PRE !== 'undefined'){ PREMAP = {}; PRE.forEach(x=>{(PREMAP[x.k]=PREMAP[x.k]||[]).push(x);}); } render(); };
+ document.head.appendChild(s);
+ }catch(e){ render(); }
+}
+
+function handleFiles(list){
+ const jobs = Array.from(list).map(f => new Promise((res, rej) => {
+ const r = new FileReader();
+ r.onload = () => { try{ res({name:f.name, data:JSON.parse(r.result)}); }catch(e){ rej(e); } };
+ r.readAsText(f, 'utf-8');
+ }));
+ Promise.all(jobs).then(arr => { FILES = FILES.concat(arr); render(); })
+ .catch(() => alert('有文件不是合法 JSON'));
+}
+const drop = document.getElementById('drop');
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); handleFiles(e.dataTransfer.files); });
+document.getElementById('file').addEventListener('change', e => handleFiles(e.target.files));
+
+function render(){
+ if (!FILES.length) return;
+ document.getElementById('students-card').style.display = '';
+ document.getElementById('pre-card').style.display = '';
+ document.getElementById('arb-card').style.display = '';
+
+ /* 学生 */
+ document.getElementById('students').innerHTML = '<table><tr><th>学生文件</th><th>句子数</th><th>Precision</th><th>Recall</th><th>F1</th><th>本人标注</th><th>校对数（采纳/修改/驳回）</th></tr>' +
+ FILES.map(f => {
+ const s = f.data.scores || {};
+ const rev = f.data.llm_reviews || {};
+ let a=0,m=0,r=0,ann=0;
+ Object.values(rev).forEach(arr => arr.forEach(x => { if(x.verdict==='采纳')a++; else if(x.verdict==='修改后采纳')m++; else r++; }));
+ (f.data.annotations||[]).forEach(()=>ann++);
+ return `<tr><td>${f.name}</td><td>${(f.data.meta&&f.data.meta.pairs)||'—'}</td>
+ <td>${s.precision!=null?s.precision:'—'}</td><td>${s.recall!=null?s.recall:'—'}</td><td><b>${s.f1!=null?s.f1:'—'}</b></td>
+ <td>${ann}</td><td>${a} / ${m} / <span class="${r?'bad':''}">${r}</span></td></tr>`;
+ }).join('') + '</table>';
+
+ /* 预标注集体判定 */
+ const stat = {};
+ FILES.forEach(f => {
+ const rev = f.data.llm_reviews || {};
+ Object.entries(rev).forEach(([k, arr]) => arr.forEach(x => {
+ const key = k + '｜' + x.span;
+ stat[key] = stat[key] || { k, span:x.span, tag:x.pre_tag, sev:x.pre_sev, acc:0, mod:0, rej:0, reasons:[] };
+ if (x.verdict === '采纳') stat[key].acc++;
+ else if (x.verdict === '修改后采纳') stat[key].mod++;
+ else { stat[key].rej++; if (x.reason) stat[key].reasons.push(x.reason); }
+ }));
+ });
+ const rows = Object.values(stat);
+ document.getElementById('prestats').innerHTML = rows.length ? '<table><tr><th>句对</th><th>预标注片段</th><th>标签/严重度</th><th>采纳</th><th>修改</th><th>驳回</th><th>集体判定</th></tr>' +
+ rows.map(r => {
+ const tot = r.acc + r.mod + r.rej;
+ let verdict = '—', cls = '';
+ if (r.rej > tot/2) { verdict = ' 多数驳回 预标注有误'; cls = 'bad'; }
+ else if (r.rej > 0 && r.acc > 0) { verdict = ' 分歧 教师终审'; cls = 'warn'; }
+ else { verdict = ' 多数采纳 保留'; cls = 'ok'; }
+ return `<tr><td>${r.k}</td><td>${esc(r.span)}</td><td>${r.tag} · ${r.sev}</td>
+ <td>${r.acc}</td><td>${r.mod}</td><td>${r.rej}</td><td class="${cls}">${verdict}</td></tr>`;
+ }).join('') + '</table>' : '<div class="empty">本批导出中不含 LLM 校对记录</div>';
+
+ /* 仲裁清单 */
+ const arb = rows.filter(r => r.rej > 0);
+ document.getElementById('arb').innerHTML = arb.length ? '<table><tr><th>句对</th><th>预标注片段</th><th>预标注</th><th>驳回次数</th><th>学生理由</th><th>仲裁结论（填写）</th></tr>' +
+ arb.map((r,i) => `<tr><td>${r.k}</td><td>${esc(r.span)}</td><td>${r.tag} · ${r.sev}</td><td class="bad">${r.rej}</td>
+ <td>${r.reasons.join('、')||'—'}</td>
+ <td><select id="arb-${i}" data-k="${r.k}" data-span="${esc(r.span)}">
+ <option value="">待定</option><option>学生成立（预标注误标）</option><option>预标注成立（学生误判）</option>
+ <option>部分成立（严重度调整）</option></select></td></tr>`).join('') + '</table>' : '<div class="empty">暂无驳回（预标注全部被接受或本批无校对记录）</div>';
+}
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function exportArb(){
+ const out = { exported:new Date().toLocaleString('zh-CN',{hour12:false}), files:FILES.map(f=>f.name), items:[] };
+ document.querySelectorAll('select[id^="arb-"]').forEach(sel => {
+ if (!sel.value) return;
+ out.items.push({ pair_key: sel.dataset.k, span: sel.dataset.span, verdict: sel.value });
+ });
+ const blob = new Blob([JSON.stringify(out,null,2)], {type:'application/json'});
+ const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = '教师仲裁结果_' + Date.now() + '.json'; a.click();
+}
+loadPre();
+</script>
+</body>
+</html>
