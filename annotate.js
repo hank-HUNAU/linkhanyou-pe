@@ -33,6 +33,14 @@ const SEV_COLOR = { Critical: 'var(--r)', Major: 'var(--a)', Minor: 'var(--b)' }
 const PRE_MAP = {};
 (typeof PRE !== 'undefined' ? PRE : []).forEach(function (x) { (PRE_MAP[x.k] = PRE_MAP[x.k] || []).push(x); });
 
+/* ---------------- 优化B：错误维度组卷 / 错题本 ---------------- */
+const DIM_LIST = ['准确性', '术语', '语言规范', '风格', '格式'];
+function qs() { try { return new URLSearchParams(location.search); } catch (e) { return new URLSearchParams(''); } }
+function wrongbook() { return store.get('wrongbook', []) || []; }
+function saveWrongbook(list) { store.set('wrongbook', list.slice(0, 300)); }
+function clearWrong() { store.del('wrongbook'); renderSetup(); toast('错题本已清空'); }
+function wrongKeys() { return [...new Set(wrongbook().map(w => w.k))]; }
+
 /* ---------------- 全局状态 ---------------- */
 let V = 'setup';
 let A = null; // {paper:[pair...], idx, anns:{k:[...]}, reviews:{k:[...]}, seeded:Set(k)}
@@ -41,10 +49,15 @@ let A = null; // {paper:[pair...], idx, anns:{k:[...]}, reviews:{k:[...]}, seede
 /* ---------------- 组卷 ---------------- */
 function renderSetup() {
  V = 'setup';
+ const P = qs();
  const eds = [...new Set(CORPUS_PAIRS.map(p => p.ed))].sort();
  const dirs = [...new Set(CORPUS_PAIRS.map(p => p.dir))];
+ const stages = [...new Set(CORPUS_PAIRS.map(p => p.stage))];
  const seededK = new Set(SEEDS.map(s => s.k));
  const seedCount = CORPUS_PAIRS.filter(p => seededK.has(p.k)).length;
+ const pre = { ed: P.get('ed') || '', stage: P.get('stage') || '', dir: P.get('dir') || '', dim: P.get('dim') || '', n: P.get('n') || '15' };
+ const wb = wrongbook();
+ const wbN = wrongKeys().length;
  app.innerHTML = `
  <div class="top">
  <div class="brand"><span class="logo">标</span>MTPE 标注实训 <span class="en">错误标注 · 种子对照</span></div>
@@ -57,10 +70,12 @@ function renderSetup() {
  <div class="card">
  <h3> 组卷筛选</h3>
  <div class="row">
- <div><label>届次</label><select id="f-ed"><option value="">全部</option>${eds.map(e => `<option value="${e}">第${e}届</option>`).join('')}</select></div>
- <div><label>方向</label><select id="f-dir"><option value="">全部</option>${dirs.map(d => `<option>${d}</option>`).join('')}</select></div>
+ <div><label>届次</label><select id="f-ed"><option value="">全部</option>${eds.map(e => `<option value="${e}"${String(pre.ed) === String(e) ? ' selected' : ''}>第${e}届</option>`).join('')}</select></div>
+ <div><label>赛段</label><select id="f-stage"><option value="">全部</option>${stages.map(s => `<option${pre.stage === s ? ' selected' : ''}>${s}</option>`).join('')}</select></div>
+ <div><label>方向</label><select id="f-dir"><option value="">全部</option>${dirs.map(d => `<option${pre.dir === d ? ' selected' : ''}>${d}</option>`).join('')}</select></div>
+ <div><label>错误类型</label><select id="f-dim"><option value="">全部</option>${DIM_LIST.map(d => `<option${pre.dim === d ? ' selected' : ''}>${d}</option>`).join('')}</select></div>
  <div><label>机翻底稿</label><select id="f-mt"><option value="">含无底稿（跳过）</option><option value="1">仅限有底稿</option></select></div>
- <div><label>卷大小</label><select id="f-n"><option>10</option><option selected>15</option><option>20</option></select></div>
+ <div><label>卷大小</label><select id="f-n">${[10, 15, 20, 30].map(k => `<option${String(pre.n) === String(k) ? ' selected' : ''}>${k}</option>`).join('')}</select></div>
  </div>
  <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
  <button class="btn btn-p" onclick="compose()">生成试卷 </button>
@@ -68,26 +83,53 @@ function renderSetup() {
  </div>
  <div id="compose-out" class="page-s" style="margin-top:10px"></div>
  </div>
+ ${wbN ? `<div class="card"><h3> 错题本（${wbN} 句 / ${wb.length} 处待回练）</h3>
+ <div class="page-s">来自你以往标注实训中<b>漏检</b>或<b>标签判错</b>的种子错误。回练只重做这些句子，交卷后同样计分。</div>
+ <ul style="margin:0 0 10px 18px;font-size:13px;color:var(--tx2)">${wb.slice(0, 6).map(w => `<li>${esc(w.k)} ｜「${esc(String(w.span).slice(0, 24))}」 → 应为 <b>${TAG_LABEL[w.tag] || w.tag}</b> · ${w.sev} <span class="muted">（${w.kind}）</span></li>`).join('')}</ul>
+ ${wb.length > 6 ? `<div class="muted" style="margin-bottom:8px">…… 其余 ${wb.length - 6} 处</div>` : ''}
+ <button class="btn btn-p" onclick="composeWrong()">错题回练（${wbN} 句）</button>
+ <button class="btn btn-g" style="margin-left:8px" onclick="clearWrong()">清空错题本</button>
+ </div>` : ''}
  ${store.get('paper', null) ? `<div class="card"><h3>⏸ 有未完成的标注卷</h3>
  <button class="btn btn-o" onclick="resumePaper()">继续上次标注</button>
  <button class="btn btn-r" style="margin-left:8px" onclick="store.del('paper');renderSetup();toast('已放弃上次标注卷')">放弃</button></div>` : ''}
  </div>
  <div id="toast"></div>`;
+ /* 由结果页"错题回练"直达：?wrong=1 自动开局 */
+ if (P.get('wrong') && wbN) setTimeout(composeWrong, 300);
 }
 
 function compose() {
- const ed = $('#f-ed').value, dir = $('#f-dir').value, mtOnly = $('#f-mt').value, n = parseInt($('#f-n').value, 10);
+ const ed = $('#f-ed').value, stage = $('#f-stage').value, dir = $('#f-dir').value,
+ dim = $('#f-dim').value, mtOnly = $('#f-mt').value, n = parseInt($('#f-n').value, 10);
  const seededK = new Set(SEEDS.map(s => s.k));
- let pool = CORPUS_PAIRS.filter(p => (!ed || p.ed === ed) && (!dir || p.dir === dir) && (!mtOnly || p.mt));
+ let pool = CORPUS_PAIRS.filter(p => (!ed || p.ed === ed) && (!stage || p.stage === stage)
+ && (!dir || p.dir === dir) && (!mtOnly || p.mt)
+ && (!dim || (p.tags || []).includes(dim)));
  const seeded = pool.filter(p => seededK.has(p.k));
  const blind = pool.filter(p => !seededK.has(p.k));
  const takeSeeded = Math.min(seeded.length, n);
  const paper = seeded.slice(0, takeSeeded).concat(blind.slice(0, n - takeSeeded));
  if (!paper.length) { $('#compose-out').textContent = '筛选条件下没有可用句对，请放宽条件。'; return; }
- A = { paper, idx: 0, anns: {}, reviews: store.get('llm_reviews', {}) || {}, seededK, startedAt: Date.now() };
- store.set('paper', { keys: paper.map(p => p.k), idx: 0, anns: A.anns, startedAt: A.startedAt });
- $('#compose-out').innerHTML = ` 已组卷 <b>${paper.length}</b> 条：种子对照 ${takeSeeded} 条 + 盲标 ${paper.length - takeSeeded} 条。`;
+ startPaper(paper, seededK);
+ $('#compose-out').innerHTML = ` 已组卷 <b>${paper.length}</b> 条：种子对照 ${takeSeeded} 条 + 盲标 ${paper.length - takeSeeded} 条。`
+ + (dim ? `<br>已按错误类型「${esc(dim)}」筛选（该条件共 ${pool.length} 句，其中含机翻底稿 ${pool.filter(p => p.mt).length} 句）。` : '');
  setTimeout(startWork, 600);
+}
+function startPaper(paper, seededK) {
+ A = { paper, idx: 0, anns: {}, reviews: store.get('llm_reviews', {}) || {}, seededK, startedAt: Date.now(), wrongMode: false };
+ store.set('paper', { keys: paper.map(p => p.k), idx: 0, anns: A.anns, startedAt: A.startedAt });
+}
+/* 错题回练：只重做错题本里出现过的句子 */
+function composeWrong() {
+ const keys = wrongKeys();
+ const map = Object.fromEntries(CORPUS_PAIRS.map(x => [x.k, x]));
+ const paper = keys.map(k => map[k]).filter(Boolean);
+ if (!paper.length) { toast('错题本为空'); return; }
+ startPaper(paper, new Set(SEEDS.map(s => s.k)));
+ A.wrongMode = true;
+ const out = $('#compose-out'); if (out) out.innerHTML = ` 错题回练已组卷 <b>${paper.length}</b> 句。`;
+ setTimeout(startWork, 400);
 }
 function resumePaper() {
  const p = store.get('paper', null);
@@ -115,6 +157,7 @@ function renderWork() {
  <div class="wrap">
  <div class="card">
  <div class="meta">
+ ${A.wrongMode ? '<span class="tag teal">错题回练卷</span>' : ''}
  <span class="tag teal">${esc(p.dir)}</span><span class="tag gray">第${esc(p.ed)}届 · ${esc(p.stage)}</span>
  <span>引擎：${esc(p.eng) || '（未公布）'}</span>
  <span>${seeded ? ' 种子对照卷（交卷评分）' : ' 盲标卷（不计分）'}</span>
@@ -317,6 +360,7 @@ function submitAnn() {
  const seededK = A.seededK;
  let TP = 0, FP = 0, FN = 0, tagWrong = 0, sevWrong = 0;
  const perPair = [];
+ const wrongNew = [];
  A.paper.forEach(p => {
  const my = A.anns[p.k] || [];
  const seeds = SEEDS.filter(s => s.k === p.k);
@@ -328,14 +372,24 @@ function submitAnn() {
  my.forEach((a, i) => { if (used.has(i)) return; const sim = simT(a.text, s.span); if (sim >= 0.6 && sim > bestSim) { best = { a, i }; bestSim = sim; } });
  if (best) {
  used.add(best.i);
- if (best.a.tag === s.tag) { TP++; if (best.a.sev !== s.sev) sevWrong++; }
- else tagWrong++;
- } else FN++;
+ if (best.a.tag === s.tag) {
+ TP++;
+ if (best.a.sev !== s.sev) { sevWrong++; wrongNew.push({ k: p.k, span: s.span, tag: s.tag, sev: s.sev, kind: '严重度判偏', mine: best.a.sev }); }
+ } else { tagWrong++; wrongNew.push({ k: p.k, span: s.span, tag: s.tag, sev: s.sev, kind: '标签判错', mine: best.a.tag }); }
+ } else { FN++; wrongNew.push({ k: p.k, span: s.span, tag: s.tag, sev: s.sev, kind: '漏检', mine: '' }); }
  });
  FP += my.filter((a, i) => !used.has(i)).length;
  }
  perPair.push(pairInfo);
  });
+ /* 错题本（优化B）：漏检 / 标签判错 / 严重度判偏 自动入本，去重后供"错题回练" */
+ const oldWB = wrongbook();
+ const seen = new Set(oldWB.map(w => w.k + '|' + w.span + '|' + w.tag + '|' + w.kind));
+ const stamp = new Date().toLocaleString('zh-CN', { hour12: false });
+ const wrongAdded = wrongNew.filter(w => !seen.has(w.k + '|' + w.span + '|' + w.tag + '|' + w.kind))
+ .map(w => ({ ...w, date: stamp }));
+ if (wrongAdded.length) saveWrongbook(wrongAdded.concat(oldWB));
+ const wrongTotal = wrongKeys().length;
  const precision = (TP + FP) ? Math.round(TP / (TP + FP) * 1000) / 10 : 0;
  const recall = (TP + FN) ? Math.round(TP / (TP + FN) * 1000) / 10 : 0;
  const f1 = (precision + recall) ? Math.round(2 * precision * recall / (precision + recall) * 10) / 10 : 0;
@@ -360,7 +414,7 @@ function submitAnn() {
  const avg = (a) => a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length * 10) / 10 : null;
  const studentQ = avg(tQ), seedQ = avg(sQ);
 
- const result = { date: new Date().toLocaleString('zh-CN', { hour12: false }), TP, FP, FN, tagWrong, sevWrong, precision, recall, f1, studentQ, seedQ, perPair, pairsN: A.paper.length, tagged: Object.values(A.anns).reduce((s, a) => s + a.length, 0) };
+ const result = { date: new Date().toLocaleString('zh-CN', { hour12: false }), TP, FP, FN, tagWrong, sevWrong, precision, recall, f1, studentQ, seedQ, perPair, pairsN: A.paper.length, tagged: Object.values(A.anns).reduce((s, a) => s + a.length, 0), wrongAdded: wrongAdded.length, wrongTotal };
  const rs = store.get('results', []); rs.unshift(result); store.set('results', rs.slice(0, 50));
  /* 同步到主平台「我的统计」 */
  try {
@@ -407,6 +461,11 @@ function renderResult(r) {
  <span><i style="background:#ffe2e2;border-bottom:2px dashed var(--r)"></i>漏检的种子错误</span>
  <span><i style="background:#d6e6ff;border-bottom:2px solid var(--b)"></i>你的标注</span>
  </div>
+ ${(r.wrongAdded || r.wrongTotal) ? `<div class="card" style="border-color:#f0d9a8;background:#fffdf7">
+ <h3> 错题本已更新</h3>
+ <div class="page-s" style="margin-bottom:8px">本次新增 <b>${r.wrongAdded || 0}</b> 处，错题本共 <b>${r.wrongTotal || 0}</b> 句待回练——含漏检、标签判错与严重度判偏。回练只重做这些句子，形成"暴露 → 回练 → 复测"的闭环。</div>
+ <button class="btn btn-p" onclick="renderSetup()">去错题回练</button>
+ </div>` : ''}
  ${r.perPair.map(x => `
  <div class="card">
  <div class="meta">

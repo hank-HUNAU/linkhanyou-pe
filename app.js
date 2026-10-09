@@ -656,6 +656,8 @@ function renderStats() {
  <div class="page-s">说明：得分基于参考译文词级重合度（同义改写可能低估）；修订率中文按字切分，跨语向比较需谨慎。</div>
  ${annStatsHTML()}
  ${mqmProfileHTML(hs)}
+ ${examProfileHTML(hs)}
+ ${wrongbookHTML()}
  <div class="board"><h3> 最近 ${recent.length} 次得分走势</h3>
  <div class="chart">
  ${recent.map(h => `
@@ -686,6 +688,56 @@ function viewRecord(id) {
  const r = history().find(h => h.id === id);
  if (r) renderResult(r);
  window.scrollTo(0, 0);
+}
+
+/* ---------------- 考试结果画像（pe-exam 交卷同步聚合） ---------------- */
+function examProfileHTML(hs) {
+ const recs = (hs || []).filter(h => h && h.profile);
+ if (!recs.length) {
+  return `<div class="board"><h3>考试结果画像</h3>
+  <div class="empty-tip" style="padding:16px 0">暂无考场记录。去 <a href="pe-exam.html" target="_blank">模拟考场</a> 交一次卷，这里会汇总你的编辑倾向（精准型 / 过度编辑型 / 保守型 / 鲁莽型）、编辑命中率与后半程稳定性。</div></div>`;
+ }
+ const avg = (k) => Math.round(recs.reduce((s, h) => s + (Number(h.profile[k]) || 0), 0) / recs.length * 10) / 10;
+ const QUADS = ['精准型', '过度编辑型', '保守型', '鲁莽型'];
+ const quadCount = {};
+ recs.forEach(h => { const q = h.profile.quadrant || '—'; quadCount[q] = (quadCount[q] || 0) + 1; });
+ const maxQ = Math.max(1, ...QUADS.map(q => quadCount[q] || 0));
+ const bars = QUADS.map(q => `
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+  <span style="width:84px;font-size:13px;flex-shrink:0">${q}</span>
+  <div style="flex:1;height:14px;background:#eef1f7;border-radius:99px;overflow:hidden">
+  <div style="width:${(quadCount[q] || 0) / maxQ * 100}%;height:100%;background:linear-gradient(90deg,#6c8cff,var(--primary));border-radius:99px"></div>
+  </div>
+  <span style="width:70px;font-size:12.5px;color:var(--text-2)">${quadCount[q] || 0} 次</span>
+  </div>`).join('');
+ const mainQ = QUADS.slice().sort((a, b) => (quadCount[b] || 0) - (quadCount[a] || 0))[0];
+ const stab = avg('stability');
+ return `<div class="board"><h3> 考试结果画像（共 ${recs.length} 次交卷）</h3>
+  <div class="score-hero" style="margin-bottom:10px">
+  <div class="stat-box"><div class="v">${avg('editRate')}%</div><div class="l">平均编辑率</div></div>
+  <div class="stat-box"><div class="v green">${avg('effRate')}%</div><div class="l">平均有效编辑率</div></div>
+  <div class="stat-box"><div class="v">${avg('speed')}</div><div class="l">平均速度（段/分）</div></div>
+  <div class="stat-box"><div class="v ${stab < 0 ? 'amber' : 'green'}">${stab >= 0 ? '+' : ''}${stab}</div><div class="l">后半程平均变化</div></div>
+  </div>
+  ${bars}
+  <div class="board-note">编辑倾向来自每次交卷的逐段 diff 初筛，出现最多的是「${mainQ}」（${quadCount[mainQ] || 0} 次）。有效编辑率＝改对的问题点 ÷ 改动的词数；偏低说明改动多而命中少，先练"判断哪里该改"（M0 思维）。画像细节见各次交卷的结果页。</div>
+  </div>`;
+}
+
+/* ---------------- 错题本（标注实训 → 错题回练闭环） ---------------- */
+function wrongbookHTML() {
+ let wb = [];
+ try { wb = JSON.parse(localStorage.getItem('ann_wrongbook') || '[]') || []; } catch (e) {}
+ const keys = [...new Set(wb.map(w => w.k))];
+ if (!keys.length) return '';
+ const kinds = {};
+ wb.forEach(w => { kinds[w.kind] = (kinds[w.kind] || 0) + 1; });
+ const kindTxt = Object.keys(kinds).map(k => k + ' ' + kinds[k]).join(' ｜ ');
+ return `<div class="board"><h3> 错题本（${keys.length} 句 / ${wb.length} 处）</h3>
+ <div class="board-note" style="margin-top:0">来自标注实训中漏检 / 标签判错 / 严重度判偏的种子错误：${kindTxt}。</div>
+ <div style="margin-top:10px"><a class="btn btn-outline" href="annotate.html?wrong=1" target="_blank" style="text-decoration:none">错题回练</a>
+ <span class="muted" style="margin-left:10px">只重做这些句子，交卷后同样按种子对照计分。</span></div>
+ </div>`;
 }
 
 /* ---------------- 标注实训能力（annotate.html 同步） ---------------- */
@@ -767,8 +819,10 @@ ${r.details.map(d => `<div class="blk"><b>第 ${d.i + 1} 段</b>（修订率 ${(
 }
 
 function exportCSV() {
- const rows = [['时间', '昵称', '任务', '语向', '领域', '模式', '得分', '修订率%', '完成段', '总段', '字数', '用时秒']];
- history().forEach(h => rows.push([h.date, h.nickname, h.taskName, h.pair, h.domain, h.mode, h.score, h.ter, h.segDone, h.total, h.words, h.timeUsed]));
+ const rows = [['时间', '昵称', '任务', '语向', '领域', '模式', '得分', '修订率%', '完成段', '总段', '字数', '用时秒', '编辑率%', '有效编辑率%', '编辑倾向', '速度段每分', '后半程变化']];
+ history().forEach(h => rows.push([h.date, h.nickname, h.taskName, h.pair, h.domain, h.mode, h.score, h.ter, h.segDone, h.total, h.words, h.timeUsed,
+  h.profile ? h.profile.editRate : '', h.profile ? h.profile.effRate : '', h.profile ? h.profile.quadrant : '',
+  h.profile ? h.profile.speed : '', h.profile ? h.profile.stability : '']));
  const csv = '\uFEFF' + rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n');
  download('MTPE实训明细.csv', csv, 'text/csv');
 }

@@ -127,8 +127,7 @@ function exportLesson(kind) {
  });
  dl('课堂讲义.md', md, 'text/markdown');
  } else {
- let h = '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>译后编辑课堂讲义</title><!-- Apple 设计语言 -->
-</head><body style="font:15px/1.7 sans-serif;max-width:820px;margin:0 auto;padding:24px">';
+  let h = '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>译后编辑课堂讲义</title></head><body style="font:15px/1.7 sans-serif;max-width:820px;margin:0 auto;padding:24px">';
  h += '<h1>译后编辑课堂讲义（官方评析卡片）</h1><p style="color:#86868b">导出：' + new Date().toLocaleString('zh-CN', { hour12: false }) + '</p>';
  cards.forEach((g, i) => {
  const t = (g.notes && g.notes[0] && g.notes[0].type) || '';

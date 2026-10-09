@@ -471,6 +471,8 @@ function doSubmit(reason){
  const noEditN=details.length-editedN;
  store.del('draft_'+task.id);
  const record={task,peMode,reason,timeUsed,details,editedN,avgTer,score,terScore,noEditN,tokens:S.tokens,switches:S.switches,enters:store.get('enters_'+task.id,0)};
+ record.prevBest=historyBest(task.id);   // 须在 syncToMainHistory 之前：同步会把本次写入历史
+ record.profile=buildProfile(record);
  syncToMainHistory(record);
  renderResult(record);
 }
@@ -488,6 +490,12 @@ function syncToMainHistory(r){
  timeUsed:r.timeUsed, score:r.score, ter:Math.round(r.avgTer*1000)/10,
  segDone:r.editedN, total:r.task.segs.length,
  words:r.task.segs.reduce((s,g)=>s+wordCountSrc(g.src),0),
+ profile:r.profile?{editRate:Math.round(r.profile.editRate*1000)/10,
+   effRate:Math.round(r.profile.effRate*1000)/10,
+   quadrant:quadrantName(r.profile.editRate,r.profile.effRate),
+   speed:Math.round(r.profile.speed*10)/10,
+   stability:Math.round((r.profile.second-r.profile.first)*10)/10,
+   dims:r.profile.out}:null,
  details:r.details.map(d=>({i:d.i,src:d.mt?'':'',mt:d.mt,ref:d.ref,pe:d.pe,ter:d.ter,sim:d.sim,empty:!d.edited,notes:[]}))
  };
  // 主平台结果页需要 d.src 渲染原文列：从 data.js 反查
@@ -525,6 +533,292 @@ function agentBoardHTML(r){ const agents=(AGENT_BOARD[r.task.id]||AGENT_DEFAULT)
 }
 function getNickYcx(){ return store.get('nickname_yx','我'); }
 
+/* ============ 结果画像（优化A） ============
+ * 四项：① 错误维度雷达 ② 编辑倾向四象限 ③ 速度与稳定性 ④ 参照系
+ * 维度归并同标注体系：M1-M3→准确性，M4→术语，M5-M7→语言规范，M8→风格，M9→格式。
+ * 注意：考场无人工标注，维度分布由"逐段机翻↔参考 diff"启发式初筛，精确口径以第一期 MQM 人工标注为准。
+ */
+const DIMS = ['准确性', '术语', '语言规范', '风格', '格式'];
+const M_DIM = { M1:'准确性', M2:'准确性', M3:'准确性', M4:'术语',
+                M5:'语言规范', M6:'语言规范', M7:'语言规范', M8:'风格', M9:'格式' };
+const QUAD_X = 0.30, QUAD_Y = 0.60;
+
+function zeroDims(){ const o = {}; DIMS.forEach(d => o[d] = 0); return o; }
+function isPunctOnly(s){ return !!s && !/[0-9A-Za-z\u4e00-\u9fff]/.test(s); }
+/* 参考译文补出拉丁文括注（专名/术语处理）也算术语维度 */
+const GLOSS_RE = /[（(]\s*[A-Za-z][A-Za-z0-9 .'’\-]{1,40}\s*[）)]/;
+function termHit(terms, txt){
+  if (!txt || !terms.length) return false;
+  const low = txt.toLowerCase();
+  return terms.some(t => {
+    const cn = String(t.s || '').trim();
+    const en = String(t.t || '').split('（')[0].trim();
+    return (cn && (txt.includes(cn) || low.includes(cn.toLowerCase()))) ||
+           (en && en.length > 1 && low.includes(en.toLowerCase()));
+  });
+}
+function classifyChunk(del, ins, terms){
+  const d = del.join(''), s = ins.join('');
+  if (d.replace(/\s+/g, '') === s.replace(/\s+/g, '')) return 'M9';   // 仅空白/不可见差异
+  const dt = d.replace(/\s+/g, ''), st = s.replace(/\s+/g, '');
+  if (termHit(terms, dt) || termHit(terms, st)) return 'M4';          // 命中术语表
+  if (st && GLOSS_RE.test(st) && !GLOSS_RE.test(dt)) return 'M4';     // 参考补出拉丁文括注
+  if (/[0-9]/.test(dt) || /[0-9]/.test(st)) return 'M5';              // 数字/单位
+  if (isPunctOnly(dt) || isPunctOnly(st)) return 'M7';                // 标点
+  if (!dt) return 'M2';                                                // 参考多出内容 → 漏译
+  if (!st) return 'M3';                                                // 参考少出内容 → 增译
+  const dn = del.filter(t => t.trim()).length, sn = ins.filter(t => t.trim()).length;
+  // 仅"整句/短语级重述"判为风格（双侧 ≥2 词且 ≥6 字）：单词级替换默认按误译，避免低估准确性
+  if (dn >= 2 && sn >= 2 && Math.max(dt.length, st.length) >= 6 && Math.abs(dt.length - st.length) <= 2) return 'M8';
+  if (st.length - dt.length >= 4) return 'M2';
+  if (dt.length - st.length >= 4) return 'M3';
+  return 'M1';
+}
+function errorTags(a, b, terms){
+  const ops = diffTokens(tokenize(a || ''), tokenize(b || ''));
+  const tags = [];
+  let i = 0;
+  while (i < ops.length){
+    if (ops[i].op === 'same'){ i++; continue; }
+    const del = [], ins = [];
+    while (i < ops.length && ops[i].op !== 'same'){ (ops[i].op === 'del' ? del : ins).push(ops[i].t); i++; }
+    tags.push(classifyChunk(del, ins, terms));
+  }
+  return tags;
+}
+function addTags(target, tags){ tags.forEach(m => { target[M_DIM[m] || '准确性'] += 1; }); }
+function sumDims(o){ return DIMS.reduce((s, d) => s + o[d], 0); }
+
+function buildProfile(r){
+  const terms = r.task.terms || [];
+  const draft = zeroDims(), out = zeroDims();
+  const n = r.details.length;
+  let editOps = 0, cut = 0, mtTok = 0;
+  const halves = [[], []];
+  r.details.forEach((d, idx) => {
+    const base = d.mt || '', ref = d.ref || '';
+    const pe = String(d.pe == null ? '' : d.pe).trim();
+    const baseTags = errorTags(base, ref, terms);
+    addTags(draft, baseTags);
+    const peTags = pe ? errorTags(pe, ref, terms) : baseTags;
+    if (pe) addTags(out, peTags);
+    const ops = diffTokens(tokenize(base), tokenize(pe || base));
+    editOps += ops.filter(o => o.op !== 'same').length;
+    mtTok += tokenize(base).length;
+    cut += Math.max(0, baseTags.length - peTags.length);
+    halves[idx < n / 2 ? 0 : 1].push(pe ? similarity(pe, ref) : 0);
+  });
+  const avg = arr => arr.length ? arr.reduce((x, y) => x + y, 0) / arr.length : 0;
+  return {
+    draft, out,
+    editRate: mtTok ? editOps / mtTok : 0,
+    effRate: editOps ? Math.min(1, cut / editOps) : 0,
+    speed: n / (Math.max(r.timeUsed, 1) / 60),
+    first: avg(halves[0]), second: avg(halves[1]),
+    draftTotal: sumDims(draft), outTotal: sumDims(out)
+  };
+}
+function historyBest(taskId){
+  try{
+    const h = JSON.parse(localStorage.getItem('mtpe_history') || '[]') || [];
+    const s = h.filter(x => x && x.taskId === taskId).map(x => Number(x.score) || 0).filter(v => v > 0);
+    return s.length ? Math.max(...s) : null;
+  }catch(e){ return null; }
+}
+
+/* ---- 图 1：维度改对率雷达（0-100 固定刻度，避免某维度量级独大导致退化） ---- */
+function fixRates(p){
+  // 该维度机翻无问题的按 100% 计（无事可改）
+  return DIMS.map(d => p.draft[d] ? Math.max(0, Math.min(100, (p.draft[d] - p.out[d]) / p.draft[d] * 100)) : 100);
+}
+function radarSVG(values, color){
+  const cx = 160, cy = 146, R = 96, n = DIMS.length;
+  const ang = i => -Math.PI / 2 + i * 2 * Math.PI / n;
+  const clamp = v => Math.min(1, Math.max(0, v / 100));
+  const P = (i, v) => [(cx + Math.cos(ang(i)) * R * clamp(v)).toFixed(1),
+                       (cy + Math.sin(ang(i)) * R * clamp(v)).toFixed(1)];
+  let g = '';
+  [25, 50, 75, 100].forEach(f => {
+    g += '<polygon points="' + DIMS.map((_, i) => P(i, f).join(',')).join(' ') + '" fill="none" stroke="#e5eaf2"/>';
+  });
+  DIMS.forEach((_, i) => { const q = P(i, 100);
+    g += '<line x1="' + cx + '" y1="' + cy + '" x2="' + q[0] + '" y2="' + q[1] + '" stroke="#e5eaf2"/>'; });
+  g += '<text x="' + (cx + 3) + '" y="' + (cy - R * 0.5) + '" font-size="9" fill="#b6bfcd">50%</text>';
+  g += '<polygon points="' + values.map((v, i) => P(i, v).join(',')).join(' ') +
+       '" fill="' + color + '" fill-opacity=".18" stroke="' + color + '" stroke-width="2"/>';
+  values.forEach((v, i) => { const q = P(i, v);
+    g += '<circle cx="' + q[0] + '" cy="' + q[1] + '" r="3" fill="' + color + '"/>'; });
+  DIMS.forEach((L, i) => {
+    const x = (cx + Math.cos(ang(i)) * R * 1.3).toFixed(1);
+    const y = (cy + Math.sin(ang(i)) * R * 1.3 + 4).toFixed(1);
+    g += '<text x="' + x + '" y="' + y + '" text-anchor="middle" font-size="11" fill="#5a6478">' + esc(L) + '</text>';
+  });
+  return '<svg viewBox="0 0 320 294" width="100%" height="205" role="img" aria-label="维度改对率雷达图">' + g + '</svg>';
+}
+function dimTable(draft, out){
+  return '<table class="prof-tb"><tr><th>维度</th><th>机翻底稿</th><th>你的译文</th><th>已改对</th></tr>' +
+    DIMS.map(d => {
+      const a = draft[d] || 0, b = out[d] || 0, fixed = Math.max(0, a - b);
+      return '<tr><td>' + d + '</td><td>' + a + '</td><td>' + b + '</td><td>' +
+             (a ? Math.round(fixed / a * 100) + '%' : '—') + '</td></tr>';
+    }).join('') + '</table>';
+}
+
+/* ---- 图 2：编辑倾向四象限 ---- */
+function quadrantName(x, y){
+  if (y >= QUAD_Y) return x < QUAD_X ? '精准型' : '过度编辑型';
+  return x < QUAD_X ? '保守型' : '鲁莽型';
+}
+const QUAD_DESC = {
+  '精准型': '改动克制、命中率高——这是译后编辑最理想的节奏。',
+  '过度编辑型': '改动基本都对，但改动量偏大。机翻对的部分保留才是得分动作（M0 思维），把时间留给文化词与长难句。',
+  '保守型': '改动偏少且命中率不高——可能是"该改的地方"判断不足，也可能是没敢动。',
+  '鲁莽型': '改动多、命中率低——先在脑子里判断哪儿是硬伤，再动手，别整句凭语感重写。'
+};
+function quadrantSVG(x, y){
+  const W = 300, H = 244, L = 40, RT = 14, T = 14, B = 36;
+  const pw = W - L - RT, ph = H - T - B;
+  const px = v => L + Math.min(1, Math.max(0, v)) * pw;
+  const py = v => (T + ph) - Math.min(1, Math.max(0, v)) * ph;
+  const xm = px(QUAD_X), ym = py(QUAD_Y), right = px(1), bottom = py(0);
+  const q = [
+    [L, T, xm - L, ym - T, '#e9f7ee', '精准型', L + 6, T + 15],
+    [xm, T, right - xm, ym - T, '#eaf2ff', '过度编辑型', right - 6, T + 15],
+    [L, ym, xm - L, bottom - ym, '#f7f9fd', '保守型', L + 6, bottom - 6],
+    [xm, ym, right - xm, bottom - ym, '#fdecec', '鲁莽型', right - 6, bottom - 6]
+  ];
+  let g = '';
+  q.forEach(t => {
+    g += '<rect x="' + t[0] + '" y="' + t[1] + '" width="' + t[2] + '" height="' + t[3] + '" fill="' + t[4] + '"/>' +
+         '<text x="' + t[5] + '" y="' + t[6] + '" text-anchor="' + (t[5] > right - 40 ? 'end' : 'start') +
+         '" font-size="11.5" fill="#6b7488">' + t[7] + '</text>';
+  });
+  g += '<line x1="' + xm + '" y1="' + T + '" x2="' + xm + '" y2="' + bottom + '" stroke="#c9d3e3" stroke-dasharray="4 4"/>';
+  g += '<line x1="' + L + '" y1="' + ym + '" x2="' + right + '" y2="' + ym + '" stroke="#c9d3e3" stroke-dasharray="4 4"/>';
+  g += '<rect x="' + L + '" y="' + T + '" width="' + pw + '" height="' + ph + '" fill="none" stroke="#dfe5ef"/>';
+  const dotX = px(x), dotY = py(y);
+  g += '<line x1="' + dotX + '" y1="' + bottom + '" x2="' + dotX + '" y2="' + dotY + '" stroke="#2b7cff" stroke-width="1" stroke-dasharray="3 3"/>';
+  g += '<line x1="' + L + '" y1="' + dotY + '" x2="' + dotX + '" y2="' + dotY + '" stroke="#2b7cff" stroke-width="1" stroke-dasharray="3 3"/>';
+  g += '<circle cx="' + dotX + '" cy="' + dotY + '" r="6" fill="#2b7cff" stroke="#fff" stroke-width="2"/>';
+  g += '<text x="' + W / 2 + '" y="' + (H - 8) + '" text-anchor="middle" font-size="11" fill="#5a6478">编辑率 →</text>';
+  g += '<text x="11" y="' + (T + ph / 2) + '" text-anchor="middle" font-size="11" fill="#5a6478" transform="rotate(-90 11 ' + (T + ph / 2) + ')">有效编辑率 →</text>';
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="205" role="img" aria-label="编辑倾向四象限">' + g + '</svg>';
+}
+
+/* ---- 画像整体 HTML ---- */
+function profileHTML(r){
+  const p = r.profile;
+  if (!p) return '';
+  const qn = quadrantName(p.editRate, p.effRate);
+  const speed = p.speed.toFixed(1);
+  const decay = p.second - p.first;
+  const decayTxt = decay <= -5 ? '后半程明显下滑（时间压力下容易失准），建议前半程就留出检查时间。'
+    : decay >= 5 ? '后半程反而越改越顺，节奏在走上坡。' : '前后半程基本稳定，抗压节奏可用。';
+  const pass = (r.terScore || 0) >= PASS_LINE;
+  const best = (typeof r.prevBest === 'number' && isFinite(r.prevBest)) ? r.prevBest : null;
+  const agentBest = (AGENT_BOARD[r.task.id] || AGENT_DEFAULT)[0][1];
+  return `
+ <div class="prof-head">结果画像 <span class="tag blue">四项诊断</span></div>
+ <div class="prof-grid">
+ <div class="prof-card">
+ <h3>① 错误维度分布与改对率</h3>
+ ${radarSVG(fixRates(p), '#2b7cff')}
+ <div class="prof-legend"><span><i style="background:#2b7cff"></i>该维度已改对率</span></div>
+ ${dimTable(p.draft, p.out)}
+ <div class="prof-note">按 M1-M9 归并为 5 维。机翻底稿共 ${p.draftTotal} 处问题 → 你的译文献余 ${p.outTotal} 处。此分布由逐段 diff 启发式初筛，精确口径以第一期人工 MQM 标注为准；该维度机翻本无问题的按 100% 计。</div>
+ </div>
+ <div class="prof-card">
+ <h3>② 编辑倾向定位</h3>
+ ${quadrantSVG(p.editRate, p.effRate)}
+ <div class="prof-kv"><span>整体编辑率</span><b>${(p.editRate * 100).toFixed(1)}%</b></div>
+ <div class="prof-kv"><span>有效编辑率（改对的/改的）</span><b>${(p.effRate * 100).toFixed(1)}%</b></div>
+ <div class="prof-kv"><span>类型判定</span><b>${qn}</b></div>
+ <div class="prof-note">${QUAD_DESC[qn]}（阈值：编辑率 ${QUAD_X * 100}%、有效编辑率 ${QUAD_Y * 100}%）</div>
+ </div>
+ <div class="prof-card">
+ <h3>③ 速度与稳定性</h3>
+ <div class="prof-kv"><span>处理速度</span><b>${speed} 段/分钟</b></div>
+ <div class="prof-kv"><span>前半程平均分</span><b>${p.first.toFixed(1)}</b></div>
+ <div class="prof-kv"><span>后半程平均分</span><b>${p.second.toFixed(1)}</b></div>
+ <div class="prof-kv"><span>后程变化</span><b class="${decay < -5 ? 'neg' : decay >= 5 ? 'pos' : ''}">${decay >= 0 ? '+' : ''}${decay.toFixed(1)} 分</b></div>
+ <div class="prof-note">${decayTxt}（前后半程按段序切分，为时间压力下的稳定性近似）</div>
+ </div>
+ <div class="prof-card">
+ <h3>④ 参照系</h3>
+ <div class="prof-kv"><span>模拟晋级线</span><b>${PASS_LINE} 分 · ${pass ? '已达线' : '差 ' + (PASS_LINE - (r.terScore || 0)).toFixed(1)}</b></div>
+ <div class="prof-kv"><span>本卷历史最好</span><b>${best === null ? '首次作答' : best + ' 分'}</b></div>
+ <div class="prof-kv"><span>本次进步</span><b class="${best !== null && r.score >= best ? 'pos' : ''}">${best === null ? '—' : (r.score - best >= 0 ? '+' : '') + (r.score - best).toFixed(1) + ' 分'}</b></div>
+ <div class="prof-kv"><span>同榜 Agent 最高分</span><b>${agentBest} 分（拟真）</b></div>
+ <div class="prof-kv"><span>班级百分位</span><b class="muted">待教师导入</b></div>
+ <div class="prof-note">历史最好取自本机「我的统计」中同一份卷子的既往成绩；班级参照需教师汇总后导入。</div>
+ </div>
+ </div>`;
+}
+
+/* ---- 图 5：下一步推荐练习（优化B：画像 → 推荐 → 回练闭环） ---- */
+function wrongPairsCount(){
+  try{
+    const wb = JSON.parse(localStorage.getItem('ann_wrongbook') || '[]') || [];
+    return [...new Set(wb.map(w => w.k))].length;
+  }catch(e){ return 0; }
+}
+function recommendHTML(r){
+  const p = r.profile;
+  if (!p) return '';
+  const idx = (typeof CORPUS_TAG_INDEX !== 'undefined') ? CORPUS_TAG_INDEX : null;
+  const nm = String(r.task.name || '').match(/第(\d+)届(初赛|决赛)/);
+  const ed = nm ? nm[1] : '', stage = nm ? nm[2] : '';
+  const cands = DIMS.map(d => ({ d: d, base: p.draft[d] || 0, left: p.out[d] || 0 }))
+    .filter(x => x.base > 0)
+    .map(x => ({ d: x.d, base: x.base, left: x.left, rate: (x.base - x.left) / x.base }))
+    .sort((a, b) => a.rate - b.rate || b.left - a.left);
+  const weak = cands[0] || null;
+  const avail = (dim, edf) => (!idx || !idx[dim]) ? null : (edf ? (idx[dim].e[edf] || 0) : idx[dim].t);
+  const cnt = n => (n === null ? '' : '（约 ' + n + ' 句可练）');
+ const items = [];
+ const wbN = wrongPairsCount();
+ const recWrong = {
+   title: '错题回练（' + wbN + ' 句）',
+   desc: '你在标注实训里漏检 / 判错的句子，只重做这些——闭环里最省时间的一步。',
+   href: 'annotate.html?wrong=1'
+ };
+ if (weak){
+   items.push({
+     title: '最弱维度「' + weak.d + '」· 同源卷 ' + cnt(avail(weak.d, ed)),
+     desc: '本卷该维度改对率仅 ' + Math.round(weak.rate * 100) + '%，还剩 ' + weak.left + ' 处没改对。回炉第 ' + ed + ' 届' + stage + '同类句对，专攻这一维。',
+     href: 'annotate.html?dim=' + encodeURIComponent(weak.d) + '&ed=' + ed + '&stage=' + encodeURIComponent(stage) + '&n=15'
+   });
+   if (wbN) items.push(recWrong);
+   items.push({
+     title: '最弱维度「' + weak.d + '」· 跨届次加练 ' + cnt(avail(weak.d, null)),
+     desc: '换一批同维度语料再练，检验上一次的补漏是不是真的补上了。',
+     href: 'annotate.html?dim=' + encodeURIComponent(weak.d) + '&n=15'
+   });
+ } else if (wbN) items.push(recWrong);
+ if (ed){
+   items.push({
+     title: '第 ' + ed + ' 届' + stage + ' · 同源句对盲标',
+     desc: '本卷同源语料的逐句标注，练"找错"的敏感度（有种子标注的句子按 P/R/F1 计分）。',
+     href: 'annotate.html?ed=' + ed + '&stage=' + encodeURIComponent(stage) + '&n=15'
+   });
+ }
+  if (!items.length){
+    items.push({ title: '去标注实训组卷', desc: '完成一次标注实训，就能拿到"找错"的查准率 / 查全率画像。', href: 'annotate.html' });
+  }
+  const list = items.slice(0, 3).map((it, i) => `
+ <a class="rec-item" href="${it.href}" target="_blank" rel="noopener">
+ <span class="rec-n">${i + 1}</span>
+ <span class="rec-body"><b>${esc(it.title)}</b><span class="muted">${esc(it.desc)}</span></span>
+ <span class="rec-go">去练 →</span>
+ </a>`).join('');
+  return `
+ <div class="prof-head">下一步练什么 <span class="tag blue">画像 → 推荐 → 回练</span></div>
+ <div class="board">
+ ${list}
+ <div class="board-note">推荐由本次画像自动生成：先补最弱维度，再练同源卷，最后回练错题；链接直达标注实训的组卷筛选（按届次 / 赛段 / 错误类型）。可用句数来自全库句对的错误维度预计算。</div>
+ </div>`;
+}
+
 /* ============ 结果页 ============ */
 function renderResult(r){
  V='result'; S=null;
@@ -550,6 +844,8 @@ function renderResult(r){
  </div>
  <div class="${(r.terScore||0)>=PASS_LINE?'info-box':'warn-box'}" style="margin-bottom:14px"> <b>考场口径（TER×${TER_K}，与训练效果模拟同源）：</b>${r.terScore} 分 —— ${(r.terScore||0)>=PASS_LINE?`<b>达到模拟晋级线 ${PASS_LINE}（前20%水平）</b>`:`未达模拟晋级线 ${PASS_LINE}，差 ${(PASS_LINE-(r.terScore||0)).toFixed(1)} 分`}。晋级线取自 1000 人模拟池第 80 百分位。</div>
  <div class="${r.noEditN>r.details.length*0.6||r.noEditN<3?'warn-box':'info-box'}" style="margin-bottom:14px"> <b>编辑率诊断：</b>未编辑 ${r.noEditN}/${r.details.length} 段。${r.noEditN>r.details.length*0.6?'改动过少——机翻对的句子保留是得分动作，但文化专有词与文学表达处需果断改，先练"判断哪里该改"。':r.noEditN<3?'几乎逐句都改——警惕过度编辑：大模型底稿错误少而隐蔽，机翻对的部分不动才是得分动作（M0 思维）。':'编辑节奏适中。'}</div>
+ ${profileHTML(r)}
+ ${recommendHTML(r)}
  ${r.peMode==='agent'?agentBoardHTML(r):''}
  ${r.details.map(d=>`
  <div class="res-seg">
