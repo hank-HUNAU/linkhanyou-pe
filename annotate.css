@@ -9,7 +9,7 @@ body{font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;backgroun
 .hidden{display:none!important}
 button{font-family:inherit;cursor:pointer}
 .wrap{max-width:960px;margin:0 auto;padding:24px 18px 70px}
-.top{background:#fff;border-bottom:1px solid var(--bd);padding:12px 22px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:40}
+.top{background:#fff;border-bottom:1px solid var(--bd);padding:12px 22px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:var(--mtpe-nav-h, 57px);z-index:40}
 .brand{display:flex;align-items:center;gap:10px;font-weight:700}
 .logo{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--an),#2dd4bf);color:#fff;display:flex;align-items:center;justify-content:center}
 .brand .en{color:var(--mut);font-size:12px;font-weight:400}

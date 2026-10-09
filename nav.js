@@ -48,6 +48,8 @@
  : `<a class="mtpe-tab plain" href="#" onclick="askTeacherLogin();return false"> 教师登录</a>`}
  </div>
  <style>
+        /* 顶栏吸顶：页面内的次级吸顶元素用 --mtpe-nav-h 让位（由下方脚本按实测高度写入） */
+        #mtpe-nav{position:sticky;top:0;z-index:60}
         .mtpe-nav{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.72);
           backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid rgba(0,0,0,.08);
           padding:10px 18px;font:14px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif}
@@ -62,7 +64,14 @@
         .mtpe-tab.plain{color:#0071e3}
         .mtpe-tab.plain:hover{background:rgba(0,0,0,.04)}
  </style>`;
+ /* 把顶栏实际高度写入 CSS 变量，供 .exam-top / .side-panel / annotate .top 等次级吸顶元素对齐 */
+ const bar = host.querySelector('.mtpe-nav');
+ if (bar) {
+ const setH = () => document.documentElement.style.setProperty('--mtpe-nav-h', bar.offsetHeight + 'px');
+ setH();
+ window.addEventListener('resize', setH);
  }
+}
  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', render);
  else render();
 })();

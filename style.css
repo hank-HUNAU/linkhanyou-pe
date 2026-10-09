@@ -100,7 +100,7 @@ main { max-width: 1180px; margin: 0 auto; padding: 26px 20px 60px; }
   background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
   box-shadow: var(--shadow); padding: 12px 18px; margin-bottom: 14px;
   display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
-  position: sticky; top: 67px; z-index: 40;
+  position: sticky; top: calc(var(--mtpe-nav-h, 57px) + 6px); z-index: 40;
 }
 .exam-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .exam-title .mode-chip { font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 999px; background: var(--primary-light); color: var(--primary); }
@@ -133,7 +133,7 @@ main { max-width: 1180px; margin: 0 auto; padding: 26px 20px 60px; }
 .seg-cell textarea:focus { outline: none; border-color: var(--primary); background: #fff; }
 .seg-cell textarea.empty-mt { color: var(--muted); font-style: italic; }
 
-.side-panel { display: flex; flex-direction: column; gap: 12px; position: sticky; top: 140px; }
+.side-panel { display: flex; flex-direction: column; gap: 12px; position: sticky; top: calc(var(--mtpe-nav-h, 57px) + 73px); }
 .panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px 16px; }
 .panel h4 { font-size: 13.5px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
 .term-item {
