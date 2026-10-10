@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>① 找 · 标注实训 · 机器翻译错误标注</title>
-<meta name="description" content="在机翻句对上划选错误片段并定性（M1–M9 / M0 + 严重度），与官方种子标注比对，给出查准率 / 查全率 / F1。">
+<title>② 改 · 译后编辑练习 · MTPE Trainer</title>
+<meta name="description" content="在机器翻译底稿上动手改：限时练习 8/15/30 分钟或自由练习，交卷看修订率、逐段对照与参考译文点评。">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0071e3">
 <link rel="icon" href="icon-192.png">
@@ -12,16 +12,26 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="译后编辑">
-<link rel="stylesheet" href="annotate.css">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
+
 <div id="mtpe-nav"></div>
 <script src="nav.js"></script>
 <script src="pwa.js"></script>
-<div id="app"></div>
 <script src="secure.js"></script>
 <script src="unlock.js"></script>
-<script src="annotate-data.js"></script>
-<script src="annotate.js"></script>
+
+<main id="app"></main>
+
+<div id="modal-mask" class="modal-mask hidden">
+  <div class="modal" id="modal-box"></div>
+</div>
+
+<div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+<script src="data.js"></script>
+<script src="corpus.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

@@ -13,6 +13,23 @@ const store = {
  del(k) { localStorage.removeItem('mtpe_' + k); }
 };
 
+/* 写历史的抗爆仓策略：语料明文与作答记录共用同一块 localStorage，
+   容量吃紧时逐级丢弃较早记录的逐段明细（分数 / 日期 / 画像保留），
+   确保交卷一定写得进去，不会因为配额失败而在结果页开天窗。
+   返回 true 表示发生了瘦身。 */
+function saveHistory(list) {
+ let keep = list.length;
+ for (let round = 0; round < 8; round++) {
+ const slim = list.map((r, i) => (i < keep ? r : (r && r.details && r.details.length ? Object.assign({}, r, { details: [] }) : r)));
+ try { store.set('history', slim); return round > 0; }
+ catch (e) { keep = Math.max(1, Math.floor(keep / 2)); }
+ }
+ try {
+ store.set('history', list.slice(0, 20).map((r) => Object.assign({}, r, { details: [] })));
+ return true;
+ } catch (e) { return false; }
+}
+
 function toast(msg) {
  const t = $('#toast');
  t.textContent = msg;
@@ -149,32 +166,19 @@ function closeModal() { $('#modal-mask').classList.add('hidden'); }
 
 /* ---------------- 译后编辑实训 ---------------- */
 function renderPlaza() {
-  // 教师登录相关代码已移除；课堂演示改为本地临时开关：用 index.html#demo 打开
-  const isTeacher = location.hash === '#demo';
+ // 课堂演示临时开关：practice.html#demo（只在本机演示时有意义，公开站点无入口）
+ const isTeacher = location.hash.indexOf('demo') >= 0;
  const tasks = allTasks();
  const html = `
  <div class="plaza-head">
- <h2>实训端</h2>
- <p>按"找 → 改 → 考"三步走。练「找」用标注实训，练「改」用下面的自由练习，考（唯一考场口径）在模拟参赛。
- ｜ <a href="MQM错误类型参考手册.html" target="_blank">MQM 错误类型参考手册</a></p>
- <div class="step-strip">
- <a class="step-card" href="annotate.html" target="_blank">
- <b>① 练「找」</b>
- <span>标注实训 · 判断哪里该改：划选错误片段并定性，对官方种子算查准/查全，错题自动入本</span>
- </a>
- <a class="step-card" href="pe-exam.html">
- <b>③ 考</b>
- <span>模拟参赛 · 唯一考场口径：90 分钟、防作弊、TER 分、晋级判定、结果画像</span>
- </a>
- <a class="step-card" href="#" onclick="document.querySelector('.task-grid').scrollIntoView({behavior:'smooth'});return false">
- <b>② 练「改」</b>
- <span>下面的自由练习 · 在机翻底稿上动手改，看修订率与逐段对照（练习分非考场口径）</span>
- </a>
- </div>
+ <h2>② 改 · 译后编辑练习</h2>
+ <p>在机翻底稿上动手改，交卷看修订率、逐段对照与参考译文点评。<b>练习分不是考场口径</b>——考场口径只在「③ 考 · 模拟参赛」。
+ ｜ <a href="index.html">← 返回首页</a> ｜ <a href="MQM错误类型参考手册.html">MQM 错误类型参考手册</a></p>
  <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
- <button class="btn btn-ghost" onclick="go('stats')"> 我的统计</button>
- <a class="btn btn-ghost" href="annotate.html" style="text-decoration:none">进入标注实训（练"找错"）</a>
- <a class="btn btn-ghost" href="pe-exam.html" style="text-decoration:none">进入模拟参赛（考）</a>
+ <a class="btn btn-ghost" href="annotate.html" style="text-decoration:none">① 找 · 标注实训</a>
+ <a class="btn btn-ghost" href="pe-exam.html" style="text-decoration:none">③ 考 · 模拟参赛</a>
+ <button class="btn btn-ghost" onclick="go('stats')">我的统计</button>
+ <button class="btn btn-ghost" onclick="go('import')">导入自定义任务</button>
  </div>
  </div>
  <div class="mode-strip">
@@ -239,7 +243,7 @@ function openSetup(taskId, mode) {
  return;
  }
 
- const modeName = { competition: '竞赛模拟', practice: '自由练习', demo: '教学演示' }[mode];
+ const modeName = { competition: '限时练习', practice: '自由练习', demo: '教学演示' }[mode];
  let body = `<div class="info-box">
  任务：${esc(task.name)}（${esc(task.pair)} · ${task.segs.length} 段）<br>
  模式：${modeName}
@@ -248,12 +252,12 @@ function openSetup(taskId, mode) {
  if (mode === 'competition') {
  const durs = [Math.min(8, task.minutes), task.minutes, task.minutes * 2];
  body += `
- <div class="field"><label>竞赛时长</label>
+ <div class="field"><label>限时时长</label>
  <div class="dur-picker">
  ${durs.map((d, i) => `<div class="dur-btn${i === 1 ? ' sel' : ''}" data-d="${d}" onclick="pickDur(this)">${d} 分钟${i === 1 ? '（建议）' : ''}</div>`).join('')}
  </div>
  </div>
- <div class="warn-box"> 竞赛防作弊规则：作答期间离开页面会被记录；倒计时归零将自动交卷；交卷后不可再修改。</div>`;
+ <div class="warn-box">限时练习规则：作答期间离开页面会被记录；倒计时归零将自动交卷；交卷后不可再修改。练习分仅供自己追踪，考场口径请用「③ 考 · 模拟参赛」。</div>`;
  }
  body += `
  <div class="m-actions">
@@ -552,7 +556,9 @@ function submitSession() {
  };
 
  stopSession(true);
- store.set('history', [record].concat(history()).slice(0, 200));
+ if (saveHistory([record].concat(history()).slice(0, 200))) {
+ toast('本机存储接近上限：已自动精简较早记录的逐段明细（分数、日期与画像保留）');
+ }
  renderResult(record);
 }
 
@@ -562,7 +568,7 @@ function renderResult(r) {
 
  app.innerHTML = `
  <div class="page-title">
- <h2> ${r.mode === 'competition' ? '竞赛成绩' : r.mode === 'demo' ? '演示结果' : '练习结果'} · ${esc(r.taskName)}</h2>
+ <h2> ${r.mode === 'competition' ? '限时练习成绩' : r.mode === 'demo' ? '演示结果' : '练习结果'} · ${esc(r.taskName)}</h2>
  <div style="display:flex;gap:8px">
  <button class="btn btn-outline" onclick="exportReport('${r.id}')"> 导出成绩报告</button>
  <button class="btn btn-primary" onclick="go('plaza')">返回译后编辑实训</button>
@@ -643,7 +649,7 @@ function saveMqmTags(recordId) {
  const tags = [...row.querySelectorAll('.mqm-chip.on')].map(c => c.dataset.tag);
  if (rec.details[i]) rec.details[i].mqmTags = tags;
  });
- store.set('history', hs);
+ saveHistory(hs);
  toast('MQM 自评已保存，可在「我的统计」查看错误敏感度画像');
 }
 
@@ -664,7 +670,7 @@ function renderStats() {
  try { hasAnn = (JSON.parse(localStorage.getItem('mtpe_ann_stats') || '[]')).length > 0; } catch (e) {}
  if (!hs.length && !hasAnn) {
  app.innerHTML = `<div class="page-title"><h2>我的统计</h2></div>
- <div class="empty-tip">还没有作答记录，去<a href="#" onclick="go('plaza');return false">译后编辑实训</a>开始第一次练习，或去<a href="annotate.html" target="_blank">标注实训</a>完成一卷错误标注。</div>`;
+ <div class="empty-tip">还没有作答记录，去<a href="practice.html">译后编辑练习</a>开始第一次练习，或去<a href="annotate.html">标注实训</a>完成一卷错误标注。</div>`;
  return;
  }
  const totalWords = hs.reduce((s, h) => s + h.words, 0);
@@ -726,7 +732,7 @@ function examProfileHTML(hs) {
  const recs = (hs || []).filter(h => h && h.profile);
  if (!recs.length) {
   return `<div class="board"><h3>考试结果画像</h3>
-  <div class="empty-tip" style="padding:16px 0">暂无考场记录。去 <a href="pe-exam.html" target="_blank">模拟考场</a> 交一次卷，这里会汇总你的编辑倾向（精准型 / 过度编辑型 / 保守型 / 鲁莽型）、编辑命中率与后半程稳定性。</div></div>`;
+ <div class="empty-tip" style="padding:16px 0">暂无考场记录。去 <a href="pe-exam.html">模拟考场</a> 交一次卷，这里会汇总你的编辑倾向（精准型 / 过度编辑型 / 保守型 / 鲁莽型）、编辑命中率与后半程稳定性。</div></div>`;
  }
  const avg = (k) => Math.round(recs.reduce((s, h) => s + (Number(h.profile[k]) || 0), 0) / recs.length * 10) / 10;
  const QUADS = ['精准型', '过度编辑型', '保守型', '鲁莽型'];
@@ -766,7 +772,7 @@ function wrongbookHTML() {
  const kindTxt = Object.keys(kinds).map(k => k + ' ' + kinds[k]).join(' ｜ ');
  return `<div class="board"><h3> 错题本（${keys.length} 句 / ${wb.length} 处）</h3>
  <div class="board-note" style="margin-top:0">来自标注实训中漏检 / 标签判错 / 严重度判偏的种子错误：${kindTxt}。</div>
- <div style="margin-top:10px"><a class="btn btn-outline" href="annotate.html?wrong=1" target="_blank" style="text-decoration:none">错题回练</a>
+ <div style="margin-top:10px"><a class="btn btn-outline" href="annotate.html?wrong=1" style="text-decoration:none">错题回练</a>
  <span class="muted" style="margin-left:10px">只重做这些句子，交卷后同样按种子对照计分。</span></div>
  </div>`;
 }
@@ -777,7 +783,7 @@ function annStatsHTML() {
  try { st = JSON.parse(localStorage.getItem('mtpe_ann_stats') || '[]'); } catch (e) {}
  if (!st.length) {
  return `<div class="board"><h3> 标注实训能力</h3>
- <div class="empty-tip" style="padding:16px 0">暂无标注记录。去 <a href="annotate.html" target="_blank">标注实训</a> 完成一卷错误标注（与种子标注对比），这里会展示你的查准率 / 查全率 / F1 走势。</div></div>`;
+ <div class="empty-tip" style="padding:16px 0">暂无标注记录。去 <a href="annotate.html">标注实训</a> 完成一卷错误标注（与种子标注对比），这里会展示你的查准率 / 查全率 / F1 走势。</div></div>`;
  }
  const avg = (k) => Math.round(st.reduce((s, x) => s + (x[k] || 0), 0) / st.length * 10) / 10;
  return `<div class="board"><h3> 标注实训能力（共 ${st.length} 卷）</h3>
@@ -795,7 +801,7 @@ function annStatsHTML() {
  <td>${x.seedQ != null && x.studentQ != null ? (x.studentQ - x.seedQ > 0 ? '+' : '') + Math.round((x.studentQ - x.seedQ) * 10) / 10 : '—'}</td>
  </tr>`).join('')}
  </table>
- <div class="board-note">数据来自 <a href="annotate.html" target="_blank">标注实训</a> 交卷自动同步；质量分偏差=你的 MQM-B 评分 − 种子评分，正值说明你判定的问题偏少（警惕漏检），负值偏多（警惕过度标注）。</div>
+ <div class="board-note">数据来自 <a href="annotate.html">标注实训</a> 交卷自动同步；质量分偏差=你的 MQM-B 评分 − 种子评分，正值说明你判定的问题偏少（警惕漏检），负值偏多（警惕过度标注）。</div>
  </div>`;
 }
 
@@ -822,7 +828,7 @@ function mqmProfileHTML(hs) {
  const top = MQM_TAGS.map(t => ({ label: t.label, n: count[t.id] || 0 })).sort((a, b) => b.n - a.n)[0];
  return `<div class="board"><h3> 错误敏感度画像（MQM 自评 · 共 ${total} 处标注）</h3>
  ${rows}
- <div class="board-note">你标注最多的类型是「${top.label}」（占 ${Math.round(top.n / total * 100)}%）——这是你当前最敏感（或机翻最常出问题）的错误类型，可对照 <a href="MQM错误类型参考手册.html" target="_blank">MQM 手册</a> 查漏补缺。</div>
+ <div class="board-note">你标注最多的类型是「${top.label}」（占 ${Math.round(top.n / total * 100)}%）——这是你当前最敏感（或机翻最常出问题）的错误类型，可对照 <a href="MQM错误类型参考手册.html">MQM 手册</a> 查漏补缺。</div>
  </div>`;
 }
 
@@ -961,4 +967,9 @@ function doImport() {
 /* ---------------- 启动 ---------------- */
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 updateNickBadge();
-renderPlaza();
+(function boot() {
+ /* 支持 practice.html#stats / #import 直接落到对应视图（首页的「我的统计」就是这么跳的） */
+ const h = (location.hash || '').replace(/^#/, '');
+ if (h === 'stats' || h === 'import' || h === 'plaza') go(h);
+ else renderPlaza();
+})();

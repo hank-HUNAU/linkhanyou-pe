@@ -292,3 +292,22 @@ h1,h2,h3 { letter-spacing: -.01em; font-weight: 600; }
 input, select, textarea { border-radius: 10px !important; border: 1px solid var(--border) !important; font-family: inherit; }
 table { border-collapse: separate; border-spacing: 0; }
 th, td { border-color: var(--border) !important; }
+
+/* ---------- 一级首页（index.html） ---------- */
+.home-hero { margin: 4px 0 20px; }
+.home-hero h1 { font-size: 30px; line-height: 1.25; }
+.home-hero p { color: var(--text-2); font-size: 14.5px; margin-top: 10px; line-height: 1.85; max-width: 900px; }
+.home-hero p b, .home-hero p strong { color: var(--primary); }
+.home-steps .step-card { padding: 18px 18px 16px; gap: 8px; }
+.home-steps .step-card b { font-size: 16px; }
+.home-steps .step-card span { font-size: 13px; line-height: 1.7; }
+.home-steps .step-card em { font-style: normal; font-size: 12px; color: var(--muted); margin-top: 6px; }
+.home-progress { margin-top: 22px; }
+.home-progress .score-hero { margin: 12px 0 4px; }
+.home-last { font-size: 13px; color: var(--text-2); margin-top: 10px; }
+.home-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.home-actions .btn { text-decoration: none; }
+@media (max-width: 620px) {
+  .home-hero h1 { font-size: 23px; }
+  .home-steps .step-card b { font-size: 15px; }
+}

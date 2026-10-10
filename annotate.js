@@ -61,12 +61,12 @@ function renderSetup() {
  app.innerHTML = `
  <div class="top">
  <div class="brand"><span class="logo">标</span>MTPE 标注实训 <span class="en">错误标注 · 种子对照</span></div>
- <a class="muted" href="index.html" style="text-decoration:none"> 返回实训平台</a>
+ <a class="muted" href="index.html" style="text-decoration:none">返回首页</a>
  </div>
  <div class="wrap">
  <h1>标注实训</h1>
  <div class="page-s">在机翻译文中<b>选中错误片段</b>并标注类别与严重度；交卷后与已校对种子标注对比，计算查准率 / 查全率 / F1。
- 数据：历届大赛 ${CORPUS_PAIRS.length} 条 A 级句对（其中 ${seedCount} 条有种子标注可对照，其余为盲标）。标签集 M1-M9 + M0 见 <a href="MQM错误类型参考手册.html" target="_blank">MQM 手册</a>。</div>
+ 数据：历届大赛 ${CORPUS_PAIRS.length} 条 A 级句对（其中 ${seedCount} 条有种子标注可对照，其余为盲标）。标签集 M1-M9 + M0 见 <a href="MQM错误类型参考手册.html">MQM 手册</a>。</div>
  <div class="card">
  <h3> 组卷筛选</h3>
  <div class="row">
@@ -479,7 +479,7 @@ function renderResult(r) {
  <div style="display:flex;gap:10px">
  <button class="btn btn-p" onclick="renderSetup()">再组一卷</button>
  <button class="btn btn-o" onclick="exportAnnJSON()"> 导出标注 JSON（pair_annotations 格式）</button>
- <a class="btn btn-o" href="index.html" style="text-decoration:none">返回实训平台</a>
+ <a class="btn btn-o" href="index.html" style="text-decoration:none">返回首页</a>
  </div>
  </div>
  <div id="toast"></div>`;

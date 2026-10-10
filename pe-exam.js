@@ -62,7 +62,7 @@ function renderExams(){
  document.body.innerHTML = `
  <div class="yc-top">
  <div class="yc-brand"><span class="yc-logo">译</span>MTPE 模拟考场 <span class="en">译后编辑模拟考试</span></div>
- <div class="yc-top-right"><a class="mi" href="index.html" style="text-decoration:none"> 返回实训平台</a></div>
+ <div class="yc-top-right"><a class="mi" href="index.html" style="text-decoration:none">返回首页</a></div>
  </div>
  <div class="wrap">
  <div class="page-t">考试广场</div>
@@ -541,7 +541,14 @@ function syncToMainHistory(r){
  const t=(typeof TASKS!=='undefined'?TASKS:[]).find(x=>x.id===r.task.id);
  if(t) rec.details.forEach(d=>{ d.src=t.segs[d.i].src; d.notes=t.segs[d.i].notes||[]; });
  const h=JSON.parse(localStorage.getItem('mtpe_history')||'[]');
- localStorage.setItem('mtpe_history', JSON.stringify([rec].concat(h).slice(0,200)));
+ const list=[rec].concat(h).slice(0,200);
+ /* 语料明文与作答记录共用同一块本地存储：容量吃紧时逐级丢弃较早记录的逐段明细，
+    确保本次成绩一定入库（分数 / 日期 / 画像保留） */
+ let keep=list.length, done=false;
+ for(let i=0;i<8 && !done;i++){
+  try{ localStorage.setItem('mtpe_history', JSON.stringify(list.map((r,idx)=>idx<keep?r:Object.assign({},r,{details:[]})))); done=true; }
+  catch(e){ keep=Math.max(1,Math.floor(keep/2)); }
+ }
  }catch(e){}
 }
 function agentBoardHTML(r){ const agents=(AGENT_BOARD[r.task.id]||AGENT_DEFAULT).map(([name,score])=>({name,score,agent:true}));
@@ -845,7 +852,7 @@ function recommendHTML(r){
     items.push({ title: '去标注实训组卷', desc: '完成一次标注实训，就能拿到"找错"的查准率 / 查全率画像。', href: 'annotate.html' });
   }
   const list = items.slice(0, 3).map((it, i) => `
- <a class="rec-item" href="${it.href}" target="_blank" rel="noopener">
+ <a class="rec-item" href="${it.href}">
  <span class="rec-n">${i + 1}</span>
  <span class="rec-body"><b>${esc(it.title)}</b><span class="muted">${esc(it.desc)}</span></span>
  <span class="rec-go">去练 →</span>
@@ -894,7 +901,7 @@ function renderResult(r){
  </div>`).join('')}
  <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
  <a class="btn btn-p" href="pe-exam.html" style="text-decoration:none">返回我的考试</a>
- <a class="btn btn-o" href="index.html" style="text-decoration:none">去主平台看逐段修订痕迹 </a>
+ <a class="btn btn-o" href="practice.html#stats" style="text-decoration:none">去「改」看逐段修订痕迹与统计</a>
  </div>
  </div>
  <div id="toast" style="opacity:0" role="status" aria-live="polite"></div>`;

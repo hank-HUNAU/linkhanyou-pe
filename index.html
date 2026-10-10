@@ -2,27 +2,31 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>译后编辑实训平台 · MTPE Trainer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>译后编辑实训平台 · 首页</title>
+<meta name="description" content="机器翻译译后编辑实训：找错标注、改稿练习、模拟参赛。历届大赛真题语料，可离线使用。">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0071e3">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="译后编辑">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div id="mtpe-nav"></div>
 <script src="nav.js"></script>
+<script src="pwa.js"></script>
 <script src="secure.js"></script>
 <script src="unlock.js"></script>
 
 <main id="app"></main>
 
-<div id="modal-mask" class="modal-mask hidden">
-  <div class="modal" id="modal-box"></div>
-</div>
-
 <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
-<script src="data.js"></script>
-<script src="corpus.js"></script>
-<script src="app.js"></script>
+<script src="home.js"></script>
 </body>
 </html>

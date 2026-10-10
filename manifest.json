@@ -1,0 +1,20 @@
+{
+  "name": "译后编辑实训平台 · MTPE Trainer",
+  "short_name": "译后编辑",
+  "description": "机器翻译译后编辑实训：找错标注、改稿练习、模拟参赛。历届大赛真题，离线可用。",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "orientation": "any",
+  "theme_color": "#0071e3",
+  "background_color": "#f4f6fb",
+  "categories": ["education", "productivity"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
