@@ -103,12 +103,6 @@ button{font-family:inherit;cursor:pointer}
 .res-box .v.r{color:var(--r)}.res-box .v.g{color:var(--g)}.res-box .v.a{color:var(--a)}
 .res-seg{background:#fff;border:1px solid var(--bd);border-radius:12px;padding:14px 16px;margin-bottom:10px;font-size:13.5px}
 .muted{color:var(--mut);font-size:12.5px}
-
-/* ---- v2：模式选择 / 右侧栏双模式 / 状态栏 ---- */
-.mode-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.mode-btn{border:1.5px solid var(--bd);border-radius:10px;padding:10px 12px;cursor:pointer;font-size:12.5px;color:var(--tx2)}
-.mode-btn b{display:block;color:var(--tx);font-size:13.5px;margin-bottom:2px}
-.mode-btn.sel{border-color:var(--yc);background:var(--ycl)}
 .side-col{display:flex;flex-direction:column;gap:10px;position:sticky;top:100px}
 .task-panel{background:#fff;border:1px solid var(--bd);border-radius:10px;box-shadow:0 1px 3px rgba(30,41,72,.06);padding:14px}
 .tp-title{font-weight:700;font-size:14.5px;margin-bottom:10px}
@@ -187,7 +181,8 @@ body.exam-on::after{content:'';position:fixed;inset:0;border:3px solid #e5484d;p
 .notice-box b{color:var(--tx)}
 /* 顶栏必须吸顶：倒计时与"切屏 N/8"都在这里，滚走就看不见了 */
 .yc-top{position:sticky;top:0}
-.yc-top .remain{position:absolute;left:50%;transform:translateX(-50%);color:#c0392b;font-weight:800}
+/* 剩余时间放顶栏右端（按官方赛场实拍：右上角「剩余时间 01:27:56」） */
+.yc-top .remain{position:static;transform:none;color:#c0392b;font-weight:800;font-variant-numeric:tabular-nums}
 .yc-top .remain.warn{color:#c0392b}
 .seg-table tr.cur td{box-shadow:inset 0 0 0 1px var(--yc)}
 .seg-table tr.cur td:first-child{box-shadow:inset 1px 0 0 0 var(--yc),inset 0 1px 0 0 var(--yc),inset 0 -1px 0 0 var(--yc)}

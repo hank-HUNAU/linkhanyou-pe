@@ -175,12 +175,10 @@ function renderPlaza() {
  const tasks = allTasks();
  const html = `
  <div class="plaza-head">
- <h2>② 改 · 译后编辑练习</h2>
+ <h2>译后编辑练习</h2>
  <p>在机翻底稿上动手改，交卷看修订率、逐段对照与参考译文点评。
- ｜ <a href="index.html">← 返回首页</a> ｜ <a href="MQM错误类型参考手册.html">MQM 错误类型参考手册</a></p>
+ ｜ <a href="MQM错误类型参考手册.html">MQM 错误类型参考手册</a></p>
  <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
- <a class="btn btn-ghost" href="annotate.html" style="text-decoration:none">① 找 · 标注实训</a>
- <a class="btn btn-ghost" href="pe-exam.html" style="text-decoration:none">③ 考 · 模拟参赛</a>
  <button class="btn btn-ghost" onclick="go('stats')">我的统计</button>
  </div>
  </div>
@@ -246,7 +244,7 @@ function openSetup(taskId, mode) {
  ${durs.map((d, i) => `<div class="dur-btn${i === 1 ? ' sel' : ''}" data-d="${d}" onclick="pickDur(this)">${d} 分钟${i === 1 ? '（建议）' : ''}</div>`).join('')}
  </div>
  </div>
- <div class="warn-box">限时练习规则：作答期间离开页面会被记录；倒计时归零将自动交卷；交卷后不可再修改。练习分仅供自己追踪，考场口径请用「③ 考 · 模拟参赛」。</div>`;
+ <div class="warn-box">限时练习规则：作答期间离开页面会被记录；倒计时归零将自动交卷；交卷后不可再修改。练习分仅供自己追踪，考场口径请用「③ 考 · 仿真训练」。</div>`;
  }
  body += `
  <div class="m-actions">
@@ -661,7 +659,7 @@ function examProfileHTML(hs) {
  const recs = (hs || []).filter(h => h && h.profile);
  if (!recs.length) {
   return `<div class="board"><h3>考试结果画像</h3>
- <div class="empty-tip" style="padding:16px 0">暂无考场记录。去 <a href="pe-exam.html">模拟考场</a> 交一次卷，这里会汇总你的编辑倾向（精准型 / 过度编辑型 / 保守型 / 鲁莽型）、编辑命中率与后半程稳定性。</div></div>`;
+ <div class="empty-tip" style="padding:16px 0">暂无仿真训练记录。去 <a href="pe-exam.html">仿真训练</a> 交一次卷，这里会汇总你的编辑倾向（精准型 / 过度编辑型 / 保守型 / 鲁莽型）、编辑命中率与后半程稳定性。</div></div>`;
  }
  const avg = (k) => Math.round(recs.reduce((s, h) => s + (Number(h.profile[k]) || 0), 0) / recs.length * 10) / 10;
  const QUADS = ['精准型', '过度编辑型', '保守型', '鲁莽型'];

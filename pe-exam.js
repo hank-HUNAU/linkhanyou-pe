@@ -1,11 +1,12 @@
 /* ============================================================
- * MTPE 模拟考场 · 逻辑 v2
+ * MTPE 仿真训练 · 逻辑 v2
  * 依据真实界面截图（第四届翻译技术大赛决赛 / 第九届官方模拟赛）校准：
  * - 右侧栏：题目面板 + 上一题/下一题 + 保存&退出 / 交卷
- * - 两种作答模式：第九届模式（默认，无 AI、Agent 同榜）与轻度译后编辑
- * - 工具栏按第九届官方模拟赛实拍对齐：复制原文/清除译文、B I U Aa、S x² x₃ ¶、
+ * - 单一作答模式：仿真训练（无 AI、Agent 同榜），界面按官方赛场还原
+ * - 工具栏按官方模拟赛实拍对齐：复制原文/清除译文、B I U Aa、S x² x₃ ¶、
  *   清除样式、查找替换、拼写检查、特殊字符（不再有格式刷/溶解样式）
- * - 2026-10-10 瘦身：下线深度模式 / AI 助手拟真（与"第九届全程无 AI"矛盾）与右侧图标栏
+ * - 2026-10-10 瘦身：下线深度模式 / AI 助手拟真（与"全程无 AI"矛盾）与右侧图标栏
+ * - 2026-10-11：统一叫法"仿真训练"（不再出现"第九届/模拟参赛"字样）；移除作答模式选择（直接进仿真界面）
  * ============================================================ */
 const $ = (s) => document.querySelector(s);
 const esc = (s) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -43,7 +44,7 @@ function examScore(pe,ref){ return Math.max(0, 100 - terRef(pe,ref)*100*TER_K); 
 /* ---- 全局状态 ---- */
 let S=null; // {task, minutes, peMode, answers[], cur, startTs, duration, switches, enters}
 
-/* 第九届赛制：Agent 选手成绩（拟真，交卷后同榜） */
+/* 仿真训练：Agent 选手成绩（拟真，交卷后同榜） */
 const AGENT_BOARD = {
  t1: [['Agent·旗舰A', 91.4], ['Agent·旗舰B', 89.7], ['Agent·旗舰C', 87.8]],
  t2: [['Agent·旗舰A', 92.1], ['Agent·旗舰B', 88.9], ['Agent·旗舰C', 86.5]],
@@ -51,7 +52,7 @@ const AGENT_BOARD = {
  t4: [['Agent·旗舰A', 93.0], ['Agent·旗舰B', 90.4], ['Agent·旗舰C', 88.6]]
 };
 const AGENT_DEFAULT = [['Agent·旗舰A', 90.0], ['Agent·旗舰B', 88.0], ['Agent·旗舰C', 86.0]];
-function modeName(m){ return m==='agent'?'第九届·Agent同榜':'轻度'; }
+function modeName(m){ return m==='light'?'轻度':'仿真训练'; }
 /* 按语言方向给出列头语言代码（对齐真实界面的"请输入原文（en-US）"） */
 function langOf(pair){ return /中译英|汉译英|中译外|汉译外/.test(pair || '') ? ['zh-CN', 'en-US'] : ['en-US', 'zh-CN']; }
 
@@ -60,19 +61,19 @@ function renderExams(){
  document.body.className='';
  document.body.innerHTML = `
  <div class="yc-top">
- <div class="yc-brand"><span class="yc-logo">译</span>MTPE 模拟考场 <span class="en">译后编辑模拟考试</span></div>
+ <div class="yc-brand"><span class="yc-logo">译</span>MTPE 仿真训练 <span class="en">译后编辑 · 仿真训练</span></div>
  <div class="yc-top-right"><a class="mi" href="index.html" style="text-decoration:none">返回首页</a></div>
  </div>
  <div class="wrap">
  <div class="page-t">考试广场</div>
- <div class="page-s">教学模拟工具：界面按第九届赛制还原，试题内容与正式考试无关。</div>
+ <div class="page-s">教学仿真工具：界面按官方赛场还原，试题内容与正式考试无关。</div>
  ${TASKS.map(t=>{
  const draft=store.get('draft_'+t.id,null);
  const enters=store.get('enters_'+t.id,0);
  const real = ![8,15,30].includes(t.minutes);
  return `
  <div class="exam-card-v3">
- <div class="mtpe-logo"><span class="big">MTPE</span><span class="sm">${t.corpus?'历届真题':'模拟考试'}</span></div>
+ <div class="mtpe-logo"><span class="big">MTPE</span><span class="sm">${t.corpus?'历届真题':'仿真训练'}</span></div>
  <div class="ec-v3-body">
  <h3>${esc(t.name)} <span class="tag blue">${esc(t.pair)}</span>${t.corpus?'<span class="tag-fee">真题</span>':''}</h3>
  <div class="times">
@@ -111,21 +112,10 @@ function enterExam(id){
  S={ task, minutes, peMode:'agent', answers,
  cur:0, startTs:Date.now(), duration:minutes*60, switches:0, timer:null, over:false };
  openModal(`<h3>进入答题页面（第 ${enters+1}/3 次）</h3>
- <div class="field" style="margin:10px 0">
- <div style="font-weight:600;font-size:13px;margin-bottom:6px">选择作答模式</div>
- <div class="mode-row">
- <div class="mode-btn" id="mode-light" onclick="pickMode(this,'light')"><b>轻度译后编辑</b><span>以可理解为目标，只改硬伤，不重写</span></div>
- <div class="mode-btn sel" id="mode-agent" onclick="pickMode(this,'agent')"><b> 第九届模式（默认）</b><span>全程无 AI，交卷后与 Agent 选手同榜排名（对齐2026第九届赛制）</span></div>
- </div>
- <style>.mode-row{grid-template-columns:1fr 1fr 1fr}</style>
- </div>
+ <div class="info-box"><b>仿真训练</b>：${esc(task.name)}（${esc(task.pair)} · ${task.segs.length} 段 · ${minutes} 分钟）</div>
  <div class="info-box">请勿切换页面/点击红框外区域（累计 <b>8 次</b>强制交卷）；禁止复制试题与粘贴内容；倒计时归零自动交卷。</div>
  ${resumed?'<div class="info-box">已恢复上次答题记录。</div>':''}
  <div class="m-actions"><button class="btn btn-p" onclick="closeModal();startExam()">开始答题</button></div>`);
-}
-function pickMode(el,m){
- document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('sel'));
- el.classList.add('sel'); S.peMode=m;
 }
 
 /* ============ 答题页 ============ */
@@ -137,10 +127,10 @@ function renderExam(){
  const dirLabel = /中译英|汉译英|中译外|汉译外/.test(task.pair || '') ? '汉译英' : '英译汉';
  document.body.innerHTML=`
  <div class="yc-top">
- <div class="yc-brand"><span class="yc-logo">译</span>MTPE 模拟考场 <span class="en">译后编辑考试·${modeName(peMode)}</span></div>
+ <div class="yc-brand"><span class="yc-logo">译</span>MTPE 仿真训练 <span class="en">译后编辑 · ${modeName(peMode)}</span></div>
  <div class="exam-meta">
  <span class="switch-chip ok" id="sw-chip">切屏 0/8</span>
- <span class="remain" id="remain">${fmt(S.duration)}</span>
+ <span class="remain" id="remain">剩余时间 ${fmt(S.duration)}</span>
  </div>
  </div>
  <div class="exam-toolbar">
@@ -191,7 +181,7 @@ function renderExam(){
  </div>
  <div class="side-col">
  <div class="task-panel">
- <div class="tp-title">第九届全国机器翻译译后编辑大赛（拟真）</div>
+ <div class="tp-title">译后编辑仿真训练（界面按官方赛场还原）</div>
  <div class="notice-box">
  <b>试题须知</b>
  <div>满分 100 ｜ 请直接在所提供的机器译文基础上修改，系统将自动记录修订位置，<b>无需另行标注修改痕迹</b>。</div>
@@ -201,7 +191,7 @@ function renderExam(){
  <button class="btn btn-g" onclick="navSeg(1)">下一题 </button>
  </div>
  <div class="tp-card">
- <b>${dirLabel} · ${agent?'译后编辑（第九届赛制）':'轻度译后编辑'}</b> <span class="muted">（机翻底稿，供修改）</span>
+ <b>${dirLabel} · ${agent?'译后编辑（仿真训练）':'轻度译后编辑'}</b> <span class="muted">（机翻底稿，供修改）</span>
  </div>
  </div>
  <div class="side-btns">
@@ -213,6 +203,7 @@ function renderExam(){
  <div class="status-bar">
  <span>进度: <b id="prog-txt">0/${task.segs.length}</b> 段</span>
  <span class="sb-title">${esc(task.name)}-${modeName(peMode)}译后编辑</span>
+ <span>‹ <b id="page-num">1</b>/${task.segs.length} 页 ›</span>
  <span>跳至 <input id="jump-n" type="number" min="1" max="${task.segs.length}" value="1"> 段
  <button class="btn btn-g" style="padding:2px 8px" onclick="jumpSeg()">跳转</button></span>
  </div>
@@ -241,6 +232,7 @@ function setCur(i){
  S.cur=Math.max(0,Math.min(i,S.task.segs.length-1));
  document.querySelectorAll('.seg-table .seg-row').forEach(r=>r.classList.remove('cur'));
  const row=$('#row-'+S.cur); if(row)row.classList.add('cur');
+ const pn=$('#page-num'); if(pn)pn.textContent=S.cur+1;
  const jn=$('#jump-n'); if(jn)jn.value=S.cur+1;
 }
 function navSeg(d){ setCur(S.cur+d); $('#ta-'+S.cur).focus(); }
@@ -386,8 +378,7 @@ function startExam(){
  },500);
  S.timer=tid;
  const ta=$('#ta-0'); if(ta)ta.focus();
- if(S.peMode==='light')toast('轻度译后编辑模式：以可理解为目标，只改硬伤');
- if(S.peMode==='agent')toast('第九届模式：全程无 AI，交卷后与 Agent 选手同榜排名');
+ if(S.peMode==='agent')toast('仿真训练：全程无 AI，交卷后与 Agent 选手同榜排名');
 }
 function askSubmit(){
  const done=S.answers.filter((a,k)=>a&&a!==S.task.segs[k].mt).length;
@@ -425,7 +416,7 @@ function doSubmit(reason){
  renderResult(record);
 }
 
-/* ---- Agent 同榜（第九届赛制拟真） ---- */
+/* ---- Agent 同榜（仿真训练） ---- */
 /* ---- 同步成绩到主平台「我的统计」（mtpe_history） ---- */
 function wordCountSrc(s){ return (s.match(/[\u4e00-\u9fff]/g)||[]).length + (s.match(/[A-Za-z]+/g)||[]).length; }
 function syncToMainHistory(r){
@@ -471,7 +462,7 @@ function agentBoardHTML(r){ const agents=(AGENT_BOARD[r.task.id]||AGENT_DEFAULT)
  : `与 Agent 同榜：第 ${mine.rank} 名，战胜 ${beaten}/${total} 名 Agent 选手${beaten===0?'——还没有 Agent 被你甩在身后，继续练！':''}`;
  return `
  <div class="board">
- <h3> 人机同榜（第九届赛制拟真）</h3>
+ <h3> 人机同榜（仿真训练）</h3>
  <table>
  <tr><th>名次</th><th>选手</th><th>得分</th><th>说明</th></tr>
  ${rows.map(row=>`
@@ -777,12 +768,12 @@ function renderResult(r){
  document.body.className='';
  document.body.innerHTML=`
  <div class="yc-top">
- <div class="yc-brand"><span class="yc-logo">译</span>MTPE 模拟考场 <span class="en">考试结果（拟真）</span></div>
+ <div class="yc-brand"><span class="yc-logo">译</span>MTPE 仿真训练 <span class="en">仿真训练结果</span></div>
  <div class="yc-top-right"><a class="mi" href="pe-exam.html" style="text-decoration:none">返回考试中心</a></div>
  </div>
  <div class="wrap">
  <div class="page-t">「决赛${esc(r.task.pair)}」${esc(r.task.name)} <span class="tag blue">${esc(r.reason)} · ${modeName(r.peMode)}译后编辑</span></div>
- <div class="page-s">拟真版结果：计算机辅助指标实时计算；正式大赛以“机器智能评分 + 人工评阅”为准（第九届赛场显示满分 100）${r.peMode==='agent'?'，第九届引入 Agent 选手与人类同榜，下方为同榜结果':''}。</div>
+ <div class="page-s">仿真训练结果：计算机辅助指标实时计算；正式大赛以“机器智能评分 + 人工评阅”为准（赛场显示满分 100）${r.peMode==='agent'?'，赛制引入 Agent 选手与人类同榜，下方为同榜结果':''}。</div>
  <div class="warn-box" style="margin-bottom:14px"> 得分说明：综合得分基于与参考译文的<b>词级重合度</b>，同义改写或更优表达可能被低估，请以逐段修订痕迹自行判断质量；修订率中文按字切分，跨语向比较需谨慎。</div>
  <div class="res-hero">
  <div class="res-box"><div class="v">${r.score}</div><div class="l">综合得分（vs 参考译文）</div></div>

@@ -110,14 +110,14 @@
     const nx = nextStep(s, dr);
     const lastBits = [];
     if (s.lastPractice) lastBits.push('上次练习《' + esc(s.lastPractice.taskName) + '》得分 ' + s.lastPractice.score);
-    if (s.lastExam) lastBits.push('上次模拟参赛《' + esc(s.lastExam.taskName) + '》得分 ' + s.lastExam.score
+    if (s.lastExam) lastBits.push('上次仿真训练《' + esc(s.lastExam.taskName) + '》得分 ' + s.lastExam.score
       + (s.lastExam.profile && s.lastExam.profile.quadrant ? '（' + esc(s.lastExam.profile.quadrant) + '）' : ''));
 
     app.innerHTML = `
   <section class="home-hero">
     <h1>译后编辑实训平台</h1>
     <p>按「<b>找 → 改 → 考</b>」三步走练机器翻译译后编辑：先练<strong>发现哪里该改</strong>，再练<strong>动手改</strong>，最后进考场练<strong>临场状态</strong>。
-    练「找」「改」是实训，<strong>「考」是唯一考场口径</strong>的模拟参赛。语料为历届大赛真题；登录一次，三个页面之间往返无需再登录。</p>
+    练「找」「改」是实训，<strong>「考」是唯一考场口径</strong>的仿真训练。语料为历届大赛真题；登录一次，三个页面之间往返无需再登录。</p>
   </section>
 
   <div class="home-next">
@@ -141,8 +141,8 @@
       <em>练手法：练习分不是考场口径</em>
     </a>
     <a class="step-card" href="pe-exam.html">
-      <b>③ 考 · 模拟参赛</b>
-      <span>全真考场：整页独占、防作弊（切屏计数、禁复制粘贴、倒计时）、TER 分与结果画像，交卷后给出编辑倾向与推荐练习。</span>
+      <b>③ 考 · 仿真训练</b>
+      <span>全真赛场界面：整页独占、防作弊（切屏计数、禁复制粘贴、倒计时）、TER 分与结果画像，交卷后给出编辑倾向与推荐练习。</span>
       <em>练状态：赛前用它估分、找短板</em>
     </a>
   </div>
@@ -161,7 +161,7 @@
     <div class="home-actions">
       <a class="btn btn-primary" href="annotate.html">开始练「找」</a>
       <a class="btn btn-primary" href="practice.html">开始练「改」</a>
-      <a class="btn btn-outline" href="pe-exam.html">进入模拟参赛</a>
+    <a class="btn btn-outline" href="pe-exam.html">进入仿真训练</a>
       <a class="btn btn-ghost" href="practice.html#stats">我的统计</a>
       <button id="mtpe-install-btn" class="btn btn-ghost hidden" onclick="mtpeInstall()">安装到桌面</button>
     </div>

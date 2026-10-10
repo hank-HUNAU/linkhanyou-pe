@@ -1,7 +1,7 @@
 {
   "name": "译后编辑实训平台 · MTPE Trainer",
   "short_name": "译后编辑",
-  "description": "机器翻译译后编辑实训：找错标注、改稿练习、模拟参赛。历届大赛真题，离线可用。",
+  "description": "机器翻译译后编辑实训：找错标注、改稿练习、仿真训练。历届大赛真题，离线可用。",
   "lang": "zh-CN",
   "dir": "ltr",
   "start_url": "./index.html",
