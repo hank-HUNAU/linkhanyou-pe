@@ -86,11 +86,11 @@
  d.innerHTML = '<div class="mtpe-login-card">'
  + '<div class="mtpe-login-brand"><span class="lg">译</span>译后编辑实训平台</div>'
  + '<div class="mtpe-login-sub">请使用本地内置账号登录后使用（账号由课程负责人发放）</div>'
- + '<label>账号</label><input id="mtpe-acc" autocomplete="username" placeholder="hunau-pe-XX">'
+ + '<label>账号</label><input id="mtpe-acc" autocomplete="username">'
  + '<label>密码</label><input id="mtpe-pw" type="password" autocomplete="current-password" placeholder="密码">'
  + '<div id="mtpe-login-err" class="mtpe-login-err"></div>'
  + '<button id="mtpe-login-btn" class="mtpe-login-btn" onclick="mtpeUnlock()">登录</button>'
- + '<div class="mtpe-login-foot">口令以 PBKDF2-SHA256 派生密钥；语料以 AES-GCM 加密，本地不存明文</div></div>';
+ + '</div>';
  document.body.appendChild(d);
  const enter = (e) => { if (e.key === 'Enter') window.mtpeUnlock(); };
  ['mtpe-acc', 'mtpe-pw'].forEach(function (x) { const el = document.getElementById(x); if (el) el.addEventListener('keydown', enter); });
