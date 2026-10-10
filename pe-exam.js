@@ -58,9 +58,6 @@ function langOf(pair){ return /中译英|汉译英|中译外|汉译外/.test(pai
 /* ============ 考试广场（精简版：只保留与考试直接相关的元素） ============ */
 function renderExams(){
  document.body.className='';
- /* 教师用开关：pe-exam.html#demo（本地演示时才显示"重置进入次数"）。
-    公开站点没有入口 —— 否则学生自己点一下就把"3 次上限"清零，防作弊形同虚设。 */
- const isDemo = location.hash.indexOf('demo') >= 0;
  document.body.innerHTML = `
  <div class="yc-top">
  <div class="yc-brand"><span class="yc-logo">译</span>MTPE 模拟考场 <span class="en">译后编辑模拟考试</span></div>
@@ -89,7 +86,6 @@ function renderExams(){
  ${real?`<option value="${t.minutes}" selected>${t.minutes} 分钟（真题）</option>`:''}
  </select></span>
  <button class="btn btn-o" onclick="enterExam('${t.id}')">去考试</button>
- ${isDemo?`<span class="reset-link" onclick="resetEnters('${t.id}')">重置进入次数（教师）</span>`:''}
  </div>
  </div>`;
  }).join('')}
@@ -98,14 +94,16 @@ function renderExams(){
  <div id="toast" style="opacity:0" role="status" aria-live="polite"></div>`;
 }
 
+/* 重置某个任务的进入次数（拟真规则上限 3 次）。界面上不再提供入口 ——
+   否则学生自己点一下就把防作弊的"3 次上限"清零；教师需要重开演示时可在控制台调用。 */
 function resetEnters(id){ store.del('enters_'+id); store.del('draft_'+id); renderExams(); toast('已重置该任务的进入次数与答题记录'); }
 
 function enterExam(id){
  const task=TASKS.find(t=>t.id===id); if(!task)return;
  const minutes=parseInt(($('#dur-'+id)||{}).value||'15',10);
  const enters=store.get('enters_'+id,0);
- if(enters>=3){ openModal(`<h3>无法进入考试</h3><div class="warn-box">该考试进入答题页面的次数已达 3 次上限，系统已强制交卷，无法再次作答。</div>
- <div class="m-actions"><button class="btn btn-g" onclick="closeModal();resetEnters('${id}');renderExams()">重置拟真数据</button></div>`); return; }
+ if(enters>=3){ openModal(`<h3>无法进入考试</h3><div class="warn-box">该考试进入答题页面的次数已达 3 次上限（对齐真实赛制），无法再次作答。换一套试卷练习即可。</div>
+ <div class="m-actions"><button class="btn btn-g" onclick="closeModal()">知道了</button></div>`); return; }
  store.set('enters_'+id, enters+1);
  const draft=store.get('draft_'+id,null);
  let answers=task.segs.map(g=>g.mt||''), resumed=false;

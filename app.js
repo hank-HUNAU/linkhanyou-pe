@@ -649,16 +649,8 @@ function examProfileHTML(hs) {
  const QUADS = ['精准型', '过度编辑型', '保守型', '鲁莽型'];
  const quadCount = {};
  recs.forEach(h => { const q = h.profile.quadrant || '—'; quadCount[q] = (quadCount[q] || 0) + 1; });
- const maxQ = Math.max(1, ...QUADS.map(q => quadCount[q] || 0));
- const bars = QUADS.map(q => `
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-  <span style="width:84px;font-size:13px;flex-shrink:0">${q}</span>
-  <div style="flex:1;height:14px;background:#eef1f7;border-radius:99px;overflow:hidden">
-  <div style="width:${(quadCount[q] || 0) / maxQ * 100}%;height:100%;background:linear-gradient(90deg,#6c8cff,var(--primary));border-radius:99px"></div>
-  </div>
-  <span style="width:70px;font-size:12.5px;color:var(--text-2)">${quadCount[q] || 0} 次</span>
-  </div>`).join('');
  const mainQ = QUADS.slice().sort((a, b) => (quadCount[b] || 0) - (quadCount[a] || 0))[0];
+ const quadTxt = QUADS.filter(q => quadCount[q]).map(q => `${q} ${quadCount[q]} 次`).join('　｜　') || '—';
  const stab = avg('stability');
  return `<div class="board"><h3> 考试结果画像（共 ${recs.length} 次交卷）</h3>
   <div class="score-hero" style="margin-bottom:10px">
@@ -667,8 +659,7 @@ function examProfileHTML(hs) {
   <div class="stat-box"><div class="v">${avg('speed')}</div><div class="l">平均速度（段/分）</div></div>
   <div class="stat-box"><div class="v ${stab < 0 ? 'amber' : 'green'}">${stab >= 0 ? '+' : ''}${stab}</div><div class="l">后半程平均变化</div></div>
   </div>
-  ${bars}
-  <div class="board-note">编辑倾向来自每次交卷的逐段 diff 初筛，出现最多的是「${mainQ}」（${quadCount[mainQ] || 0} 次）。有效编辑率＝改对的问题点 ÷ 改动的词数；偏低说明改动多而命中少，先练"判断哪里该改"（M0 思维）。画像细节见各次交卷的结果页。</div>
+ <div class="board-note">编辑倾向分布：${quadTxt}　｜　最多的是「${mainQ}」，各次交卷的四项画像见 <a href="pe-exam.html">③ 考</a> 的结果页。</div>
   </div>`;
 }
 

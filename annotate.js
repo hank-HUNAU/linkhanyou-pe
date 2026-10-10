@@ -80,8 +80,11 @@ function renderSetup() {
  <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
  <button class="btn btn-o" onclick="quickCompose()">一键组卷（推荐 10 句）</button>
  <button class="btn btn-p" onclick="compose()">按筛选生成 </button>
- <span class="muted">共 ${seedCount} 条带种子标注（交卷计分），其余为盲标练习（不计分）；种子优先入选。</span>
  </div>
+ <label class="muted" style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;margin-top:8px">
+ <input type="checkbox" id="f-blind"> 种子不足时补盲标句对（不计分）
+ </label>
+ <div class="muted" style="font-size:12.5px;margin-top:6px">默认只出<b>种子对照卷</b>：全库 ${seedCount} 条有官方种子标注（交卷计分），其余为盲标练习（不计分）。</div>
  <div id="compose-out" class="page-s" style="margin-top:10px"></div>
  </div>
  ${wbN ? `<div class="card"><h3> 错题本（${wbN} 句 / ${wb.length} 处待回练）</h3>
@@ -100,17 +103,21 @@ function renderSetup() {
  if (P.get('wrong') && wbN) setTimeout(composeWrong, 300);
 }
 
-/* 一键组卷：不熟悉筛选时的默认路径 —— 清空筛选、10 句、种子优先 */
+/* 一键组卷：不熟悉筛选时的默认路径 —— 清空筛选、10 句、种子卷（全部计分） */
 function quickCompose() {
  const set = (id, v) => { const el = $('#' + id); if (el) el.value = v; };
  ['f-ed', 'f-stage', 'f-dir', 'f-dim', 'f-mt'].forEach((id) => set(id, ''));
  set('f-n', '10');
+ const cb = $('#f-blind'); if (cb) cb.checked = false;
  compose();
 }
 
 function compose() {
  const ed = $('#f-ed').value, stage = $('#f-stage').value, dir = $('#f-dir').value,
  dim = $('#f-dim').value, mtOnly = $('#f-mt').value, n = parseInt($('#f-n').value, 10);
+ /* 默认只出种子卷（有官方种子可对照、交卷计分）；
+     种子不够时不再自动补盲标句对 —— 学生标完一卷却"不计分"是白练，必须显式勾选才补。 */
+ const withBlind = !!(($('#f-blind') || {}).checked);
  const seededK = new Set(SEEDS.map(s => s.k));
  let pool = CORPUS_PAIRS.filter(p => (!ed || p.ed === ed) && (!stage || p.stage === stage)
  && (!dir || p.dir === dir) && (!mtOnly || p.mt)
@@ -118,10 +125,16 @@ function compose() {
  const seeded = pool.filter(p => seededK.has(p.k));
  const blind = pool.filter(p => !seededK.has(p.k));
  const takeSeeded = Math.min(seeded.length, n);
- const paper = seeded.slice(0, takeSeeded).concat(blind.slice(0, n - takeSeeded));
+ const takeBlind = withBlind ? Math.min(blind.length, n - takeSeeded) : 0;
+ const paper = seeded.slice(0, takeSeeded).concat(blind.slice(0, takeBlind));
  if (!paper.length) { $('#compose-out').textContent = '筛选条件下没有可用句对，请放宽条件。'; return; }
  startPaper(paper, seededK);
- $('#compose-out').innerHTML = ` 已组卷 <b>${paper.length}</b> 条：种子对照 ${takeSeeded} 条 + 盲标 ${paper.length - takeSeeded} 条。`
+ const shortTip = (!withBlind && seeded.length < n)
+ ? `<br>该条件下只有 ${seeded.length} 条带种子标注，已按实际数量组卷；想加练盲标句对（不计分）请勾选下方选项。`
+ : '';
+ $('#compose-out').innerHTML = `已组卷 <b>${paper.length}</b> 条：种子对照（计分） ${takeSeeded} 条`
+ + (takeBlind ? ` + 盲标（不计分） ${takeBlind} 条。` : '。')
+ + shortTip
  + (dim ? `<br>已按错误类型「${esc(dim)}」筛选（该条件共 ${pool.length} 句，其中含机翻底稿 ${pool.filter(p => p.mt).length} 句）。` : '');
  setTimeout(startWork, 600);
 }
