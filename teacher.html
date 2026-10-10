@@ -26,8 +26,8 @@ h1{font-size:21px;margin:14px 0 4px}h2{font-size:17px;margin:0 0 8px}h3{font-siz
 
 <div class="wrap">
  <div id="gate" class="card" style="display:none">
- <h2> 教师后台</h2>
- <p class="muted">本页为教师视图。请点击右上角「教师登录」输入口令。</p>
+  <h2>教学端</h2>
+  <p class="muted">本页为教学端。请点击右上角「教学登录」输入口令。</p>
  <button class="btn" onclick="askTeacherLogin()">教师登录</button>
  </div>
 
@@ -77,7 +77,8 @@ h1{font-size:21px;margin:14px 0 4px}h2{font-size:17px;margin:0 0 8px}h3{font-siz
  </div>
 
  <div class="warn">
- <b>关于口令</b>：教师登录是<b>角色切换</b>，不是安全鉴权（口令摘要存于前端，可被查看）。仅用于收拢管理功能。
+  <b>关于口令</b>：口令以 <b>PBKDF2-SHA256（加盐 + 20 万次迭代）</b>摘要校验，口令本身不落盘、无法从代码反推。
+  但静态站点上页面内容仍可被直接打开，口令只保护入口与管理动作；需要真正防外泄时，请把 teacher.html / review.html 移出公开仓库（本地或私有部署）。
  若公开发布本平台，请用 <code>build_public_bundle.py</code> 剥离教师端与真题内容，或部署为私有仓库 / 课堂内部分发。
  </div>
  </div>

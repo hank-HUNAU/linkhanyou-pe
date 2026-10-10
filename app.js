@@ -153,17 +153,31 @@ function renderPlaza() {
  const tasks = allTasks();
  const html = `
  <div class="plaza-head">
- <h2>译后编辑实训</h2>
- <p>${isTeacher ? '选择一套任务和作答模式。竞赛模拟提供倒计时、自动交卷与排行榜；自由练习可随时保存草稿；教学演示附错误点评。' : '选择一套任务和作答模式。竞赛模拟提供倒计时、自动交卷与排行榜；自由练习可随时保存草稿。'}
+ <h2>实训端</h2>
+ <p>按"找 → 改 → 考"三步走。练「找」用标注实训，练「改」用下面的自由练习，考（唯一考场口径）在模拟参赛。
  ｜ <a href="MQM错误类型参考手册.html" target="_blank">MQM 错误类型参考手册</a></p>
- <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+ <div class="step-strip">
+ <a class="step-card" href="annotate.html" target="_blank">
+ <b>① 练「找」</b>
+ <span>标注实训 · 判断哪里该改：划选错误片段并定性，对官方种子算查准/查全，错题自动入本</span>
+ </a>
+ <a class="step-card" href="pe-exam.html">
+ <b>③ 考</b>
+ <span>模拟参赛 · 唯一考场口径：90 分钟、防作弊、TER 分、晋级判定、结果画像</span>
+ </a>
+ <a class="step-card" href="#" onclick="document.querySelector('.task-grid').scrollIntoView({behavior:'smooth'});return false">
+ <b>② 练「改」</b>
+ <span>下面的自由练习 · 在机翻底稿上动手改，看修订率与逐段对照（练习分非考场口径）</span>
+ </a>
+ </div>
+ <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
  <button class="btn btn-ghost" onclick="go('stats')"> 我的统计</button>
- <a class="btn btn-ghost" href="annotate.html" style="text-decoration:none"> 进入标注实训（练"找错"）</a>
- <a class="btn btn-ghost" href="pe-exam.html" style="text-decoration:none"> 进入模拟参赛</a>
+ <a class="btn btn-ghost" href="annotate.html" style="text-decoration:none">进入标注实训（练"找错"）</a>
+ <a class="btn btn-ghost" href="pe-exam.html" style="text-decoration:none">进入模拟参赛（考）</a>
  </div>
  </div>
  <div class="mode-strip">
- <div class="mode-card"><b><span class="ic"></span>竞赛模拟</b><span>限时作答、离开页面计数、交卷后进入排行榜（仿大赛流程）</span></div>
+ <div class="mode-card"><b><span class="ic"></span>限时练习</b><span>可选 8/15/30/真题分钟限时作答、离开页面计数——<b>非考场口径</b>，分数仅供练习参考</span></div>
  <div class="mode-card"><b><span class="ic"></span>自由练习</b><span>不限时、可保存草稿，聚焦修订痕迹与修订率反馈</span></div>
  ${isTeacher ? '<div class="mode-card"><b><span class="ic"></span>教学演示</b><span>逐段查看错误类型点评与参考译文，适合课堂讲解</span></div>' : ''}
  </div>
@@ -187,7 +201,7 @@ function renderPlaza() {
  </div>
  ${draft ? `<div class="draft-tip"> 检测到未完成的练习草稿（${draft.done}/${t.segs.length} 段已编辑）</div>` : ''}
  <div class="task-actions">
- <button class="btn btn-primary" onclick="openSetup('${t.id}','competition')"> 竞赛模拟</button>
+ <button class="btn btn-primary" onclick="openSetup('${t.id}','competition')"> 限时练习</button>
  <button class="btn btn-outline" onclick="openSetup('${t.id}','practice')"> 自由练习</button>
  ${isTeacher ? `<button class="btn btn-ghost" onclick="openSetup('${t.id}','demo')"> 教学演示</button>` : ''}
  ${t.custom ? `<button class="btn btn-danger" onclick="delCustom('${t.id}')">删除</button>` : ''}
@@ -355,7 +369,7 @@ function showTerm(title) { toast(title.replace('术语：', ' ')); }
 
 function renderExam() {
  const { task, mode } = S;
- const modeChip = mode === 'competition' ? '<span class="mode-chip">竞赛模拟</span>'
+  const modeChip = mode === 'competition' ? '<span class="mode-chip">限时练习</span>'
  : mode === 'demo' ? '<span class="mode-chip demo">教学演示</span>'
  : '<span class="mode-chip prac">自由练习</span>';
  const timerHtml = mode === 'competition'

@@ -1,32 +1,37 @@
 /* ============================================================
- * nav.js — 全站共享顶栏（两个主 tab + 教师入口）
- * 说明：教师登录是【角色切换】不是【安全鉴权】——口令以 FNV-1a 摘要存放，
- * 仅用于把教师管理功能收拢，公开部署时请勿依赖它保护内容。
+ * nav.js — 全站共享顶栏（两端：实训端 / 教学端）
+ * 说明：教学端口令以 PBKDF2-SHA256（加盐 + 20 万次迭代）摘要校验，口令本身不落盘、
+ * 无法从代码反推。注意：静态站点上"页面内容"仍可被直接打开，口令只保护入口与管理动作；
+ * 需要真正防外泄时，请把 teacher.html / review.html 移出公开仓库（本地或私有部署）。
  * 用法：页面放 <div id="mtpe-nav"></div> 并引入本脚本
  * ============================================================ */
 (function () {
- const TEACHER_HASH = 0x10fd1a44; // FNV-1a('hankyou')
+ const TEACHER_SALT = 'mtpe-trainer-2026';
+ const TEACHER_ITER = 200000;
+ const TEACHER_DIGEST = 'lCpns0JZ7xa/VV1MDhMDiV8/VKSHQ03RfcjqpynR4U4=';
  const KEY = 'mtpe_role';
- const fnv1a = (s) => {
- let h = 0x811c9dc5;
- for (let i = 0; i < s.length; i++) {
- h ^= s.charCodeAt(i);
- h = (h + (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24)) >>> 0;
+ async function digestOf(pwd) {
+ const enc = new TextEncoder();
+ const key = await crypto.subtle.importKey('raw', enc.encode(pwd), 'PBKDF2', false, ['deriveBits']);
+ const bits = await crypto.subtle.deriveBits(
+ { name: 'PBKDF2', salt: enc.encode(TEACHER_SALT), iterations: TEACHER_ITER, hash: 'SHA-256' }, key, 256);
+ return btoa(String.fromCharCode(...new Uint8Array(bits)));
  }
- return h >>> 0;
- };
  const isTeacher = () => localStorage.getItem(KEY) === 'teacher';
  function setTeacher(v) { v ? localStorage.setItem(KEY, 'teacher') : localStorage.removeItem(KEY); }
 
- window.askTeacherLogin = function () {
+ window.askTeacherLogin = async function () {
  if (isTeacher()) { location.href = 'teacher.html'; return; }
- const pwd = prompt('教师口令（仅用于切换教师视图）：');
+ const pwd = prompt('教学端口令：');
  if (pwd == null) return;
- if (fnv1a(pwd) === TEACHER_HASH) { setTeacher(true); alert('已进入教师模式'); location.href = 'teacher.html'; }
+ if (!(window.crypto && crypto.subtle)) { alert('当前环境不支持安全校验，请用 https 或较新的浏览器打开。'); return; }
+ try {
+ if (await digestOf(pwd) === TEACHER_DIGEST) { setTeacher(true); location.href = 'teacher.html'; }
  else alert('口令不正确');
+ } catch (e) { alert('校验失败：' + e); }
  };
  window.toggleTeacher = function () {
- if (isTeacher()) { setTeacher(false); alert('已退出教师模式，返回学生视图'); location.reload(); }
+ if (isTeacher()) { setTeacher(false); alert('已退出教学端，返回实训端'); location.reload(); }
  else askTeacherLogin();
  };
  window.mtpeIsTeacher = isTeacher;
@@ -39,13 +44,13 @@
  host.innerHTML = `
  <div class="mtpe-nav">
  <div class="mtpe-brand" onclick="location.href='index.html'"><span class="logo">译</span>译后编辑实训平台</div>
- <span class="mtpe-tabs"><a class="mtpe-tab ${cur === 'index.html' || cur === 'annotate.html' ? 'on' : ''}" href="index.html"> 译后编辑实训</a>
- <a class="mtpe-tab ${cur === 'pe-exam.html' ? 'on' : ''}" href="pe-exam.html"> 模拟参赛</a></span>
+ <span class="mtpe-tabs"><a class="mtpe-tab ${cur === 'teacher.html' || cur === 'review.html' ? '' : 'on'}" href="index.html">实训端</a>
+ ${teacher ? `<a class="mtpe-tab ${cur === 'teacher.html' || cur === 'review.html' ? 'on' : ''}" href="teacher.html">教学端</a>`
+ : `<a class="mtpe-tab" href="#" title="需要口令" onclick="askTeacherLogin();return false">教学端（需口令）</a>`}</span>
  <span style="flex:1"></span>
  ${typeof window.askNickname === 'function' ? `<a class="mtpe-tab" href="#" onclick="askNickname();return false"> ${(localStorage.getItem('mtpe_nickname')||'"匿名"').replace(/"/g,'')||'未设置昵称'}</a>` : ''}
- ${teacher ? `<a class="mtpe-tab plain" href="teacher.html"> 教师后台</a>
- <a class="mtpe-tab plain" href="#" onclick="toggleTeacher();return false"> 退出教师模式</a>`
- : `<a class="mtpe-tab plain" href="#" onclick="askTeacherLogin();return false"> 教师登录</a>`}
+ ${teacher ? `<a class="mtpe-tab plain" href="#" onclick="toggleTeacher();return false">退出教学端</a>`
+ : `<a class="mtpe-tab plain" href="#" onclick="askTeacherLogin();return false">教学登录</a>`}
  </div>
  <style>
         /* 顶栏吸顶：页面内的次级吸顶元素用 --mtpe-nav-h 让位（由下方脚本按实测高度写入） */

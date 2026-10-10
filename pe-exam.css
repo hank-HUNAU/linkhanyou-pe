@@ -195,3 +195,17 @@ body.exam-on{border:3px solid #e5484d;border-top:none}
 .rec-item .rec-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .rec-item .rec-body b{font-size:13.5px}
 .rec-item .rec-go{flex-shrink:0;font-size:12.5px;color:var(--yc);font-weight:600;align-self:center}
+
+/* ---- v5：按第九届官方模拟赛实拍对齐（工具栏/列头/须知/倒计时/当前段） ---- */
+.exam-toolbar .tb-col{display:flex;flex-direction:column;gap:2px}
+.exam-toolbar .tb-line{display:flex;gap:2px;align-items:center;min-height:24px}
+.exam-toolbar .tb-tall{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px 9px;line-height:1.25}
+.col-lang{margin-left:8px;font-weight:400;font-size:11.5px;color:var(--mut)}
+.notice-box{background:var(--card);border:1px solid var(--yc);border-radius:9px;padding:9px 11px;margin-top:8px;font-size:12.5px;color:var(--tx2);line-height:1.6}
+.notice-box b{color:var(--tx)}
+.yc-top{position:relative}
+.yc-top .remain{position:absolute;left:50%;transform:translateX(-50%);color:#c0392b;font-weight:800}
+.yc-top .remain.warn{color:#c0392b}
+.seg-table tr.cur td{box-shadow:inset 0 0 0 1px var(--yc)}
+.seg-table tr.cur td:first-child{box-shadow:inset 1px 0 0 0 var(--yc),inset 0 1px 0 0 var(--yc),inset 0 -1px 0 0 var(--yc)}
+.seg-table tr.cur td:last-child{box-shadow:inset -1px 0 0 0 var(--yc),inset 0 1px 0 0 var(--yc),inset 0 -1px 0 0 var(--yc)}

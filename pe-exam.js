@@ -3,7 +3,8 @@
  * 依据真实界面截图（第四届全国翻译技术大赛决赛）校准：
  * - 右侧栏双模式：题目面板（默认） AI助手（仅深度译后编辑开放）
  * - 轻度/深度两种作答模式
- * - 工具栏含 运行QA、格式刷、溶解样式
+ * - 工具栏按第九届官方模拟赛实拍对齐：复制原文/清除译文、B I U Aa、S x² x₃ ¶、
+ *   清除样式、查找替换、拼写检查、特殊字符（不再有格式刷/溶解样式）
  * - AI 模型声明为"大语言模型"（教学模拟，不使用真实品牌名），预置 4 条英文润色指令
  * ============================================================ */
 const $ = (s) => document.querySelector(s);
@@ -52,6 +53,8 @@ const AGENT_BOARD = {
 };
 const AGENT_DEFAULT = [['Agent·旗舰A', 90.0], ['Agent·旗舰B', 88.0], ['Agent·旗舰C', 86.0]];
 function modeName(m){ return m==='deep'?'深度':m==='agent'?'第九届·Agent同榜':'轻度'; }
+/* 按语言方向给出列头语言代码（对齐真实界面的"请输入原文（en-US）"） */
+function langOf(pair){ return /中译英|汉译英|中译外|汉译外/.test(pair || '') ? ['zh-CN', 'en-US'] : ['en-US', 'zh-CN']; }
 
 /* ============ 考试广场（精简版：只保留与考试直接相关的元素） ============ */
 function renderExams(){
@@ -143,26 +146,36 @@ function renderExam(){
  </div>
  </div>
  <div class="exam-toolbar">
- <button class="tb-btn" onclick="copySrc()"> 复制原文 ▾</button>
+ <div class="tb-col">
+ <button class="tb-btn" onclick="copySrc()">复制原文 ▾</button>
+ <button class="tb-btn" onclick="clearPe()">清除译文</button>
+ </div>
  <span class="tb-sep"></span>
+ <div class="tb-col">
+ <span class="tb-line">
  <button class="tb-btn tb-b" onclick="toast('拟真版：富文本样式不可用')">B</button>
  <button class="tb-btn tb-i" onclick="toast('拟真版：富文本样式不可用')">I</button>
  <button class="tb-btn tb-u" onclick="toast('拟真版：富文本样式不可用')">U</button>
- <button class="tb-btn" onclick="toast('拟真版：格式刷不可用')">格式刷</button>
+ <button class="tb-btn" onclick="toast('拟真版：字号设置不可用')">Aa ▾</button>
+ </span>
+ <span class="tb-line">
+ <button class="tb-btn" onclick="toast('拟真版：删除线不可用')">S</button>
+ <button class="tb-btn" title="插入上标" onclick="insertChar('²')">x²</button>
+ <button class="tb-btn" title="插入下标" onclick="insertChar('₃')">x₃</button>
+ <button class="tb-btn" id="hidden-btn" title="显示隐藏字符" onclick="toggleHidden()">¶</button>
+ </span>
+ </div>
  <span class="tb-sep"></span>
- <button class="tb-btn" onclick="openFind()"> 查找替换</button>
- <button class="tb-btn" onclick="runQA()"> 运行QA</button>
- <button class="tb-btn" onclick="openSpecial()">特殊字符</button>
- <span class="tb-sep"></span>
- <button class="tb-btn" onclick="clearPe()">清除译文</button>
- <button class="tb-btn" onclick="toast('拟真版：溶解样式不可用')"> 溶解样式</button>
- <button class="tb-btn" id="hidden-btn" onclick="toggleHidden()">显示隐藏字符</button>
+ <button class="tb-btn tb-tall" onclick="clearStyles()">清除样式</button>
+ <button class="tb-btn tb-tall" onclick="openFind()">查找替换</button>
+ <button class="tb-btn tb-tall" onclick="runQA()">拼写检查</button>
+ <button class="tb-btn tb-tall" onclick="openSpecial()">特殊字符</button>
  </div>
  <div class="exam-body">
  <div class="op-zone">
  <div class="zone-note">* 红框内为光标操作区域，请勿点击框外区域</div>
  <table class="seg-table">
- <tr><th style="width:46px">#</th><th>原文</th><th>译文（Enter 确认句段）</th></tr>
+ <tr><th style="width:46px">#</th><th>原文<span class="col-lang">请输入原文（${langOf(task.pair)[0]}）</span></th><th>译文<span class="col-lang">请输入译文（${langOf(task.pair)[1]}）　Enter 确认句段</span></th></tr>
  ${task.segs.map((g,i)=>`
  <tr id="row-${i}" onclick="setCur(${i})">
  <td class="num">${i+1}<span class="st todo" id="st-${i}">○</span></td>
@@ -176,6 +189,10 @@ function renderExam(){
  <div class="side-col">
  <div class="task-panel">
  <div class="tp-title">第九届全国机器翻译译后编辑大赛（拟真）</div>
+ <div class="notice-box">
+ <b>试题须知</b>
+ <div>满分 100 ｜ 请直接在所提供的机器译文基础上修改，系统将自动记录修订位置，<b>无需另行标注修改痕迹</b>。</div>
+ </div>
  <div class="tp-nav">
  <button class="btn btn-g" onclick="navSeg(-1)"> 上一题</button>
  <button class="btn btn-g" onclick="navSeg(1)">下一题 </button>
@@ -283,6 +300,15 @@ function clearPe(){
  if(!confirm('确定清除当前句段译文？'))return;
  S.answers[S.cur]=S.task.segs[S.cur].mt||''; $('#ta-'+S.cur).value=S.answers[S.cur]; refreshStatus(S.cur);
 }
+/* 清除样式：纯文本编辑器里等价于清理本段的格式噪声（连续空格 / 不可见字符） */
+function clearStyles(){
+ const i=S.cur, ta=$('#ta-'+i); if(!ta)return;
+ const before=ta.value;
+ const after=before.replace(/[\u200b-\u200f\ufeff\u00a0]/g,' ').replace(/ {2,}/g,' ');
+ if(after===before){ toast('本段没有可清理的格式噪声（连续空格 / 不可见字符）'); return; }
+ ta.value=after; S.answers[i]=after; refreshStatus(i);
+ toast('已清理本段格式噪声');
+}
 function openSpecial(){
  openModal(`<h3>插入特殊字符</h3>
  <div style="display:flex;flex-wrap:wrap;gap:6px">${['×','÷','±','°','©','®','™','µ','¶','§','—','…','“','”','‘','’'].map(c=>`<button class="btn btn-g" style="min-width:42px" onclick="insertChar('${c}')">${c}</button>`).join('')}</div>
@@ -332,7 +358,7 @@ function runQA(){
  });
  const rows=issues.length?issues.map(([i,lv,m])=>`<div class="qa-row ${lv}">句段 ${i+1} · ${esc(m)}</div>`).join('')
  :'<div class="qa-row ok"> QA 检查通过，未发现问题</div>';
- openModal(`<h3> QA 检查结果（${issues.length} 条）</h3>
+ openModal(`<h3>拼写检查结果（${issues.length} 条）</h3>
  <div style="max-height:320px;overflow:auto">${rows}</div>
  <div class="m-actions"><button class="btn btn-p" onclick="closeModal()">知道了</button></div>`);
 }
@@ -830,7 +856,7 @@ function renderResult(r){
  </div>
  <div class="wrap">
  <div class="page-t">「决赛${esc(r.task.pair)}」${esc(r.task.name)} <span class="tag blue">${esc(r.reason)} · ${modeName(r.peMode)}译后编辑</span></div>
- <div class="page-s">拟真版结果：计算机辅助指标实时计算；正式大赛以“机器智能评分 + 人工评阅”为准${r.peMode==='agent'?'（第九届引入 Agent 选手与人类同榜，下方为同榜结果）':'（决赛译文质量 170 分 + 翻译技术应用 30 分）'}。</div>
+ <div class="page-s">拟真版结果：计算机辅助指标实时计算；正式大赛以“机器智能评分 + 人工评阅”为准（第九届赛场显示满分 100）${r.peMode==='agent'?'，第九届引入 Agent 选手与人类同榜，下方为同榜结果':''}。</div>
  <div class="warn-box" style="margin-bottom:14px"> 得分说明：综合得分基于与参考译文的<b>词级重合度</b>，同义改写或更优表达可能被低估，请以逐段修订痕迹自行判断质量；修订率中文按字切分，跨语向比较需谨慎。</div>
  <div class="res-hero">
  <div class="res-box"><div class="v">${r.score}</div><div class="l">综合得分（vs 参考译文）</div></div>
