@@ -734,20 +734,20 @@ function recommendHTML(r){
    items.push({
      title: '最弱维度「' + weak.d + '」· 同源卷 ' + cnt(avail(weak.d, ed)),
      desc: '本卷该维度改对率仅 ' + Math.round(weak.rate * 100) + '%，还剩 ' + weak.left + ' 处没改对。回炉第 ' + ed + ' 届' + stage + '同类句对，专攻这一维。',
-     href: 'annotate.html?dim=' + encodeURIComponent(weak.d) + '&ed=' + ed + '&stage=' + encodeURIComponent(stage) + '&n=15'
+    href: 'annotate.html?dim=' + encodeURIComponent(weak.d) + '&ed=' + ed + '&stage=' + encodeURIComponent(stage) + '&n=15&go=1'
    });
    if (wbN) items.push(recWrong);
    items.push({
      title: '最弱维度「' + weak.d + '」· 跨届次加练 ' + cnt(avail(weak.d, null)),
      desc: '换一批同维度语料再练，检验上一次的补漏是不是真的补上了。',
-     href: 'annotate.html?dim=' + encodeURIComponent(weak.d) + '&n=15'
+    href: 'annotate.html?dim=' + encodeURIComponent(weak.d) + '&n=15&go=1'
    });
  } else if (wbN) items.push(recWrong);
  if (ed){
    items.push({
      title: '第 ' + ed + ' 届' + stage + ' · 同源句对盲标',
      desc: '本卷同源语料的逐句标注，练"找错"的敏感度（有种子标注的句子按 P/R/F1 计分）。',
-     href: 'annotate.html?ed=' + ed + '&stage=' + encodeURIComponent(stage) + '&n=15'
+    href: 'annotate.html?ed=' + ed + '&stage=' + encodeURIComponent(stage) + '&n=15&go=1'
    });
  }
   if (!items.length){

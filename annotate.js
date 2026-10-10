@@ -40,6 +40,7 @@ function wrongKeys() { return [...new Set(wrongbook().map(w => w.k))]; }
 /* ---------------- 全局状态 ---------------- */
 let V = 'setup';
 let A = null; // {paper:[pair...], idx, anns:{k:[...]}, seeded:Set(k)}
+let AUTO_BLIND = false;   // 由带 go=1 的练习建议链接置位：允许补盲标句对（组卷结果会标明不计分）
 
 /* ---------------- 组卷 ---------------- */
 function renderSetup() {
@@ -51,6 +52,11 @@ function renderSetup() {
  const seededK = new Set(SEEDS.map(s => s.k));
  const seedCount = CORPUS_PAIRS.filter(p => seededK.has(p.k)).length;
  const pre = { ed: P.get('ed') || '', stage: P.get('stage') || '', dir: P.get('dir') || '', dim: P.get('dim') || '', n: P.get('n') || '15' };
+ /* 由「考场结果页 / 首页」的练习建议带参数进来时：高级筛选默认展开，让学生看得见为什么这么组卷；
+     带 go=1 的链接直接开局（等价于点一次"按筛选生成"）。 */
+ const fromLink = !!(pre.ed || pre.stage || pre.dir || pre.dim);
+ const autoGo = P.get('go') === '1';
+ if (autoGo) AUTO_BLIND = true;      // 链接是学生主动点的：允许补盲标，但组卷结果会标明"不计分"
  const wb = wrongbook();
  const wbN = wrongKeys().length;
  app.innerHTML = `
@@ -60,6 +66,7 @@ function renderSetup() {
  </div>
  <div class="wrap">
  <h1>标注实训</h1>
+ ${fromLink ? `<div class="page-s" style="margin-bottom:10px">已按练习建议预置筛选条件${pre.dim ? '：错误维度「' + esc(pre.dim) + '」' : ''}${pre.ed ? ' · 第' + esc(pre.ed) + '届' + esc(pre.stage || '') : ''}。</div>` : ''}
  <div class="page-s">在机翻译文中<b>选中错误片段</b>并标注类别与严重度；交卷后与已校对种子标注对比，计算查准率 / 查全率 / F1。
  数据：历届大赛 ${CORPUS_PAIRS.length} 条 A 级句对（其中 ${seedCount} 条有种子标注可对照，其余为盲标）。标签集 M1-M9 + M0 见 <a href="MQM错误类型参考手册.html">MQM 手册</a>。</div>
  <div class="card">
@@ -68,7 +75,7 @@ function renderSetup() {
  <div><label>届次</label><select id="f-ed"><option value="">全部</option>${eds.map(e => `<option value="${e}"${String(pre.ed) === String(e) ? ' selected' : ''}>第${e}届</option>`).join('')}</select></div>
  <div><label>卷大小</label><select id="f-n">${[10, 15, 20, 30].map(k => `<option${String(pre.n) === String(k) ? ' selected' : ''}>${k}</option>`).join('')}</select></div>
  </div>
- <details class="adv">
+ <details class="adv"${fromLink ? ' open' : ''}>
  <summary>高级筛选（赛段 / 方向 / 错误类型 / 机翻底稿）</summary>
  <div class="row" style="margin-top:10px">
  <div><label>赛段</label><select id="f-stage"><option value="">全部</option>${stages.map(s => `<option${pre.stage === s ? ' selected' : ''}>${s}</option>`).join('')}</select></div>
@@ -99,8 +106,9 @@ function renderSetup() {
  <button class="btn btn-r" style="margin-left:8px" onclick="store.del('paper');renderSetup();toast('已放弃上次标注卷')">放弃</button></div>` : ''}
  </div>
  <div id="toast"></div>`;
- /* 由结果页"错题回练"直达：?wrong=1 自动开局 */
+ /* 直达：?wrong=1（错题回练）与 ?go=1（带筛选条件的练习建议）都自动开局 */
  if (P.get('wrong') && wbN) setTimeout(composeWrong, 300);
+ else if (autoGo) setTimeout(compose, 300);
 }
 
 /* 一键组卷：不熟悉筛选时的默认路径 —— 清空筛选、10 句、种子卷（全部计分） */
@@ -117,7 +125,7 @@ function compose() {
  dim = $('#f-dim').value, mtOnly = $('#f-mt').value, n = parseInt($('#f-n').value, 10);
  /* 默认只出种子卷（有官方种子可对照、交卷计分）；
      种子不够时不再自动补盲标句对 —— 学生标完一卷却"不计分"是白练，必须显式勾选才补。 */
- const withBlind = !!(($('#f-blind') || {}).checked);
+ const withBlind = !!(($('#f-blind') || {}).checked) || AUTO_BLIND;
  const seededK = new Set(SEEDS.map(s => s.k));
  let pool = CORPUS_PAIRS.filter(p => (!ed || p.ed === ed) && (!stage || p.stage === stage)
  && (!dir || p.dir === dir) && (!mtOnly || p.mt)

@@ -59,6 +59,21 @@
     return '在 Chrome / Edge 里打开本页可安装到桌面（离线可用）；若没看到按钮，点浏览器地址栏右侧的「安装」图标即可。';
   }
 
+  /* 最弱错误维度：取自"最近一次考场交卷"的画像（dims = 你的译文里各维度还剩多少处没改对）。
+     只读既有数据，不新增采集；与考场结果页的推荐练习同一口径。 */
+  const DIMS = ['准确性', '术语', '语言规范', '风格', '格式'];
+  function weakestDim() {
+    const exams = (get('history', []) || []).filter((h) => h.mode === 'competition' && h.profile && h.profile.dims);
+    if (!exams.length) return null;
+    const dims = exams[0].profile.dims;
+    let best = null;
+    DIMS.forEach((d) => {
+      const n = Number(dims[d]) || 0;
+      if (n > 0 && (!best || n > best.n)) best = { dim: d, n: n };
+    });
+    return best && best.n >= 3 ? best : null;   // 只剩零星一两处就不打扰
+  }
+
   /* 只给一条"下一步"：学生进门先看到该做什么，而不是先看懂三个入口的区别。
      依据只有现有数据（草稿 / 标注 F1 / 练习次数 / 考场次数），不新增采集。 */
   function nextStep(s, dr) {
@@ -67,6 +82,15 @@
     }
     if (!s.annN && !s.practiceN && !s.examN) {
       return { href: 'annotate.html', cta: '开始第一练 · 标注 10 句', why: '先练「找」：判断哪里该改是译后编辑的第一步，10 句约 10 分钟，交卷立即有查准率 / 查全率 / F1。' };
+    }
+    /* 有考场画像时优先给"针对最弱维度"的建议 —— 这是全站最有信息量的一条线索 */
+    const wd = weakestDim();
+    if (wd) {
+      return {
+        href: 'annotate.html?dim=' + encodeURIComponent(wd.dim) + '&n=15&go=1',
+        cta: '加练「' + wd.dim + '」15 句',
+        why: '上次考场里「' + wd.dim + '」还剩 ' + wd.n + ' 处没改对（五个维度中最多）。点进去已按该维度组好 15 句——这类句对多数没有种子标注，交卷不计分，练的是手感。'
+      };
     }
     if (s.annN && s.annF1 != null && s.annF1 < 70) {
       return { href: 'annotate.html', cta: '加练「找」10 句', why: '「找」的平均 F1 是 ' + s.annF1 + '%——漏检或多余标注还偏多，这是当前最短的一块板。' };
