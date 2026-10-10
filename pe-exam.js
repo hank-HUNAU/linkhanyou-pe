@@ -56,7 +56,7 @@ function modeName(m){ return m==='light'?'轻度':'仿真训练'; }
 /* 按语言方向给出列头语言代码（对齐真实界面的"请输入原文（en-US）"） */
 function langOf(pair){ return /中译英|汉译英|中译外|汉译外/.test(pair || '') ? ['zh-CN', 'en-US'] : ['en-US', 'zh-CN']; }
 
-/* ============ 考试广场（精简版：只保留与考试直接相关的元素） ============ */
+/* ============ 仿真训练广场（精简版：只保留与作答直接相关的元素） ============ */
 function renderExams(){
  document.body.className='';
  document.body.innerHTML = `
@@ -65,7 +65,7 @@ function renderExams(){
  <div class="yc-top-right"><a class="mi" href="index.html" style="text-decoration:none">返回首页</a></div>
  </div>
  <div class="wrap">
- <div class="page-t">考试广场</div>
+ <div class="page-t">仿真训练</div>
  <div class="page-s">教学仿真工具：界面按官方赛场还原，试题内容与正式考试无关。</div>
  ${TASKS.map(t=>{
  const draft=store.get('draft_'+t.id,null);
@@ -86,7 +86,7 @@ function renderExams(){
  <option value="8">8 分钟</option><option value="15">15 分钟</option><option value="30">30 分钟</option>
  ${real?`<option value="${t.minutes}" selected>${t.minutes} 分钟（真题）</option>`:''}
  </select></span>
- <button class="btn btn-o" onclick="enterExam('${t.id}')">去考试</button>
+ <button class="btn btn-o" onclick="enterExam('${t.id}')">进入训练</button>
  </div>
  </div>`;
  }).join('')}

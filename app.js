@@ -654,11 +654,11 @@ function viewRecord(id) {
  window.scrollTo(0, 0);
 }
 
-/* ---------------- 考试结果画像（pe-exam 交卷同步聚合） ---------------- */
+/* ---------------- 仿真训练结果画像（pe-exam 交卷同步聚合） ---------------- */
 function examProfileHTML(hs) {
  const recs = (hs || []).filter(h => h && h.profile);
  if (!recs.length) {
-  return `<div class="board"><h3>考试结果画像</h3>
+ return `<div class="board"><h3>仿真训练结果画像</h3>
  <div class="empty-tip" style="padding:16px 0">暂无仿真训练记录。去 <a href="pe-exam.html">仿真训练</a> 交一次卷，这里会汇总你的编辑倾向（精准型 / 过度编辑型 / 保守型 / 鲁莽型）、编辑命中率与后半程稳定性。</div></div>`;
  }
  const avg = (k) => Math.round(recs.reduce((s, h) => s + (Number(h.profile[k]) || 0), 0) / recs.length * 10) / 10;
@@ -668,7 +668,7 @@ function examProfileHTML(hs) {
  const mainQ = QUADS.slice().sort((a, b) => (quadCount[b] || 0) - (quadCount[a] || 0))[0];
  const quadTxt = QUADS.filter(q => quadCount[q]).map(q => `${q} ${quadCount[q]} 次`).join('　｜　') || '—';
  const stab = avg('stability');
- return `<div class="board"><h3> 考试结果画像（共 ${recs.length} 次交卷）</h3>
+ return `<div class="board"><h3> 仿真训练结果画像（共 ${recs.length} 次交卷）</h3>
   <div class="score-hero" style="margin-bottom:10px">
   <div class="stat-box"><div class="v">${avg('editRate')}%</div><div class="l">平均编辑率</div></div>
   <div class="stat-box"><div class="v green">${avg('effRate')}%</div><div class="l">平均有效编辑率</div></div>
