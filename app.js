@@ -676,6 +676,7 @@ function renderStats() {
  <div class="page-title">
  <h2>我的统计</h2>
  <button class="btn btn-outline" onclick="exportCSV()"> 导出全部明细 (CSV)</button>
+ <button class="btn btn-outline" onclick="exportHomework()"> 导出作业 JSON（交给老师汇总）</button>
  </div>
  <div class="score-hero">
  <div class="stat-box"><div class="v">${hs.length}</div><div class="l">完成次数</div></div>
@@ -846,6 +847,25 @@ ${r.details.map(d => `<div class="blk"><b>第 ${d.i + 1} 段</b>（修订率 ${(
 <p>参考：${esc(d.ref)}</p>${d.notes.map(n => `<p>【${esc(n.type)}】${esc(n.text)}</p>`).join('')}</div>`).join('')}
 </body></html>`;
  download('MTPE成绩报告_' + r.taskName.slice(0, 12) + '.html', html, 'text/html');
+}
+
+/* 导出作业 JSON：交给老师汇总（含账号、作答记录与画像、标注实训成绩、错题本） */
+function exportHomework() {
+ const account = (window.mtpeAccount && window.mtpeAccount()) || getNick() || '未登录';
+ let ann = [], wrong = [];
+ try { ann = JSON.parse(localStorage.getItem('mtpe_ann_stats') || '[]') || []; } catch (e) {}
+ try { wrong = JSON.parse(localStorage.getItem('ann_wrongbook') || '[]') || []; } catch (e) {}
+ const payload = {
+ account: account,
+ exported: now(),
+ tasks: (history() || []).length,
+ history: history() || [],
+ annStats: ann,
+ wrongbook: wrong
+ };
+ const name = 'MTPE作业_' + String(account).replace(/[^\w-]/g, '') + '_' + new Date().toISOString().slice(0, 10) + '.json';
+ download(name, JSON.stringify(payload, null, 1), 'application/json');
+ toast('已导出作业：' + name + '　请交给老师汇总');
 }
 
 function exportCSV() {
