@@ -122,14 +122,22 @@ function quickCompose() {
 
 function compose() {
  const ed = $('#f-ed').value, stage = $('#f-stage').value, dir = $('#f-dir').value,
- dim = $('#f-dim').value, mtOnly = $('#f-mt').value, n = parseInt($('#f-n').value, 10);
+ dim0 = $('#f-dim').value, mtOnly = $('#f-mt').value, n = parseInt($('#f-n').value, 10);
  /* 默认只出种子卷（有官方种子可对照、交卷计分）；
      种子不够时不再自动补盲标句对 —— 学生标完一卷却"不计分"是白练，必须显式勾选才补。 */
  const withBlind = !!(($('#f-blind') || {}).checked) || AUTO_BLIND;
  const seededK = new Set(SEEDS.map(s => s.k));
- let pool = CORPUS_PAIRS.filter(p => (!ed || p.ed === ed) && (!stage || p.stage === stage)
+ const buildPool = (dim) => CORPUS_PAIRS.filter(p => (!ed || p.ed === ed) && (!stage || p.stage === stage)
  && (!dir || p.dir === dir) && (!mtOnly || p.mt)
  && (!dim || (p.tags || []).includes(dim)));
+ let dim = dim0, relaxed = '';
+ let pool = buildPool(dim);
+ /* 练习建议可能指向某个维度，而该维度全库没有句对（如「格式」目前 0 句）：
+     自动放宽维度重来，别让学生点进来撞上"没有可用句对"。 */
+ if (!pool.length && AUTO_BLIND && dim) {
+ relaxed = '「' + esc(dim) + '」维度目前没有可练句对，已改为不限维度组卷。';
+ dim = ''; pool = buildPool(dim);
+ }
  const seeded = pool.filter(p => seededK.has(p.k));
  const blind = pool.filter(p => !seededK.has(p.k));
  const takeSeeded = Math.min(seeded.length, n);
@@ -142,6 +150,7 @@ function compose() {
  : '';
  $('#compose-out').innerHTML = `已组卷 <b>${paper.length}</b> 条：种子对照（计分） ${takeSeeded} 条`
  + (takeBlind ? ` + 盲标（不计分） ${takeBlind} 条。` : '。')
+ + (relaxed ? '<br>' + relaxed : '')
  + shortTip
  + (dim ? `<br>已按错误类型「${esc(dim)}」筛选（该条件共 ${pool.length} 句，其中含机翻底稿 ${pool.filter(p => p.mt).length} 句）。` : '');
  setTimeout(startWork, 600);
