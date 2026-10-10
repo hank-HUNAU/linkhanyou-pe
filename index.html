@@ -20,7 +20,8 @@
 <div id="mtpe-nav"></div>
 <script src="nav.js"></script>
 <script src="pwa.js"></script>
-<script src="secure.js"></script>
+<!-- secure.js（语料密文，约 1.2MB）不在这里加载：已登录时用不到它，
+     只有输入口令时 unlock.js 才按需拉取，页面空下来后会自动预取 -->
 <script src="unlock.js"></script>
 
 <main id="app"></main>

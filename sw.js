@@ -1,15 +1,17 @@
 /* ============================================================
  * sw.js — Service Worker（PWA 离线外壳）
- * 策略：安装时预缓存整站外壳；运行时同源 GET 一律「网络优先、缓存兜底」。
- *   · 在线：始终拿最新版本（部署后刷新即生效，不会卡在旧缓存）
- *   · 离线：命中缓存继续用，机房断网也能练习
- * 注意：语料是加密的（secure.js 密文 + 登录后 localStorage 明文），
- *      缓存里只有密文，Student 未登录拿不到内容，与本站的安全边界不冲突。
+ * 策略（校园网实测：单独一个 1.2MB 文件要下 25 秒，所以策略核心是"少下、只下一次"）：
+ *   · 页面导航：网络优先 + 缓存兜底 → 部署后刷新即见新版，断网仍能开
+ *   · 其它同源资源：缓存优先 + 后台更新（stale-while-revalidate）
+ *     → secure.js 这类大文件只在第一次真正下载，之后每次打开都从本地秒开
+ *   · 预缓存只放"轻外壳"，不放 secure.js：已登录时根本用不到它
+ * 注意：语料是加密的（secure.js 密文 + 登录后本机明文），缓存里只有密文，
+ *      没登录拿不到内容，与本站的安全边界不冲突。
  * 只在 http/https 下生效；本地双击打开（file://）时不会注册。
  * ============================================================ */
-const CACHE = 'mtpe-shell-v1';
+const CACHE = 'mtpe-shell-v2';
 
-/* 站点外壳（含登录解锁所必需的文件） */
+/* 轻外壳：不含 secure.js（按需下载，由 stale-while-revalidate 自动缓存） */
 const CORE = [
   './',
   './index.html',
@@ -25,7 +27,6 @@ const CORE = [
   './home.js',
   './app.js',
   './unlock.js',
-  './secure.js',
   './data.js',
   './corpus.js',
   './annotate-data.js',
@@ -37,6 +38,10 @@ const CORE = [
   './icon-maskable-512.png',
   './apple-touch-icon.png'
 ];
+
+function putSafe(cache, req, res) {
+  try { cache.put(req, res).catch(function () {}); } catch (e) {}
+}
 
 self.addEventListener('install', (e) => {
   e.waitUntil((async () => {
@@ -65,23 +70,34 @@ self.addEventListener('fetch', (e) => {
   try { url = new URL(req.url); } catch (err) { return; }
   if (url.origin !== self.location.origin) return;   // 站外请求不接管
 
-  e.respondWith((async () => {
-    try {
-      const res = await fetch(req);
-      if (res && res.status === 200 && res.type === 'basic') {
-        const cache = await caches.open(CACHE);
-        cache.put(req, res.clone());
-      }
-      return res;
-    } catch (err) {
+  /* ① 页面导航：网络优先（部署后刷新即见新版），断网回落到缓存 */
+  if (req.mode === 'navigate') {
+    e.respondWith((async () => {
       const cache = await caches.open(CACHE);
-      const hit = await cache.match(req, { ignoreSearch: true });
-      if (hit) return hit;
-      if (req.mode === 'navigate') {
+      try {
+        const res = await fetch(req);
+        if (res && res.status === 200 && res.type === 'basic') putSafe(cache, req, res.clone());
+        return res;
+      } catch (err) {
+        const hit = await cache.match(req, { ignoreSearch: true });
+        if (hit) return hit;
         const shell = await cache.match(new URL('./index.html', self.location.href).href);
-        if (shell) return shell;
+        return shell || Response.error();
       }
-      throw err;
-    }
+    })());
+    return;
+  }
+
+  /* ② 静态资源：缓存优先 + 后台更新（大文件因此只下一次） */
+  e.respondWith((async () => {
+    const cache = await caches.open(CACHE);
+    const hit = await cache.match(req, { ignoreSearch: true });
+    const fresh = fetch(req).then((res) => {
+      if (res && res.status === 200 && res.type === 'basic') putSafe(cache, req, res.clone());
+      return res;
+    }).catch(() => null);
+    if (hit) return hit;
+    const res = await fresh;
+    return res || Response.error();
   })());
 });

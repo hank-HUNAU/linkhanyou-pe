@@ -2,6 +2,8 @@
  * unlock.js — 登录解锁（本地内置账号）
  * 流程：口令 → PBKDF2 派生 KEK → 解开内容密钥 → AES-GCM 解密语料明文
  *      → 明文放本机 localStorage → 重载页面供各页面脚本读取
+ * 密文（secure.js）按需加载：首屏不加载它，已登录时完全不需要；
+ *   只有要输入口令时才下载，并在页面空下来后悄悄预取，登录时通常已就绪。
  *
  * 为什么放 localStorage：一级首页登录一次，随后在 找 / 改 / 考 三个二级页
  *   之间往返不必再次输入口令（sessionStorage 按标签页隔离，换标签就会再问一次）。
@@ -18,11 +20,48 @@
   const PAY = 'mtpe_payload';        // 明文载荷（本机共享，带时效）
   const TS = 'mtpe_payload_ts';      // 解锁时刻
   const TTL = 12 * 60 * 60 * 1000;   // 有效期：12 小时
+  const SEAL_SRC = 'secure.js';      // 语料密文：只在"登录解锁"时需要，按需加载
   const NO_GATE = ['teacher.html', 'review.html'];
-  const seal = window.__MTPE_SEAL__ || null;
   const enc = new TextEncoder();
   const b64d = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
   const page = () => (location.pathname.split('/').pop() || 'index.html');
+  const sealNow = () => window.__MTPE_SEAL__ || null;
+
+  /* ---- 密文按需加载（首屏关键路径上不再有 1.2MB 的 secure.js） ---- */
+  let sealLoading = null;
+  function sealReady() {
+    if (sealNow()) return Promise.resolve(true);
+    if (sealLoading) return sealLoading;
+    sealLoading = new Promise(function (resolve) {
+      let s;
+      try { s = document.createElement('script'); } catch (e) { return resolve(false); }
+      s.src = SEAL_SRC;
+      s.async = true;
+      s.onload = function () { resolve(!!sealNow()); };
+      s.onerror = function () { resolve(false); };
+      document.head.appendChild(s);
+    });
+    return sealLoading;
+  }
+  window.mtpeSealReady = sealReady;
+
+  /* 空闲时预取密文：已登录不下载；浏览器开了省流量模式也不下载 */
+  window.mtpePrefetchSeal = function () {
+    if (sealNow() || window.mtpePayload()) return;
+    try { if (navigator.connection && navigator.connection.saveData) return; } catch (e) {}
+    sealReady();
+  };
+
+  /* 解密后按需 gzip 解压（加封时先压缩，下载体积小 3 倍以上） */
+  async function unzipIfNeeded(buf) {
+    const s = sealNow();
+    if (!(s && s.zip)) return buf;
+    if (typeof DecompressionStream !== 'function') {
+      throw new Error('当前浏览器版本过旧，无法解压语料：请用较新的 Chrome / Edge / Safari 打开');
+    }
+    const stream = new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
 
   /* 语料明文读取口：corpus.js / annotate-data.js 注水桩都从这里取。
      带过期判定，过期即视为未登录，并顺手清掉本机残留的明文。 */
@@ -58,7 +97,7 @@
   async function kekOf(pwd, salt) {
     const km = await crypto.subtle.importKey('raw', enc.encode(pwd), 'PBKDF2', false, ['deriveBits']);
     const bits = await crypto.subtle.deriveBits(
-      { name: 'PBKDF2', salt: enc.encode(salt), iterations: seal.iter, hash: 'SHA-256' }, km, 256);
+      { name: 'PBKDF2', salt: enc.encode(salt), iterations: sealNow().iter, hash: 'SHA-256' }, km, 256);
     return crypto.subtle.importKey('raw', bits, 'AES-GCM', false, ['decrypt']);
   }
 
@@ -66,14 +105,24 @@
     const idEl = document.getElementById('mtpe-acc');
     const pwEl = document.getElementById('mtpe-pw');
     const err = document.getElementById('mtpe-login-err');
+    const btn = document.getElementById('mtpe-login-btn');
     const fail = (m) => { if (err) { err.textContent = m; err.style.display = 'block'; } };
     const id = ((idEl && idEl.value) || '').trim();
-    const k = seal && seal.keys ? seal.keys.filter((x) => x.id === id)[0] : null;
-    if (!k) return fail('账号不存在');
     if (!(window.crypto && crypto.subtle)) return fail('当前环境不支持安全校验，请用 https 或较新的浏览器打开');
-    const btn = document.getElementById('mtpe-login-btn');
-    if (btn) { btn.disabled = true; btn.textContent = '解锁中…'; }
+    if (btn) { btn.disabled = true; btn.textContent = sealNow() ? '解锁中…' : '准备语料中…'; }
     if (err) err.style.display = 'none';
+    const okSeal = await sealReady();
+    const seal = sealNow();
+    if (!okSeal || !seal) {
+      if (btn) { btn.disabled = false; btn.textContent = '登录'; }
+      return fail('语料密文没能加载：请检查网络后重试');
+    }
+    const k = seal.keys ? seal.keys.filter((x) => x.id === id)[0] : null;
+    if (!k) {
+      if (btn) { btn.disabled = false; btn.textContent = '登录'; }
+      return fail('账号不存在');
+    }
+    if (btn) btn.textContent = '解锁中…';
     try {
       const kek = await kekOf(pwEl ? pwEl.value : '', k.salt);
       let rawKey;
@@ -81,7 +130,8 @@
       catch (e) { throw new Error('密码不正确'); }
       const ck = await crypto.subtle.importKey('raw', rawKey, 'AES-GCM', false, ['decrypt']);
       const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64d(seal.nonce) }, ck, b64d(seal.data));
-      localStorage.setItem(PAY, new TextDecoder().decode(plain));
+      const bytes = await unzipIfNeeded(plain);
+      localStorage.setItem(PAY, new TextDecoder().decode(bytes));
       localStorage.setItem(TS, String(Date.now()));
       try { sessionStorage.removeItem(PAY); } catch (e) {}    // 清掉旧版残留
       localStorage.setItem(KEY, id);
@@ -133,7 +183,6 @@
     const a = document.getElementById('mtpe-acc'); if (a) a.focus();
   }
 
-  if (!seal) console.error('secure.js 未加载：语料密文缺失');
   if (NO_GATE.indexOf(page()) < 0) {
     /* 旧版把明文放在本标签页 sessionStorage 里：遇到就迁移过来，
        免得升级后正在练的同学被迫重登一次。 */
@@ -147,4 +196,12 @@
     } catch (e) {}
     if (!window.mtpePayload()) gate();
   }
+
+  /* 首屏渲染完、页面空下来后再悄悄预取密文（不阻塞打开页面） */
+  function schedulePrefetch() {
+    const fire = () => setTimeout(() => window.mtpePrefetchSeal(), 800);
+    if (document.readyState === 'complete') fire();
+    else window.addEventListener('load', fire);
+  }
+  schedulePrefetch();
 })();
