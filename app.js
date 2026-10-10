@@ -147,13 +147,14 @@ function openModal(html) {
 }
 function closeModal() { $('#modal-mask').classList.add('hidden'); }
 
-/* ---------------- 考试广场 ---------------- */
+/* ---------------- 译后编辑实训 ---------------- */
 function renderPlaza() {
+ const isTeacher = (window.mtpeIsTeacher && window.mtpeIsTeacher()) || localStorage.getItem('mtpe_role') === 'teacher';
  const tasks = allTasks();
  const html = `
  <div class="plaza-head">
- <h2>考试广场</h2>
- <p>选择一套任务和作答模式。竞赛模拟提供倒计时、自动交卷与排行榜；自由练习可随时保存草稿；教学演示附错误点评。
+ <h2>译后编辑实训</h2>
+ <p>${isTeacher ? '选择一套任务和作答模式。竞赛模拟提供倒计时、自动交卷与排行榜；自由练习可随时保存草稿；教学演示附错误点评。' : '选择一套任务和作答模式。竞赛模拟提供倒计时、自动交卷与排行榜；自由练习可随时保存草稿。'}
  ｜ <a href="MQM错误类型参考手册.html" target="_blank">MQM 错误类型参考手册</a></p>
  <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
  <button class="btn btn-ghost" onclick="go('stats')"> 我的统计</button>
@@ -164,7 +165,7 @@ function renderPlaza() {
  <div class="mode-strip">
  <div class="mode-card"><b><span class="ic"></span>竞赛模拟</b><span>限时作答、离开页面计数、交卷后进入排行榜（仿大赛流程）</span></div>
  <div class="mode-card"><b><span class="ic"></span>自由练习</b><span>不限时、可保存草稿，聚焦修订痕迹与修订率反馈</span></div>
- <div class="mode-card"><b><span class="ic"></span>教学演示</b><span>逐段查看错误类型点评与参考译文，适合课堂讲解</span></div>
+ ${isTeacher ? '<div class="mode-card"><b><span class="ic"></span>教学演示</b><span>逐段查看错误类型点评与参考译文，适合课堂讲解</span></div>' : ''}
  </div>
  <div class="task-grid">
  ${tasks.map(t => {
@@ -188,7 +189,7 @@ function renderPlaza() {
  <div class="task-actions">
  <button class="btn btn-primary" onclick="openSetup('${t.id}','competition')"> 竞赛模拟</button>
  <button class="btn btn-outline" onclick="openSetup('${t.id}','practice')"> 自由练习</button>
- <button class="btn btn-ghost" onclick="openSetup('${t.id}','demo')"> 教学演示</button>
+ ${isTeacher ? `<button class="btn btn-ghost" onclick="openSetup('${t.id}','demo')"> 教学演示</button>` : ''}
  ${t.custom ? `<button class="btn btn-danger" onclick="delCustom('${t.id}')">删除</button>` : ''}
  </div>
  </div>`;
@@ -314,14 +315,16 @@ function onAnswerInput(i, val) {
  const row = document.querySelector('.seg-row[data-i="' + i + '"]');
  if (row) {
  const st = row.querySelector('.seg-status');
- st.textContent = val.trim() ? ' 已编辑' : '○ 待编辑';
- st.className = 'seg-status' + (val.trim() ? ' done' : '');
+ const orig = (S.task.segs[i].mt || '').trim();
+ const edited = !!val.trim() && val.trim() !== orig;
+ st.textContent = edited ? ' 已编辑' : '○ 待编辑';
+ st.className = 'seg-status' + (edited ? ' done' : '');
  }
  updateProgress();
  if (S.mode === 'practice') {
  clearTimeout(S.draftSaveTm);
  S.draftSaveTm = setTimeout(() => {
- const done = S.answers.filter(a => a.trim()).length;
+ const done = S.answers.filter((a, k) => a && a.trim() && a.trim() !== (S.task.segs[k].mt || '').trim()).length;
  store.set('draft_' + S.task.id, { answers: S.answers, done, savedAt: now() });
  }, 600);
  }
@@ -329,11 +332,11 @@ function onAnswerInput(i, val) {
 
 function updateProgress() {
  if (!S) return;
- const done = S.answers.filter(a => a.trim()).length;
+ const done = S.answers.filter((a, k) => a && a.trim() && a.trim() !== (S.task.segs[k].mt || '').trim()).length;
  const fill = $('#progress-fill');
  const txt = $('#progress-txt');
  if (fill) fill.style.width = (done / S.task.segs.length * 100) + '%';
- if (txt) txt.textContent = done + '/' + S.task.segs.length + ' 段';
+ if (txt) txt.textContent = '已编辑 ' + done + '/' + S.task.segs.length + ' 段';
 }
 
 /* ---------------- 答题界面渲染 ---------------- */
@@ -365,7 +368,7 @@ function renderExam() {
  ${mode === 'competition' ? `<span class="cheat-badge hidden" id="cheat-badge">已离开页面 0 次</span>` : ''}
  </div>
  <div class="progress-wrap">
- <span class="muted" id="progress-txt">0/${task.segs.length} 段</span>
+ <span class="muted" id="progress-txt">已编辑 0/${task.segs.length} 段</span>
  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
  ${timerHtml}
  <button class="btn btn-primary" onclick="confirmSubmit()">交卷</button>
@@ -454,9 +457,11 @@ function renderExam() {
 function updateSegStatus(i) {
  const st = $('#st-' + i);
  if (st) {
- const v = S.answers[i];
- st.textContent = v && v.trim() ? ' 已编辑' : '○ 待编辑';
- st.className = 'seg-status' + (v && v.trim() ? ' done' : '');
+ const v = (S.answers[i] || '').trim();
+ const orig = (S.task.segs[i].mt || '').trim();
+ const edited = !!v && v !== orig;
+ st.textContent = edited ? ' 已编辑' : '○ 待编辑';
+ st.className = 'seg-status' + (edited ? ' done' : '');
  }
 }
 
@@ -484,7 +489,7 @@ function insertTerm(i) {
 /* ---------------- 交卷 ---------------- */
 function confirmSubmit() {
  if (!S) return;
- const done = S.answers.filter(a => a.trim()).length;
+ const done = S.answers.filter((a, k) => a && a.trim() && a.trim() !== (S.task.segs[k].mt || '').trim()).length;
  const undone = S.task.segs.length - done;
  openModal(`
  <h3>确认交卷？</h3>
@@ -508,7 +513,7 @@ function submitSession() {
  const sim = empty ? 0 : similarity(pe, g.ref);
  return { i, src: g.src, mt: g.mt, ref: g.ref, pe, ter, sim, empty, notes: g.notes || [] };
  });
- const segDone = details.filter(d => !d.empty).length;
+ const segDone = details.filter(d => d.pe && d.pe !== (d.mt || '').trim()).length;
  const avgTer = segDone ? details.filter(d => !d.empty).reduce((s, d) => s + d.ter, 0) / segDone : 1;
  const score = Math.round(details.reduce((s, d) => s + d.sim, 0) / details.length * 10) / 10;
  const words = task.segs.reduce((s, g) => s + wordCount(g.src), 0);
@@ -535,7 +540,7 @@ function renderResult(r) {
  <h2> ${r.mode === 'competition' ? '竞赛成绩' : r.mode === 'demo' ? '演示结果' : '练习结果'} · ${esc(r.taskName)}</h2>
  <div style="display:flex;gap:8px">
  <button class="btn btn-outline" onclick="exportReport('${r.id}')"> 导出成绩报告</button>
- <button class="btn btn-primary" onclick="go('plaza')">返回考试广场</button>
+ <button class="btn btn-primary" onclick="go('plaza')">返回译后编辑实训</button>
  </div>
  </div>
  <div class="score-hero">
@@ -634,7 +639,7 @@ function renderStats() {
  try { hasAnn = (JSON.parse(localStorage.getItem('mtpe_ann_stats') || '[]')).length > 0; } catch (e) {}
  if (!hs.length && !hasAnn) {
  app.innerHTML = `<div class="page-title"><h2>我的统计</h2></div>
- <div class="empty-tip">还没有作答记录，去<a href="#" onclick="go('plaza');return false">考试广场</a>开始第一次练习，或去<a href="annotate.html" target="_blank">标注实训</a>完成一卷错误标注。</div>`;
+ <div class="empty-tip">还没有作答记录，去<a href="#" onclick="go('plaza');return false">译后编辑实训</a>开始第一次练习，或去<a href="annotate.html" target="_blank">标注实训</a>完成一卷错误标注。</div>`;
  return;
  }
  const totalWords = hs.reduce((s, h) => s + h.words, 0);
@@ -866,7 +871,7 @@ Artificial intelligence will not replace translators, but translators who use AI
 hallucination=幻觉"></textarea>
  </div>
  <button class="btn btn-primary" style="width:100%" onclick="doImport()">创建任务</button>
- <p class="muted" style="margin-top:10px">任务保存在本浏览器（localStorage），可在考试广场查看与删除。</p>
+ <p class="muted" style="margin-top:10px">任务保存在本浏览器（localStorage），可在译后编辑实训查看与删除。</p>
  </div>
  </div>
  </div>`;
