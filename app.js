@@ -112,6 +112,11 @@ const getNick = () => store.get('nickname', '');
 const allTasks = () => TASKS;
 const history = () => store.get('history', []);
 
+/* 作答态：隐藏全站顶栏，作答页自己那条就是顶部栏（见 style.css 的 body.answering） */
+function setAnswering(on) {
+ try { document.body.classList.toggle('answering', !!on); } catch (e) {}
+}
+
 /* ---------------- 视图切换 ---------------- */
 function go(v) {
  if (S && view !== v && (v === 'plaza' || v === 'stats' || v === 'import')) {
@@ -164,6 +169,7 @@ function closeModal() { $('#modal-mask').classList.add('hidden'); }
 
 /* ---------------- 译后编辑实训 ---------------- */
 function renderPlaza() {
+ setAnswering(false);
  // 课堂演示临时开关：practice.html#demo（只在本机演示时有意义，公开站点无入口）
  const isTeacher = location.hash.indexOf('demo') >= 0;
  const tasks = allTasks();
@@ -365,6 +371,7 @@ function highlightTerms(src) {
 function showTerm(title) { toast(title.replace('术语：', ' ')); }
 
 function renderExam() {
+ setAnswering(true);
  const { task, mode } = S;
   const modeChip = mode === 'competition' ? '<span class="mode-chip">限时练习</span>'
  : mode === 'demo' ? '<span class="mode-chip demo">教学演示</span>'
@@ -383,7 +390,7 @@ function renderExam() {
  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
  ${timerHtml}
  <button class="btn btn-primary" onclick="confirmSubmit()">交卷</button>
- <button class="btn btn-ghost" onclick="go('plaza')">退出</button>
+ <button class="btn btn-ghost" onclick="go('plaza')">退出练习</button>
  </div>
  </div>
  <div class="exam-layout">
@@ -540,6 +547,7 @@ function submitSession() {
 
 /* ---------------- 成绩页 ---------------- */
 function renderResult(r) {
+ setAnswering(false);
  app.innerHTML = `
  <div class="page-title">
  <h2> ${r.mode === 'competition' ? '限时练习成绩' : r.mode === 'demo' ? '演示结果' : '练习结果'} · ${esc(r.taskName)}</h2>
@@ -579,6 +587,7 @@ function renderResult(r) {
 
 /* ---------------- 我的统计 ---------------- */
 function renderStats() {
+ setAnswering(false);
  const hs = history();
  let hasAnn = false;
  try { hasAnn = (JSON.parse(localStorage.getItem('mtpe_ann_stats') || '[]')).length > 0; } catch (e) {}

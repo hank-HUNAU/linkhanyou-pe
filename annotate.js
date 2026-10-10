@@ -37,6 +37,11 @@ function saveWrongbook(list) { store.set('wrongbook', list.slice(0, 300)); }
 function clearWrong() { store.del('wrongbook'); renderSetup(); toast('错题本已清空'); }
 function wrongKeys() { return [...new Set(wrongbook().map(w => w.k))]; }
 
+/* 作答态：隐藏全站顶栏，标注页自己那条就是顶部栏（见 style.css 的 body.answering） */
+function setAnswering(on) {
+ try { document.body.classList.toggle('answering', !!on); } catch (e) {}
+}
+
 /* ---------------- 全局状态 ---------------- */
 let V = 'setup';
 let A = null; // {paper:[pair...], idx, anns:{k:[...]}, seeded:Set(k)}
@@ -44,6 +49,7 @@ let AUTO_BLIND = false;   // 由带 go=1 的练习建议链接置位：允许补
 
 /* ---------------- 组卷 ---------------- */
 function renderSetup() {
+ setAnswering(false);
  V = 'setup';
  const P = qs();
  const eds = [...new Set(CORPUS_PAIRS.map(p => p.ed))].sort();
@@ -183,6 +189,7 @@ function resumePaper() {
 function startWork() { renderWork(); }
 
 function renderWork() {
+ setAnswering(true);
  V = 'work';
  const p = A.paper[A.idx];
  const k = p.k;
@@ -386,6 +393,7 @@ function submitAnn() {
 
 /* ---------------- 结果页 ---------------- */
 function renderResult(r) {
+ setAnswering(false);
  V = 'result';
  app.innerHTML = `
  <div class="top">

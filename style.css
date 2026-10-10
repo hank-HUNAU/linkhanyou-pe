@@ -105,6 +105,10 @@ main { max-width: 1180px; margin: 0 auto; padding: 26px 20px 60px; }
   display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
   position: sticky; top: calc(var(--mtpe-nav-h, 57px) + 6px); z-index: 40;
 }
+/* 作答态（改 / 找）：隐藏全站顶栏，页面自己那条就是顶部栏。
+   两条栏叠着白占一行高度；更麻烦的是"退出"（回列表）与顶栏的"退出"（退出登录）同名。 */
+body.answering #mtpe-nav { display: none !important; }
+body.answering { --mtpe-nav-h: 0px; }
 .exam-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .exam-title .mode-chip { font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 999px; background: var(--primary-light); color: var(--primary); }
 .mode-chip.demo { background: var(--amber-bg); color: var(--amber); }
