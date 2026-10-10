@@ -59,9 +59,31 @@
     return '在 Chrome / Edge 里打开本页可安装到桌面（离线可用）；若没看到按钮，点浏览器地址栏右侧的「安装」图标即可。';
   }
 
+  /* 只给一条"下一步"：学生进门先看到该做什么，而不是先看懂三个入口的区别。
+     依据只有现有数据（草稿 / 标注 F1 / 练习次数 / 考场次数），不新增采集。 */
+  function nextStep(s, dr) {
+    if (dr.length) {
+      return { href: 'practice.html', cta: '继续上次练习', why: '有 ' + dr.length + ' 份没做完的练习草稿，接着改比重新开一套划算。' };
+    }
+    if (!s.annN && !s.practiceN && !s.examN) {
+      return { href: 'annotate.html', cta: '开始第一练 · 标注 10 句', why: '先练「找」：判断哪里该改是译后编辑的第一步，10 句约 10 分钟，交卷立即有查准率 / 查全率 / F1。' };
+    }
+    if (s.annN && s.annF1 != null && s.annF1 < 70) {
+      return { href: 'annotate.html', cta: '加练「找」10 句', why: '「找」的平均 F1 是 ' + s.annF1 + '%——漏检或多余标注还偏多，这是当前最短的一块板。' };
+    }
+    if (!s.practiceN) {
+      return { href: 'practice.html', cta: '开始练「改」', why: '还没做过整篇改写：在机翻底稿上动手改一遍，才知道"该改的地方"改到什么程度算够。' };
+    }
+    if (!s.examN) {
+      return { href: 'pe-exam.html', cta: '去「考」估一次分', why: '还没交过卷。练习分不是考场口径，先摸清自己在考场口径下的位置。' };
+    }
+    return { href: 'pe-exam.html', cta: '再考一次', why: '考场最好成绩 ' + num(s.examBest) + ' 分。换一套没做过的卷子，检验这段时间的进步。' };
+  }
+
   function render() {
     const s = summary();
     const dr = drafts();
+    const nx = nextStep(s, dr);
     const lastBits = [];
     if (s.lastPractice) lastBits.push('上次练习《' + esc(s.lastPractice.taskName) + '》得分 ' + s.lastPractice.score);
     if (s.lastExam) lastBits.push('上次模拟参赛《' + esc(s.lastExam.taskName) + '》得分 ' + s.lastExam.score
@@ -73,6 +95,15 @@
     <p>按「<b>找 → 改 → 考</b>」三步走练机器翻译译后编辑：先练<strong>发现哪里该改</strong>，再练<strong>动手改</strong>，最后进考场练<strong>临场状态</strong>。
     练「找」「改」是实训，<strong>「考」是唯一考场口径</strong>的模拟参赛。语料为历届大赛真题；登录一次，三个页面之间往返无需再登录。</p>
   </section>
+
+  <div class="home-next">
+    <div class="hn-tag">下一步</div>
+    <div class="hn-body">
+      <div class="hn-why">${esc(nx.why)}</div>
+      <div class="hn-act"><a class="btn btn-primary" href="${nx.href}">${esc(nx.cta)}</a>
+      <a class="btn btn-ghost" href="practice.html#stats">看我的统计</a></div>
+    </div>
+  </div>
 
   <div class="step-strip home-steps">
     <a class="step-card" href="annotate.html">
@@ -103,7 +134,6 @@
       <div class="stat-box"><div class="v amber">${num(s.examBest)}</div><div class="l">「考」最高分</div></div>
     </div>
     ${lastBits.length ? `<div class="home-last">${lastBits.join(' ｜ ')}</div>` : ''}
-    ${dr.length ? `<div class="draft-tip" style="margin-top:8px">检测到 ${dr.length} 份未完成的练习草稿，进「② 改」可以接着改。</div>` : ''}
     <div class="home-actions">
       <a class="btn btn-primary" href="annotate.html">开始练「找」</a>
       <a class="btn btn-primary" href="practice.html">开始练「改」</a>
@@ -117,8 +147,7 @@
   <div class="board">
     <h3>学习资源</h3>
     <p class="muted" style="line-height:2">
-      · <a href="MQM错误类型参考手册.html">MQM 错误类型参考手册</a>——M1–M9 / M0 的定义与严重度判据，标注与复盘都用它<br>
-      · 导出成绩（CSV 明细 / 作业 JSON）在「② 改 → 我的统计」里，作业 JSON 可交给老师汇总班级成绩
+      · <a href="MQM错误类型参考手册.html">MQM 错误类型参考手册</a>：M1–M9 / M0 的定义与严重度判据　｜　导出成绩（CSV / 作业 JSON）在「② 改 → 我的统计」
     </p>
   </div>`;
 

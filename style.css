@@ -288,6 +288,18 @@ th, td { border-color: var(--border) !important; }
 .home-steps .step-card span { font-size: 13px; line-height: 1.7; }
 .home-steps .step-card em { font-style: normal; font-size: 12px; color: var(--muted); margin-top: 6px; }
 .home-progress { margin-top: 22px; }
+.home-next {
+  display: flex; gap: 14px; align-items: flex-start;
+  background: var(--primary-light); border: 1px solid rgba(47, 95, 224, .22);
+  border-left: 4px solid var(--primary); border-radius: var(--radius);
+  padding: 14px 16px; margin: 4px 0 20px;
+}
+.home-next .hn-tag { font-size: 12px; font-weight: 600; color: var(--primary); flex-shrink: 0; padding-top: 2px; }
+.home-next .hn-body { flex: 1; min-width: 0; }
+.home-next .hn-why { font-size: 14px; color: var(--text); line-height: 1.7; }
+.home-next .hn-act { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.home-next .hn-act .btn { text-decoration: none; }
+@media (max-width: 620px) { .home-next { flex-direction: column; gap: 8px; } }
 .home-progress .score-hero { margin: 12px 0 4px; }
 .home-last { font-size: 13px; color: var(--text-2); margin-top: 10px; }
 .home-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }

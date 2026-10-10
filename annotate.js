@@ -84,7 +84,7 @@ function renderSetup() {
  <label class="muted" style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;margin-top:8px">
  <input type="checkbox" id="f-blind"> 种子不足时补盲标句对（不计分）
  </label>
- <div class="muted" style="font-size:12.5px;margin-top:6px">默认只出<b>种子对照卷</b>：全库 ${seedCount} 条有官方种子标注（交卷计分），其余为盲标练习（不计分）。</div>
+ <div class="muted" style="font-size:12.5px;margin-top:6px">默认只出<b>种子对照卷</b>（交卷计分）：全库 ${seedCount} 条有官方种子标注。</div>
  <div id="compose-out" class="page-s" style="margin-top:10px"></div>
  </div>
  ${wbN ? `<div class="card"><h3> 错题本（${wbN} 句 / ${wb.length} 处待回练）</h3>
