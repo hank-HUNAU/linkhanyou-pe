@@ -109,8 +109,7 @@ function now() { return new Date().toLocaleString('zh-CN', { hour12: false }); }
 let view = 'plaza';
 let S = null; // 当前答题会话 {task, mode, answers[], startTs, duration, cheat, timer, idx}
 const getNick = () => store.get('nickname', '');
-const customTasks = () => store.get('custom_tasks', []);
-const allTasks = () => TASKS.concat(customTasks());
+const allTasks = () => TASKS;
 const history = () => store.get('history', []);
 
 /* ---------------- 视图切换 ---------------- */
@@ -125,7 +124,6 @@ function go(v) {
  if (nav) nav.classList.add('active');
  if (v === 'plaza') renderPlaza();
  else if (v === 'stats') renderStats();
- else if (v === 'import') renderImport();
  window.scrollTo(0, 0);
 }
 
@@ -178,7 +176,6 @@ function renderPlaza() {
  <a class="btn btn-ghost" href="annotate.html" style="text-decoration:none">① 找 · 标注实训</a>
  <a class="btn btn-ghost" href="pe-exam.html" style="text-decoration:none">③ 考 · 模拟参赛</a>
  <button class="btn btn-ghost" onclick="go('stats')">我的统计</button>
- <button class="btn btn-ghost" onclick="go('import')">导入自定义任务</button>
  </div>
  </div>
  <div class="page-s" style="margin:14px 0 18px">限时练习：8 / 15 / 30 分钟计时，离开页面计数 ｜ 自由练习：不限时、可存草稿</div>
@@ -193,7 +190,6 @@ function renderPlaza() {
  <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
  <span class="tag pair">${esc(t.pair)}</span>
  <span class="tag domain">${esc(t.domain)}</span>
- ${t.custom ? '<span class="tag custom">自建</span>' : ''}
  </div>
  </div>
  <div class="meta">
@@ -205,20 +201,11 @@ function renderPlaza() {
  <button class="btn btn-primary" onclick="openSetup('${t.id}','competition')"> 限时练习</button>
  <button class="btn btn-outline" onclick="openSetup('${t.id}','practice')"> 自由练习</button>
  ${isTeacher ? `<button class="btn btn-ghost" onclick="openSetup('${t.id}','demo')"> 教学演示</button>` : ''}
- ${t.custom ? `<button class="btn btn-danger" onclick="delCustom('${t.id}')">删除</button>` : ''}
  </div>
  </div>`;
  }).join('')}
  </div>`;
  app.innerHTML = html;
-}
-
-function delCustom(id) {
- if (!confirm('确定删除该自建任务及其草稿？历史成绩会保留。')) return;
- store.set('custom_tasks', customTasks().filter(t => t.id !== id));
- store.del('draft_' + id);
- renderPlaza();
- toast('已删除');
 }
 
 /* ---------------- 竞赛设置弹窗 ---------------- */
@@ -553,8 +540,6 @@ function submitSession() {
 
 /* ---------------- 成绩页 ---------------- */
 function renderResult(r) {
- const board = buildBoard(r);
-
  app.innerHTML = `
  <div class="page-title">
  <h2> ${r.mode === 'competition' ? '限时练习成绩' : r.mode === 'demo' ? '演示结果' : '练习结果'} · ${esc(r.taskName)}</h2>
@@ -572,22 +557,7 @@ function renderResult(r) {
  </div>
  <div class="score-note"> 得分说明：综合得分基于与参考译文的<b>词级重合度</b>，同义改写或更优表达可能被低估，仅供历次练习横向对比；修订率按词级编辑量计算，<b>中文按字切分</b>，跨语向比较需谨慎。请结合下方逐段修订痕迹自行判断质量。</div>
 
- <div class="board">
- <h3> 排行榜（本任务）</h3>
- <table>
- <tr><th>名次</th><th>选手</th><th>得分</th><th>说明</th></tr>
- ${board.rows.map(row => `
- <tr class="${row.me ? 'me' : ''}">
- <td class="${row.rank === 1 ? 'rank-1' : ''}">${row.rank <= 3 ? ['', '', ''][row.rank - 1] : '#' + row.rank}</td>
- <td>${esc(row.name)}${row.me ? '（我）' : ''}</td>
- <td><b>${row.score}</b></td><td class="muted">${esc(row.note)}</td>
- </tr>`).join('')}
- </table>
- <div class="board-note">* 榜单由内置演示数据与本人历史成绩合并生成，仅用于教学演示。</div>
- </div>
-
  <h3 style="margin:6px 0 12px"> 逐段修订痕迹与点评</h3>
- <div class="score-note" style="background:var(--primary-light)"> <b>MQM 自评</b>：给每处修改选择错误类别（可多选，对应 MQM 简化版八类），保存后将在「我的统计」生成你的<b>错误敏感度画像</b>。</div>
  ${r.details.map(d => `
  <div class="review-block">
  <h4>第 ${d.i + 1} 段
@@ -603,53 +573,8 @@ function renderResult(r) {
  <div class="rv-cell"><div class="lab">参考译文 Reference</div>${esc(d.ref)}</div>
  </div>
  ${d.notes.length ? `<div style="margin-top:8px">${d.notes.map(n => `<div class="note-item"><b>${esc(n.type)}</b>${esc(n.text)}</div>`).join('')}</div>` : ''}
- ${!d.empty ? `
- <div style="margin-top:8px" data-tagrow="${d.i}">
- <span class="muted" style="font-size:12.5px;margin-right:6px">MQM 自评：</span>
- ${MQM_TAGS.map(t => `<span class="mqm-chip${(d.mqmTags || []).includes(t.id) ? ' on' : ''}" data-tag="${t.id}" onclick="toggleTag(${d.i},this)">${t.label}</span>`).join('')}
- </div>` : ''}
  </div>`).join('')}
- <div style="display:flex;gap:8px;margin:4px 0 30px">
- <button class="btn btn-primary" onclick="saveMqmTags('${r.id}')"> 保存 MQM 自评</button>
- <span class="muted" style="align-self:center">标注会同步到「我的统计」的错误敏感度画像</span>
- </div>`;
-}
-
-/* ---------------- MQM 自评 ---------------- */
-const MQM_TAGS = [
- { id: 'acc', label: '误译/幻觉' },
- { id: 'omi', label: '漏译/增译' },
- { id: 'term', label: '术语问题' },
- { id: 'num', label: '数字与单位' },
- { id: 'gram', label: '语法搭配' },
- { id: 'spell', label: '拼写标点' },
- { id: 'style', label: '风格语域' },
- { id: 'fmt', label: '格式标记' }
-];
-function toggleTag(i, chip) {
- if (chip) chip.classList.toggle('on');
-}
-function saveMqmTags(recordId) {
- const hs = history();
- const rec = hs.find(h => h.id === recordId);
- if (!rec) { toast('未找到记录'); return; }
- document.querySelectorAll('[data-tagrow]').forEach(row => {
- const i = parseInt(row.dataset.tagrow, 10);
- const tags = [...row.querySelectorAll('.mqm-chip.on')].map(c => c.dataset.tag);
- if (rec.details[i]) rec.details[i].mqmTags = tags;
- });
- saveHistory(hs);
- toast('MQM 自评已保存，可在「我的统计」查看错误敏感度画像');
-}
-
-function buildBoard(r) {
- const demo = (DEMO_BOARD[r.taskId] || []).map(([name, score]) => ({ name, score, note: '内置演示数据' }));
- const mine = history().filter(h => h.taskId === r.taskId && h.mode === 'competition')
- .map(h => ({ name: h.nickname, score: h.score, note: h.date, me: h.id === r.id }));
- if (!mine.length) mine.push({ name: r.nickname, score: r.score, note: r.date, me: true });
- const rows = demo.concat(mine).sort((a, b) => b.score - a.score);
- rows.forEach((row, i) => { row.rank = i + 1; });
- return { rows: rows.slice(0, 12) };
+ `;
 }
 
 /* ---------------- 我的统计 ---------------- */
@@ -665,7 +590,7 @@ function renderStats() {
  const totalWords = hs.reduce((s, h) => s + h.words, 0);
  const avgScore = hs.length ? Math.round(hs.reduce((s, h) => s + h.score, 0) / hs.length * 10) / 10 : '—';
  const avgTer = hs.length ? Math.round(hs.reduce((s, h) => s + h.ter, 0) / hs.length * 10) / 10 : '—';
- const recent = hs.slice(0, 10).reverse();
+ const recent = hs.slice(0, 6).reverse();
 
  app.innerHTML = `
  <div class="page-title">
@@ -680,9 +605,7 @@ function renderStats() {
  <div class="stat-box"><div class="v amber">${avgTer}%</div><div class="l">平均修订率</div></div>
  </div>
  ${annStatsHTML()}
- ${mqmProfileHTML(hs)}
  ${examProfileHTML(hs)}
- ${wrongbookHTML()}
  <div class="board"><h3> 最近 ${recent.length} 次得分走势</h3>
  <div class="chart">
  ${recent.map(h => `
@@ -749,22 +672,6 @@ function examProfileHTML(hs) {
   </div>`;
 }
 
-/* ---------------- 错题本（标注实训 → 错题回练闭环） ---------------- */
-function wrongbookHTML() {
- let wb = [];
- try { wb = JSON.parse(localStorage.getItem('ann_wrongbook') || '[]') || []; } catch (e) {}
- const keys = [...new Set(wb.map(w => w.k))];
- if (!keys.length) return '';
- const kinds = {};
- wb.forEach(w => { kinds[w.kind] = (kinds[w.kind] || 0) + 1; });
- const kindTxt = Object.keys(kinds).map(k => k + ' ' + kinds[k]).join(' ｜ ');
- return `<div class="board"><h3> 错题本（${keys.length} 句 / ${wb.length} 处）</h3>
- <div class="board-note" style="margin-top:0">来自标注实训中漏检 / 标签判错 / 严重度判偏的种子错误：${kindTxt}。</div>
- <div style="margin-top:10px"><a class="btn btn-outline" href="annotate.html?wrong=1" style="text-decoration:none">错题回练</a>
- <span class="muted" style="margin-left:10px">只重做这些句子，交卷后同样按种子对照计分。</span></div>
- </div>`;
-}
-
 /* ---------------- 标注实训能力（annotate.html 同步） ---------------- */
 function annStatsHTML() {
  let st = [];
@@ -782,41 +689,13 @@ function annStatsHTML() {
  <div class="stat-box"><div class="v amber">${st.reduce((s, x) => s + (x.tagWrong || 0) + (x.sevWrong || 0), 0)}</div><div class="l">累计标签/严重度偏差</div></div>
  </div>
  <table>
- <tr><th>时间</th><th>查准率</th><th>查全率</th><th>F1</th><th>标签/严重度偏差</th><th>漏检</th><th>多余</th><th>质量分偏差</th></tr>
+ <tr><th>时间</th><th>查准率</th><th>查全率</th><th>F1</th><th>标签/严重度偏差</th><th>漏检</th><th>多余</th></tr>
  ${st.slice(0, 10).map(x => `<tr>
  <td class="muted">${esc(x.date)}</td><td><b>${x.precision}%</b></td><td>${x.recall}%</td><td>${x.f1}%</td>
  <td>${(x.tagWrong || 0) + (x.sevWrong || 0)}</td><td>${x.FN || 0}</td><td>${x.FP || 0}</td>
- <td>${x.seedQ != null && x.studentQ != null ? (x.studentQ - x.seedQ > 0 ? '+' : '') + Math.round((x.studentQ - x.seedQ) * 10) / 10 : '—'}</td>
  </tr>`).join('')}
  </table>
- <div class="board-note">数据来自 <a href="annotate.html">标注实训</a> 交卷自动同步；质量分偏差=你的 MQM-B 评分 − 种子评分，正值说明你判定的问题偏少（警惕漏检），负值偏多（警惕过度标注）。</div>
- </div>`;
-}
-
-/* ---------------- 错误敏感度画像（MQM 自评聚合） ---------------- */
-function mqmProfileHTML(hs) {
- const count = {};
- let total = 0;
- hs.forEach(h => (h.details || []).forEach(d => (d.mqmTags || []).forEach(t => { count[t] = (count[t] || 0) + 1; total++; })));
- if (!total) {
- return `<div class="board"><h3> 错误敏感度画像（MQM 自评）</h3>
- <div class="empty-tip" style="padding:16px 0">暂无标注。交卷后在结果页逐段完成 MQM 自评并保存，这里会生成你的错误敏感度画像。</div></div>`;
- }
- const max = Math.max(...Object.values(count));
- const rows = MQM_TAGS.map(t => ({ label: t.label, n: count[t.id] || 0 }))
- .sort((a, b) => b.n - a.n)
- .map(x => `
- <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
- <span style="width:96px;font-size:13px;flex-shrink:0">${x.label}</span>
- <div style="flex:1;height:14px;background:#eef1f7;border-radius:99px;overflow:hidden">
- <div style="width:${x.n / max * 100}%;height:100%;background:linear-gradient(90deg,#6c8cff,var(--primary));border-radius:99px"></div>
- </div>
- <span style="width:70px;font-size:12.5px;color:var(--text-2)">${x.n} 次 · ${Math.round(x.n / total * 100)}%</span>
- </div>`).join('');
- const top = MQM_TAGS.map(t => ({ label: t.label, n: count[t.id] || 0 })).sort((a, b) => b.n - a.n)[0];
- return `<div class="board"><h3> 错误敏感度画像（MQM 自评 · 共 ${total} 处标注）</h3>
- ${rows}
- <div class="board-note">你标注最多的类型是「${top.label}」（占 ${Math.round(top.n / total * 100)}%）——这是你当前最敏感（或机翻最常出问题）的错误类型，可对照 <a href="MQM错误类型参考手册.html">MQM 手册</a> 查漏补缺。</div>
+ <div class="board-note">数据来自 <a href="annotate.html">标注实训</a> 交卷自动同步：漏检（FN）说明该改的没找到，多余（FP）说明标了机翻本来没问题的地方。</div>
  </div>`;
 }
 
@@ -880,84 +759,12 @@ function download(name, content, type) {
  toast('已导出：' + name);
 }
 
-/* ---------------- 导入任务 ---------------- */
-function renderImport() {
- app.innerHTML = `
- <div class="page-title"><h2>导入自定义任务</h2></div>
- <div class="import-grid">
- <div class="board">
- <h3> 粘贴文本</h3>
- <p class="muted" style="margin-bottom:8px">每段写两行：第 1 行原文、第 2 行机翻译文；段与段之间空一行。<br>
- 也支持一行内用 Tab 分隔「原文机翻」。如粘贴第 3 行将视为参考译文（用于评分与教学演示）。</p>
- <textarea class="big" id="imp-text" placeholder="The new chip delivers twice the computing power while consuming 30 percent less energy.
-这款新芯片提供了两倍的算力，同时消耗了30%的能源。
-这款新芯片算力提升一倍，能耗降低30%。
-
-Artificial intelligence will not replace translators, but translators who use AI may replace those who do not.
-人工智能不会取代译者，但使用人工智能的译者可能会取代那些不使用的人。"></textarea>
- </div>
- <div>
- <div class="board">
- <h3> 任务信息</h3>
- <div class="field"><label>任务名称</label><input id="imp-name" placeholder="例如：金融资讯英译中练习"></div>
- <div class="field"><label>语向</label>
- <select id="imp-pair"><option>英译中</option><option>中译英</option><option>日译中</option><option>中译日</option><option>其他</option></select>
- </div>
- <div class="field"><label>领域</label><input id="imp-domain" placeholder="例如：科技 / 商务 / 医学" value="综合"></div>
- <div class="field"><label>建议时长（分钟）</label><input id="imp-min" type="number" value="10" min="1" max="180"></div>
- <div class="field"><label>术语表（可选，每行「原文=译文」）</label>
- <textarea class="big" id="imp-terms" style="min-height:90px" placeholder="computing power=算力
-hallucination=幻觉"></textarea>
- </div>
- <button class="btn btn-primary" style="width:100%" onclick="doImport()">创建任务</button>
- <p class="muted" style="margin-top:10px">任务保存在本浏览器（localStorage），可在译后编辑实训查看与删除。</p>
- </div>
- </div>
- </div>`;
-}
-
-function doImport() {
- const text = $('#imp-text').value.trim();
- const name = $('#imp-name').value.trim() || '自定义任务';
- const pair = $('#imp-pair').value;
- const domain = $('#imp-domain').value.trim() || '综合';
- const minutes = Math.max(1, parseInt($('#imp-min').value, 10) || 10);
- if (!text) { toast('请先粘贴任务文本'); return; }
-
- const segs = [];
- const blocks = text.split(/\n\s*\n/);
- for (const block of blocks) {
- const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
- if (!lines.length) continue;
- if (lines.length === 1 && lines[0].includes('\t')) {
- const [src, mt] = lines[0].split('\t');
- segs.push({ src: src.trim(), mt: (mt || '').trim(), ref: '' });
- } else {
- segs.push({ src: lines[0], mt: lines[1] || '', ref: lines[2] || '' });
- }
- }
- if (!segs.length) { toast('未解析到有效段落，请检查格式'); return; }
-
- const terms = $('#imp-terms').value.split('\n').map(l => l.trim()).filter(l => l.includes('='))
- .map(l => { const i = l.indexOf('='); return { s: l.slice(0, i).trim(), t: l.slice(i + 1).trim() }; });
-
- const tasks = customTasks();
- tasks.push({
- id: 'c' + Date.now(), name, pair, domain, minutes, custom: true,
- tips: '自建任务：优先解决准确性问题，再打磨表达。',
- terms, segs
- });
- store.set('custom_tasks', tasks);
- toast('已创建任务「' + name + '」，共 ' + segs.length + ' 段');
- go('plaza');
-}
-
 /* ---------------- 启动 ---------------- */
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 updateNickBadge();
 (function boot() {
  /* 支持 practice.html#stats / #import 直接落到对应视图（首页的「我的统计」就是这么跳的） */
  const h = (location.hash || '').replace(/^#/, '');
- if (h === 'stats' || h === 'import' || h === 'plaza') go(h);
+ if (h === 'stats' || h === 'plaza') go(h);
  else renderPlaza();
 })();

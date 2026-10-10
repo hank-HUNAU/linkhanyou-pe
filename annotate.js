@@ -29,10 +29,6 @@ function simT(a, b) { const A = tokenize(a), B = tokenize(b); if (!A.length && !
 
 const TAG_LABEL = Object.fromEntries(SCHEME.map(([id, label]) => [id, label]));
 const SEV_COLOR = { Critical: 'var(--r)', Major: 'var(--a)', Minor: 'var(--b)' };
-/* LLM 预标注（待校对）映射：与学生端金标准 SEEDS 分离，仅作"待验证提示" */
-const PRE_MAP = {};
-(typeof PRE !== 'undefined' ? PRE : []).forEach(function (x) { (PRE_MAP[x.k] = PRE_MAP[x.k] || []).push(x); });
-
 /* ---------------- 优化B：错误维度组卷 / 错题本 ---------------- */
 const DIM_LIST = ['准确性', '术语', '语言规范', '风格', '格式'];
 function qs() { try { return new URLSearchParams(location.search); } catch (e) { return new URLSearchParams(''); } }
@@ -43,8 +39,7 @@ function wrongKeys() { return [...new Set(wrongbook().map(w => w.k))]; }
 
 /* ---------------- 全局状态 ---------------- */
 let V = 'setup';
-let A = null; // {paper:[pair...], idx, anns:{k:[...]}, reviews:{k:[...]}, seeded:Set(k)}
-/* A.reviews：学生对 LLM 预标注的校对记录（采纳/修改/驳回+理由），供教师仲裁 */
+let A = null; // {paper:[pair...], idx, anns:{k:[...]}, seeded:Set(k)}
 
 /* ---------------- 组卷 ---------------- */
 function renderSetup() {
@@ -71,12 +66,17 @@ function renderSetup() {
  <h3> 组卷筛选</h3>
  <div class="row">
  <div><label>届次</label><select id="f-ed"><option value="">全部</option>${eds.map(e => `<option value="${e}"${String(pre.ed) === String(e) ? ' selected' : ''}>第${e}届</option>`).join('')}</select></div>
+ <div><label>卷大小</label><select id="f-n">${[10, 15, 20, 30].map(k => `<option${String(pre.n) === String(k) ? ' selected' : ''}>${k}</option>`).join('')}</select></div>
+ </div>
+ <details class="adv">
+ <summary>高级筛选（赛段 / 方向 / 错误类型 / 机翻底稿）</summary>
+ <div class="row" style="margin-top:10px">
  <div><label>赛段</label><select id="f-stage"><option value="">全部</option>${stages.map(s => `<option${pre.stage === s ? ' selected' : ''}>${s}</option>`).join('')}</select></div>
  <div><label>方向</label><select id="f-dir"><option value="">全部</option>${dirs.map(d => `<option${pre.dir === d ? ' selected' : ''}>${d}</option>`).join('')}</select></div>
  <div><label>错误类型</label><select id="f-dim"><option value="">全部</option>${DIM_LIST.map(d => `<option${pre.dim === d ? ' selected' : ''}>${d}</option>`).join('')}</select></div>
  <div><label>机翻底稿</label><select id="f-mt"><option value="">含无底稿（跳过）</option><option value="1">仅限有底稿</option></select></div>
- <div><label>卷大小</label><select id="f-n">${[10, 15, 20, 30].map(k => `<option${String(pre.n) === String(k) ? ' selected' : ''}>${k}</option>`).join('')}</select></div>
  </div>
+ </details>
  <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
  <button class="btn btn-o" onclick="quickCompose()">一键组卷（推荐 10 句）</button>
  <button class="btn btn-p" onclick="compose()">按筛选生成 </button>
@@ -126,7 +126,7 @@ function compose() {
  setTimeout(startWork, 600);
 }
 function startPaper(paper, seededK) {
- A = { paper, idx: 0, anns: {}, reviews: store.get('llm_reviews', {}) || {}, seededK, startedAt: Date.now(), wrongMode: false };
+ A = { paper, idx: 0, anns: {}, seededK, startedAt: Date.now(), wrongMode: false };
  store.set('paper', { keys: paper.map(p => p.k), idx: 0, anns: A.anns, startedAt: A.startedAt });
 }
 /* 错题回练：只重做错题本里出现过的句子 */
@@ -145,7 +145,7 @@ function resumePaper() {
  if (!p) return;
  const map = Object.fromEntries(CORPUS_PAIRS.map(x => [x.k, x]));
  const paper = p.keys.map(k => map[k]).filter(Boolean);
- A = { paper, idx: p.idx || 0, anns: p.anns || {}, reviews: store.get('llm_reviews', {}) || {}, seededK: new Set(SEEDS.map(s => s.k)), startedAt: p.startedAt || Date.now() };
+ A = { paper, idx: p.idx || 0, anns: p.anns || {}, seededK: new Set(SEEDS.map(s => s.k)), startedAt: p.startedAt || Date.now() };
  renderWork();
 }
 
@@ -172,8 +172,6 @@ function renderWork() {
  <span>${seeded ? ' 种子对照卷（交卷评分）' : ' 盲标卷（不计分）'}</span>
  <span>编号 ${esc(p.k)}</span>
  </div>
- ${(FLAGS || []).filter(f => f.ed == p.ed && f.stage === p.stage && f.dir === p.dir).map(f => `<div class="hint" style="color:var(--a);background:var(--ab);border-radius:7px;padding:5px 10px;margin-bottom:8px"> 预标注提示（线索，须自行确认）：${esc(f.check)} —— ${esc(f.desc)}</div>`).join('')}
- ${prePanelHTML(k)}
  <div class="src-box"><div class="lab">原文</div>${esc(p.src)}</div>
  <div class="lab">机翻译文（选中错误片段后打标；无错误可选 M0）</div>
  ${p.mt ? `<div class="mt-box" id="mtbox">${renderMT(p.mt, anns)}</div>
@@ -195,65 +193,6 @@ function renderWork() {
  <div class="sel-panel hidden" id="sel-panel"></div>
  <div id="toast"></div>`;
  if (p.mt) bindSelection();
-}
-
-/* ---------------- LLM 预标注校对（学生端） ---------------- */
-function preList() { return PRE_MAP[A.paper[A.idx].k] || []; }
-function ensureRev() { const k = A.paper[A.idx].k; A.reviews = A.reviews || {}; A.reviews[k] = A.reviews[k] || []; return A.reviews[k]; }
-function prePanelHTML(k) {
- const list = PRE_MAP[k] || [];
- if (!list.length) return '';
- return list.map(function (pre, i) {
- return '<div class="hint" style="background:#fff7e8;border:1px solid #f0d9a8;border-radius:7px;padding:8px 10px;margin-bottom:8px">'
- + ' <b>LLM 预标注（待校对，非标准答案）</b>：片段「' + esc(pre.span) + '」 <b>'
- + (TAG_LABEL[pre.tag] || pre.tag) + '</b> · ' + pre.sev
- + (pre.fix ? ' · 建议改法：' + esc(pre.fix) : '')
- + (pre.note ? '<div class="muted" style="font-size:12px">理由：' + esc(pre.note) + '</div>' : '')
- + '<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">'
- + '<button class="btn btn-p" onclick="preAccept(' + i + ')"> 采纳</button>'
- + '<button class="btn btn-g" onclick="preModify(' + i + ')"> 修改后采纳</button>'
- + '<select id="pre-reason-' + i + '" style="padding:4px 6px;border-radius:6px;border:1px solid var(--line)">'
- + '<option value="">驳回理由…</option><option>误标（机翻没错）</option><option>漏标（还有其他错误）</option>'
- + '<option>严重度不当</option><option>片段偏移</option></select>'
- + '<button class="btn btn-r" onclick="preReject(' + i + ')"> 驳回</button>'
- + '</div></div>';
- }).join('');
-}
-function findSpan(mt, span) {
- let i = mt.indexOf(span);
- if (i >= 0) return [i, i + span.length];
- let pos = -1, ci = 0;
- for (let j = 0; j < mt.length; j++) {
- if (mt[j] === span[ci]) { if (ci === 0) pos = j; ci++; if (ci === span.length) return [pos, j + 1]; }
- else if (ci > 0) { ci = 0; j--; }
- }
- return null;
-}
-function addPreAnn(i, override) {
- const p = A.paper[A.idx], pre = preList()[i];
- const loc = findSpan(p.mt || '', pre.span);
- if (!loc) { toast('该片段未在机翻文本中定位，请手动划选打标'); return; }
- const k = p.k; A.anns[k] = A.anns[k] || [];
- A.anns[k].push({ start: loc[0], end: loc[1], text: pre.span,
- tag: (override && override.tag) || pre.tag, sev: (override && override.sev) || pre.sev,
- fix: pre.fix || '', from: 'llm' + (override ? '（学生修改）' : '（学生采纳）') });
- ensureRev().push({ span: pre.span, pre_tag: pre.tag, pre_sev: pre.sev, verdict: override ? '修改后采纳' : '采纳', reason: '' });
- saveSession(); renderWork(); toast(override ? '已按你的修改记入标注' : '已采纳并记入标注');
-}
-function preAccept(i) { addPreAnn(i, null); }
-function preModify(i) {
- const pre = preList()[i];
- const tag = prompt('标签（M1-M9 / M0）：', pre.tag) || pre.tag;
- const sev = prompt('严重度（Critical / Major / Minor）：', pre.sev) || pre.sev;
- addPreAnn(i, { tag: tag, sev: sev });
-}
-function preReject(i) {
- const pre = preList()[i];
- const sel = document.getElementById('pre-reason-' + i);
- const reason = (sel && sel.value) || '';
- if (!reason) { toast('请先选择驳回理由'); return; }
- ensureRev().push({ span: pre.span, pre_tag: pre.tag, pre_sev: pre.sev, verdict: '驳回', reason: reason });
- saveSession(); renderWork(); toast('已记录驳回 进入教师仲裁队列');
 }
 
 function renderMT(mt, anns) {
@@ -284,6 +223,7 @@ function bindSelection() {
  if (mark) editAnn(parseInt(mark.dataset.i, 10));
  });
 }
+
 function offsetWithin(container, sel) {
  const rng = sel.getRangeAt(0);
  if (!container.contains(rng.commonAncestorContainer)) return { start: null };
@@ -352,7 +292,6 @@ function delAnn(i) {
 function saveSession() {
  if (!A) return;
  store.set('paper', { keys: A.paper.map(p => p.k), idx: A.idx, anns: A.anns, startedAt: A.startedAt });
- if (A.reviews) store.set('llm_reviews', A.reviews);
 }
 function navPair(d) { saveSession(); A.idx = Math.max(0, Math.min(A.paper.length - 1, A.idx + d)); saveSession(); renderWork(); }
 
@@ -403,32 +342,12 @@ function submitAnn() {
  const recall = (TP + FN) ? Math.round(TP / (TP + FN) * 1000) / 10 : 0;
  const f1 = (precision + recall) ? Math.round(2 * precision * recall / (precision + recall) * 10) / 10 : 0;
 
- /* MQM-B 质量分：100 − Σ(错误数×严重度权重)/千词（权重 Critical-25 / Major-5 / Minor-1，M0 计 0） */
- const W = { Critical: 25, Major: 5, Minor: 1 };
- const quality = (anns, mt) => {
- if (!mt) return null;
- const words = tokenize(mt).length;
- if (!words) return null;
- const w = anns.reduce((s, a) => s + (a.tag === 'M0' ? 0 : (W[a.sev] || 1)), 0);
- return Math.max(0, Math.round((100 - w * 1000 / words) * 10) / 10);
- };
- const sQ = [], tQ = [];
- A.paper.forEach(p => {
- if (!p.mt) return;
- const mine = quality(A.anns[p.k] || [], p.mt);
- if (mine !== null) tQ.push(mine);
- const seeds = SEEDS.filter(s => s.k === p.k);
- if (seeds.length) { const sq = quality(seeds.map(s => ({ tag: s.tag, sev: s.sev })), p.mt); if (sq !== null) sQ.push(sq); }
- });
- const avg = (a) => a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length * 10) / 10 : null;
- const studentQ = avg(tQ), seedQ = avg(sQ);
-
- const result = { date: new Date().toLocaleString('zh-CN', { hour12: false }), TP, FP, FN, tagWrong, sevWrong, precision, recall, f1, studentQ, seedQ, perPair, pairsN: A.paper.length, tagged: Object.values(A.anns).reduce((s, a) => s + a.length, 0), wrongAdded: wrongAdded.length, wrongTotal };
+ const result = { date: new Date().toLocaleString('zh-CN', { hour12: false }), TP, FP, FN, tagWrong, sevWrong, precision, recall, f1, perPair, pairsN: A.paper.length, tagged: Object.values(A.anns).reduce((s, a) => s + a.length, 0), wrongAdded: wrongAdded.length, wrongTotal };
  const rs = store.get('results', []); rs.unshift(result); store.set('results', rs.slice(0, 50));
  /* 同步到主平台「我的统计」 */
  try {
  const st = JSON.parse(localStorage.getItem('mtpe_ann_stats') || '[]');
- st.unshift({ date: result.date, precision, recall, f1, TP, FP, FN, tagWrong, sevWrong, studentQ, seedQ, pairsN: result.pairsN, tagged: result.tagged });
+ st.unshift({ date: result.date, precision, recall, f1, TP, FP, FN, tagWrong, sevWrong, pairsN: result.pairsN, tagged: result.tagged });
  localStorage.setItem('mtpe_ann_stats', JSON.stringify(st.slice(0, 50)));
  } catch (e) {}
  store.del('paper');
@@ -455,16 +374,6 @@ function renderResult(r) {
  <div class="stat-box"><div class="v r">${r.FN}</div><div class="l">种子漏检（FN）</div></div>
  <div class="stat-box"><div class="v r">${r.FP}</div><div class="l">多余标注（FP）</div></div>
  </div>
- ${r.studentQ !== null ? `
- <div class="card">
- <h3> MQM-B 机翻质量分（权重：Critical −25 / Major −5 / Minor −1，每千词）</h3>
- <div class="score-hero" style="margin-bottom:4px">
- <div class="stat-box"><div class="v">${r.studentQ}</div><div class="l">你的质量评分（按你的标注计算）</div></div>
- <div class="stat-box"><div class="v g">${r.seedQ ?? '—'}</div><div class="l">种子质量评分（按种子标注计算）</div></div>
- <div class="stat-box"><div class="v ${r.seedQ !== null && Math.abs(r.studentQ - r.seedQ) > 10 ? 'r' : 'g'}">${r.seedQ !== null ? (r.studentQ - r.seedQ > 0 ? '+' : '') + Math.round((r.studentQ - r.seedQ) * 10) / 10 : '—'}</div><div class="l">偏差（你 − 种子）</div></div>
- </div>
- <div class="muted">偏差为正：你判定的机翻问题比种子少（可能漏检或严重度偏轻）；偏差为负：你判定的问题更多（可能过度标注或严重度偏重）。</div>
- </div>` : ''}
  <div class="legend">
  <span><i style="background:#c9f0dc;border-bottom:2px solid var(--g)"></i>命中种子</span>
  <span><i style="background:#ffe2e2;border-bottom:2px dashed var(--r)"></i>漏检的种子错误</span>
@@ -499,9 +408,8 @@ function exportAnnJSON() {
  const r = rs[0];
  if (!r) { toast('没有可导出的标注'); return; }
  const payload = {
- meta: { exported: new Date().toLocaleString('zh-CN', { hour12: false }), scheme: 'M1-M9/M0', scoring: 'MQM-B (Critical-25/Major-5/Minor-1 每千词)', pairs: r.pairsN },
- scores: { precision: r.precision, recall: r.recall, f1: r.f1, TP: r.TP, FP: r.FP, FN: r.FN, tagWrong: r.tagWrong, sevWrong: r.sevWrong, studentQuality: r.studentQ, seedQuality: r.seedQ },
- llm_reviews: store.get('llm_reviews', {}) || {},
+ meta: { exported: new Date().toLocaleString('zh-CN', { hour12: false }), scheme: 'M1-M9/M0', scoring: 'Precision / Recall / F1（与种子标注对照）', pairs: r.pairsN },
+ scores: { precision: r.precision, recall: r.recall, f1: r.f1, TP: r.TP, FP: r.FP, FN: r.FN, tagWrong: r.tagWrong, sevWrong: r.sevWrong },
  annotations: []
  };
  r.perPair.forEach(x => (x.my || []).forEach(a => payload.annotations.push({

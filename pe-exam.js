@@ -41,8 +41,7 @@ function terRef(pe,ref){ const A=tokenize(pe),B=tokenize(ref); if(!B.length)retu
 function examScore(pe,ref){ return Math.max(0, 100 - terRef(pe,ref)*100*TER_K); }
 
 /* ---- 全局状态 ---- */
-let S=null; // {task, minutes, peMode, answers[], cur, startTs, duration, tokens, switches, enters}
-const TOKEN_LIMIT = 10000;
+let S=null; // {task, minutes, peMode, answers[], cur, startTs, duration, switches, enters}
 
 /* 第九届赛制：Agent 选手成绩（拟真，交卷后同榜） */
 const AGENT_BOARD = {
@@ -52,7 +51,7 @@ const AGENT_BOARD = {
  t4: [['Agent·旗舰A', 93.0], ['Agent·旗舰B', 90.4], ['Agent·旗舰C', 88.6]]
 };
 const AGENT_DEFAULT = [['Agent·旗舰A', 90.0], ['Agent·旗舰B', 88.0], ['Agent·旗舰C', 86.0]];
-function modeName(m){ return m==='deep'?'深度':m==='agent'?'第九届·Agent同榜':'轻度'; }
+function modeName(m){ return m==='agent'?'第九届·Agent同榜':'轻度'; }
 /* 按语言方向给出列头语言代码（对齐真实界面的"请输入原文（en-US）"） */
 function langOf(pair){ return /中译英|汉译英|中译外|汉译外/.test(pair || '') ? ['zh-CN', 'en-US'] : ['en-US', 'zh-CN']; }
 
@@ -112,18 +111,17 @@ function enterExam(id){
  let answers=task.segs.map(g=>g.mt||''), resumed=false;
  if(draft){ answers=draft.answers; resumed=true; }
  S={ task, minutes, peMode:'agent', answers,
- cur:0, startTs:Date.now(), duration:minutes*60, tokens:TOKEN_LIMIT, switches:0, timer:null, over:false };
+ cur:0, startTs:Date.now(), duration:minutes*60, switches:0, timer:null, over:false };
  openModal(`<h3>进入答题页面（第 ${enters+1}/3 次）</h3>
  <div class="field" style="margin:10px 0">
  <div style="font-weight:600;font-size:13px;margin-bottom:6px">选择作答模式</div>
  <div class="mode-row">
  <div class="mode-btn" id="mode-light" onclick="pickMode(this,'light')"><b>轻度译后编辑</b><span>以可理解为目标，只改硬伤，不重写（真实赛制：不开放 AI 助手）</span></div>
  <div class="mode-btn sel" id="mode-agent" onclick="pickMode(this,'agent')"><b> 第九届模式（默认）</b><span>全程无 AI，交卷后与 Agent 选手同榜排名（对齐2026第九届赛制）</span></div>
- <div class="mode-btn" id="mode-deep" onclick="pickMode(this,'deep')"><b>深度译后编辑</b><span>达到人工翻译水准，可切换 AI 助手（大语言模型模拟）</span></div>
  </div>
  <style>.mode-row{grid-template-columns:1fr 1fr 1fr}</style>
  </div>
- <div class="info-box"> 请勿切换页面/点击红框外区域（累计 <b>8 次</b>强制交卷）； 禁止复制试题与粘贴内容； 倒计时归零自动交卷； AI 助手 Token 限额 10000（仅深度模式）。</div>
+ <div class="info-box">请勿切换页面/点击红框外区域（累计 <b>8 次</b>强制交卷）；禁止复制试题与粘贴内容；倒计时归零自动交卷。</div>
  ${resumed?'<div class="info-box">已恢复上次答题记录。</div>':''}
  <div class="m-actions"><button class="btn btn-p" onclick="closeModal();startExam()">开始答题</button></div>`);
 }
@@ -136,7 +134,6 @@ function pickMode(el,m){
 function renderExam(){
  document.body.className='exam-on';
  const {task,peMode}=S;
- const deep = peMode==='deep';
  const agent = peMode==='agent';
  /* 语向标签按任务实际方向生成，不再写死"汉译外" */
  const dirLabel = /中译英|汉译英|中译外|汉译外/.test(task.pair || '') ? '汉译英' : '英译汉';
@@ -145,7 +142,6 @@ function renderExam(){
  <div class="yc-brand"><span class="yc-logo">译</span>MTPE 模拟考场 <span class="en">译后编辑考试·${modeName(peMode)}</span></div>
  <div class="exam-meta">
  <span class="switch-chip ok" id="sw-chip">切屏 0/8</span>
- ${deep?`<span class="tok-chip" id="tok-chip">剩余可用Tokens:${TOKEN_LIMIT}</span>`:''}
  <span class="remain" id="remain">${fmt(S.duration)}</span>
  </div>
  </div>
@@ -207,32 +203,9 @@ function renderExam(){
  <button class="btn btn-g" onclick="navSeg(1)">下一题 </button>
  </div>
  <div class="tp-card">
- <b>${dirLabel} · ${agent?'译后编辑（第九届赛制）':deep?'深度译后编辑':'轻度译后编辑'}</b> <span class="muted">（机翻底稿，供修改）</span>
- </div>
- ${deep?`
- <div class="side-tabs">
- <span class="s-tab" id="tab-task" onclick="switchSide('task')">题目</span>
- <span class="s-tab on" id="tab-ai" onclick="switchSide('ai')"> AI助手</span>
- </div>`:''}
- </div>
- ${deep?`
- <div class="ai-panel" id="ai-panel">
- <div class="ai-head"> AI助手 <span class="seg-ref">当前会话对应句段编号:<b id="ai-seg">1</b></span></div>
- <div class="ai-quick">
- <button class="q-btn" onclick="quickPolish()"> 译文润色</button>
- <button class="q-btn" onclick="quickSynonym()">同义调查询</button>
- </div>
- <div class="ai-dialog" id="ai-dialog">
- <div class="msg a">你好，我是拟真 AI 助手（规则模拟）。可用快捷指令，或输入含「润色 / 同义词 / 术语」的指令。Token 有限，请合理使用。</div>
- </div>
- <div class="ai-foot">
- <div class="ai-dis">基于大语言模型（教学模拟），相关内容仅供参考使用。</div>
- <div class="ai-input-row">
- <input id="ai-input" placeholder="请输入对话指令" aria-label="AI助手对话输入" onkeydown="if(event.key==='Enter')aiSend()">
- <button class="btn btn-p" onclick="aiSend()">工具</button>
+ <b>${dirLabel} · ${agent?'译后编辑（第九届赛制）':'轻度译后编辑'}</b> <span class="muted">（机翻底稿，供修改）</span>
  </div>
  </div>
- </div>`:''}
  <div class="side-btns">
  <button class="btn btn-g" onclick="saveExit()">保存&退出</button>
  <button class="btn btn-r" onclick="askSubmit()">交卷</button>
@@ -242,15 +215,8 @@ function renderExam(){
  <div class="status-bar">
  <span>进度: <b id="prog-txt">0/${task.segs.length}</b> 段</span>
  <span class="sb-title">${esc(task.name)}-${modeName(peMode)}译后编辑</span>
- <span>‹ ${''} <b id="page-num">1</b>/${task.segs.length} 页 ›</span>
  <span>跳至 <input id="jump-n" type="number" min="1" max="${task.segs.length}" value="1"> 段
  <button class="btn btn-g" style="padding:2px 8px" onclick="jumpSeg()">跳转</button></span>
- </div>
- <div class="icon-rail">
- <button class="rail-btn" onclick="toast('拟真版：句段列表即主区域')"><span>句段</span></button>
- ${deep?`<button class="rail-btn on" id="rail-ai" onclick="switchSide('ai')"><span>AI助手</span></button>`
- :`<button class="rail-btn" disabled onclick="toast('${agent?'第九届赛制全程无AI助手，Agent选手与您同榜排名':'轻度译后编辑不开放AI助手（真实赛制）'}')"><span>AI助手</span></button>`}
- <button class="rail-btn" onclick="runQA()"><span>QA</span></button>
  </div>
  <div class="ref-note">* 红框内为光标操作区域，请勿点击框外区域。</div>
  <div id="modal-mask" class="mask hidden"><div class="modal" id="modal-box"></div></div>
@@ -260,14 +226,6 @@ function renderExam(){
  setCur(0);
  bindAntiCheat();
  task.segs.forEach((g,i)=>{ autoGrow(i); });
-}
-
-function switchSide(w){
- const ai=$('#ai-panel');
- if(!ai)return;
- ai.style.display = w==='ai'?'flex':'none';
- $('#tab-ai').classList.toggle('on',w==='ai');
- $('#tab-task').classList.toggle('on',w==='task');
 }
 
 /* ---- 状态 / 导航 ---- */
@@ -285,8 +243,6 @@ function setCur(i){
  S.cur=Math.max(0,Math.min(i,S.task.segs.length-1));
  document.querySelectorAll('.seg-table .seg-row').forEach(r=>r.classList.remove('cur'));
  const row=$('#row-'+S.cur); if(row)row.classList.add('cur');
- const ai=$('#ai-seg'); if(ai)ai.textContent=S.cur+1;
- const pn=$('#page-num'); if(pn)pn.textContent=S.cur+1;
  const jn=$('#jump-n'); if(jn)jn.value=S.cur+1;
 }
 function navSeg(d){ setCur(S.cur+d); $('#ta-'+S.cur).focus(); }
@@ -378,57 +334,6 @@ function runQA(){
  <div class="m-actions"><button class="btn btn-p" onclick="closeModal()">知道了</button></div>`);
 }
 
-/* ---- AI 助手（规则模拟，仅深度模式） ---- */
-function tokCost(text){ const cn=(text.match(/[\u4e00-\u9fff]/g)||[]).length; const other=text.length-cn;
- return Math.ceil(cn*2+other*0.25); }
-function spend(n){ if(S.tokens<n){ aiBubble('a','剩余 Tokens 不足，无法继续对话（考试规则：耗尽后不可充值）。'); return false; }
- S.tokens-=n; const c=$('#tok-chip'); c.textContent='剩余可用Tokens:'+S.tokens;
- c.className='tok-chip'+(S.tokens<1000?' low':''); return true; }
-function aiBubble(role,text,extra){
- const d=$('#ai-dialog'); const div=document.createElement('div');
- div.className='msg '+role;
- div.innerHTML=esc(text)+(extra||'');
- d.appendChild(div); d.scrollTop=d.scrollHeight; return div;
-}
-function aiThinking(cb){
- const d=$('#ai-dialog');
- const div=document.createElement('div'); div.className='msg a';
- div.innerHTML='<span class="think" onclick="this.classList.toggle(\'open\')"> 深度思考过程（点击展开）</span><div class="think-body">先核对术语与数字等硬性错误，再检查句式是否符合目标语习惯，最后评估是否存在过度编辑空间……</div>';
- d.appendChild(div); d.scrollTop=d.scrollHeight;
- setTimeout(cb,600);
-}
-function quickPolish(){ aiSend('润色'); }
-function quickSynonym(){ aiSend('同义词'); }
-function aiSend(preset){
- const inp=$('#ai-input'); const q=(preset||inp.value).trim();
- if(!preset)inp.value='';
- if(!q)return;
- aiBubble('u',q);
- const seg=S.task.segs[S.cur], i=S.cur;
- aiThinking(()=>{
- let reply='', apply=null;
- if(q.includes('润色')){
- if(!spend(tokCost(seg.ref)+40))return;
- reply=`【句段 ${i+1} 润色建议】\n${seg.ref}\n\n可参考指定指令如下：\n【正式规范】Make the text more formal and standard.\n【优化表达】Try to improve the expression.\n【生动形象】Pay attention to its vividness.\n【避免中式英语】Avoid Chinglish and improve the text.`;
- apply={pe:seg.ref};
- } else if(q.includes('同义')||q.includes('近义')){
- if(!spend(60))return;
- const terms=(S.task.terms||[]).filter(t=>seg.src.toLowerCase().includes(t.s.toLowerCase()));
- reply=terms.length?`【句段 ${i+1} 同义词/相关表达】\n${terms.map(t=>'· '+t.s+' '+t.t).join('\n')}\n\n提示：如无规范术语要求，可结合语境灵活替换。`:`【句段 ${i+1}】未检索到强相关术语，建议结合语境自行斟酌表达。`;
- } else if(q.includes('术语')){
- if(!spend(50))return;
- const terms=(S.task.terms||[]);
- reply=terms.length?`【本任务术语表摘录】\n${terms.slice(0,5).map(t=>'· '+t.s+' = '+t.t).join('\n')}${terms.length>5?'\n……完整术语表见赛前材料':''}`:'本任务未配置术语表。';
- } else {
- if(!spend(30))return;
- reply='我是拟真版 AI 助手，支持三类指令：\n· 「润色」 当前句段润色建议\n· 「同义词」 查询相关表达\n· 「术语」 查看术语表摘录\n（正式比赛中由大模型实时对话，按 Token 计费。）';
- }
- const extra=apply?`<br><button class="apply-btn" onclick="applyPe(${JSON.stringify(apply.pe).replace(/"/g,'&quot;')})">应用到译文</button>`:'';
- aiBubble('a',reply,extra);
- });
-}
-function applyPe(pe){ if(pe==null)return; S.answers[S.cur]=pe; $('#ta-'+S.cur).value=pe; refreshStatus(S.cur); toast('已将建议应用到句段 '+(S.cur+1)); }
-
 /* ---- 术语高亮 ---- */
 function hlTerms(src){
  let html=esc(src);
@@ -511,7 +416,7 @@ function doSubmit(reason){
  const terScore=Math.round(details.reduce((s,d)=>s+d.terScore,0)/details.length*10)/10;
  const noEditN=details.length-editedN;
  store.del('draft_'+task.id);
- const record={task,peMode,reason,timeUsed,details,editedN,avgTer,score,terScore,noEditN,tokens:S.tokens,switches:S.switches,enters:store.get('enters_'+task.id,0)};
+ const record={task,peMode,reason,timeUsed,details,editedN,avgTer,score,terScore,noEditN,switches:S.switches,enters:store.get('enters_'+task.id,0)};
  record.prevBest=historyBest(task.id);   // 须在 syncToMainHistory 之前：同步会把本次写入历史
  record.profile=buildProfile(record);
  syncToMainHistory(record);
@@ -786,10 +691,7 @@ function profileHTML(r){
  <div class="prof-card">
  <h3>③ 速度与稳定性</h3>
  <div class="prof-kv"><span>处理速度</span><b>${speed} 段/分钟</b></div>
- <div class="prof-kv"><span>前半程平均分</span><b>${p.first.toFixed(1)}</b></div>
- <div class="prof-kv"><span>后半程平均分</span><b>${p.second.toFixed(1)}</b></div>
- <div class="prof-kv"><span>后程变化</span><b class="${decay < -5 ? 'neg' : decay >= 5 ? 'pos' : ''}">${decay >= 0 ? '+' : ''}${decay.toFixed(1)} 分</b></div>
- <div class="prof-note">${decayTxt}（前后半程按段序切分，为时间压力下的稳定性近似）</div>
+ <div class="prof-note">${decayTxt}（后程变化 ${decay >= 0 ? '+' : ''}${decay.toFixed(1)} 分，按段序前后半程切分）</div>
  </div>
  <div class="prof-card">
  <h3>④ 参照系</h3>
@@ -886,7 +788,6 @@ function renderResult(r){
  <div class="res-box"><div class="v a">${(r.avgTer*100).toFixed(1)}%</div><div class="l">平均修订率</div></div>
  <div class="res-box"><div class="v">${r.editedN}/${r.task.segs.length}</div><div class="l">编辑段数</div></div>
  <div class="res-box"><div class="v g">${fmt(r.timeUsed)}</div><div class="l">用时</div></div>
- ${r.peMode==='deep'?`<div class="res-box"><div class="v ${r.tokens<1000?'r':''}">${r.tokens}</div><div class="l">剩余 Tokens</div></div>`:''}
  <div class="res-box"><div class="v ${r.switches>=5?'r':''}">${r.switches}</div><div class="l">切屏次数（上限8）</div></div>
  <div class="res-box"><div class="v ${r.enters>=3?'r':''}">${r.enters}/3</div><div class="l">进入次数</div></div>
  </div>

@@ -56,14 +56,6 @@ main { max-width: 1180px; margin: 0 auto; padding: 26px 20px 60px; }
 .plaza-head { margin-bottom: 20px; }
 .plaza-head h2 { font-size: 22px; }
 .plaza-head p { color: var(--text-2); font-size: 14px; margin-top: 4px; }
-.mode-strip { display: flex; gap: 12px; margin: 18px 0 26px; flex-wrap: wrap; }
-.mode-card {
-  flex: 1; min-width: 230px; background: var(--card); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow);
-}
-.mode-card b { display: block; font-size: 14px; margin-bottom: 3px; }
-.mode-card span { font-size: 12.5px; color: var(--text-2); }
-.mode-card .ic { font-size: 20px; margin-right: 6px; }
 
 .task-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 16px; }
 .task-card {
@@ -250,9 +242,6 @@ textarea.big:focus { outline: none; border-color: var(--primary); }
 
 /* ---- 得分说明 / MQM 自评 ---- */
 .score-note{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--amber);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--text-2);margin-bottom:16px}
-.mqm-chip{display:inline-block;border:1.5px solid var(--border);border-radius:999px;padding:2px 11px;font-size:12.5px;color:var(--text-2);cursor:pointer;user-select:none;margin:2px 4px 2px 0;transition:all .15s}
-.mqm-chip:hover{border-color:var(--primary);color:var(--primary)}
-.mqm-chip.on{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:600}
 
 
 /* ===== Apple 设计语言覆盖（2026-10-09） ===== */
@@ -277,10 +266,6 @@ textarea.big:focus { outline: none; border-color: var(--primary); }
 }
 body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
 h1,h2,h3 { letter-spacing: -.01em; font-weight: 600; }
-.card, .task-card, .mode-card, .res-box, .stat-card, .item {
-  border: 1px solid var(--border) !important; border-radius: var(--radius) !important;
-  box-shadow: var(--shadow) !important; background: var(--card) !important;
-}
 .btn, .btn-p, button { border-radius: 980px !important; font-weight: 500; transition: all .15s ease; }
 .btn:hover, .btn-p:hover { filter: brightness(1.05); transform: none; }
 .btn-g, .btn-ghost, .btn-o { border-radius: 980px !important; border: 1px solid var(--border) !important; background: #fff !important; }

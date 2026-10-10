@@ -15,8 +15,6 @@ button{font-family:inherit;cursor:pointer}
 .yc-logo{width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,var(--yc),#6fa4ff);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px}
 .yc-brand .en{color:var(--mut);font-weight:400;font-size:12px}
 .yc-top-right{display:flex;align-items:center;gap:16px;font-size:13px;color:var(--tx2)}
-.tok-chip{background:var(--ycl);color:var(--ycd);border-radius:999px;padding:3px 12px;font-weight:600;font-variant-numeric:tabular-nums}
-.tok-chip.low{background:var(--ab);color:var(--a)}
 .yc-top-right .mi{cursor:pointer}
 .yc-top-right .mi:hover{color:var(--yc)}
 
@@ -83,27 +81,10 @@ button{font-family:inherit;cursor:pointer}
 .foot-btns{display:flex;gap:10px}
 .switch-chip{font-size:12px;color:var(--r);background:var(--rb);border-radius:999px;padding:3px 10px}
 .switch-chip.ok{color:var(--tx2);background:#eef1f7}
-
-/* AI 助手面板 */
-.ai-panel{background:#fff;border:1px solid var(--bd);border-radius:10px;box-shadow:0 1px 3px rgba(30,41,72,.06);display:flex;flex-direction:column;position:sticky;top:100px;max-height:calc(100vh - 120px)}
-.ai-head{padding:10px 14px;border-bottom:1px solid var(--bd);font-weight:700;display:flex;justify-content:space-between;align-items:center}
-.ai-head .seg-ref{font-size:12px;color:var(--mut);font-weight:400}
-.ai-quick{padding:8px 12px;display:flex;gap:8px}
-.q-btn{flex:1;border:1px solid var(--yc);background:var(--ycl);color:var(--ycd);border-radius:7px;padding:6px 0;font-size:12.5px}
-.q-btn:hover{background:var(--yc);color:#fff}
-.ai-dialog{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px;min-height:180px}
 .msg{max-width:92%;border-radius:10px;padding:8px 11px;font-size:13px;white-space:pre-wrap;word-break:break-word}
 .msg.u{align-self:flex-end;background:var(--yc);color:#fff}
 .msg.a{align-self:flex-start;background:#f4f6fb;border:1px solid var(--bd)}
-.msg .think{color:var(--mut);font-size:12px;cursor:pointer;text-decoration:underline dotted}
 .msg .think-body{display:none;color:var(--mut);font-size:12px;background:#fff;border-left:3px solid var(--bd);padding:4px 8px;margin:4px 0}
-.msg .think.open + .think-body{display:block}
-.msg .apply-btn{margin-top:6px;border:none;background:var(--g);color:#fff;border-radius:6px;padding:4px 12px;font-size:12px}
-.ai-foot{border-top:1px solid var(--bd);padding:8px 12px}
-.ai-dis{font-size:11px;color:var(--mut);margin-bottom:6px}
-.ai-input-row{display:flex;gap:6px}
-.ai-input-row input{flex:1;border:1px solid var(--bd);border-radius:7px;padding:7px 10px;font-size:13px;font-family:inherit}
-.ai-input-row input:focus{outline:none;border-color:var(--yc)}
 
 /* 弹窗 / toast */
 .mask{position:fixed;inset:0;background:rgba(20,26,45,.45);z-index:100;display:flex;align-items:center;justify-content:center}
@@ -134,12 +115,8 @@ button{font-family:inherit;cursor:pointer}
 .tp-nav{display:flex;gap:8px;margin-bottom:10px}
 .tp-nav .btn{flex:1}
 .tp-card{background:#f7f9fd;border:1px solid var(--bd);border-radius:9px;padding:10px 12px;font-size:13px}
-.side-tabs{display:flex;gap:6px;margin-top:10px}
-.s-tab{flex:1;text-align:center;padding:6px 0;border-radius:7px;font-size:12.5px;background:#eef1f7;color:var(--tx2);cursor:pointer;user-select:none}
-.s-tab.on{background:var(--yc);color:#fff;font-weight:600}
 .side-btns{display:flex;gap:10px}
 .side-btns .btn{flex:1;padding:10px 0}
-.ai-panel{max-height:calc(100vh - 320px)}
 .status-bar{max-width:1400px;margin:0 auto 20px;padding:0 14px;display:flex;align-items:center;gap:18px;font-size:12.5px;color:var(--tx2);flex-wrap:wrap}
 .status-bar .sb-title{color:var(--mut)}
 .status-bar input{width:52px;border:1px solid var(--bd);border-radius:6px;padding:3px 6px;text-align:center;font-family:inherit}
@@ -160,11 +137,6 @@ button{font-family:inherit;cursor:pointer}
    （还显式写了 border-top:none），看起来像没画完。 */
 body.exam-on::after{content:'';position:fixed;inset:0;border:3px solid #e5484d;pointer-events:none;z-index:90}
 .ref-note{max-width:1400px;margin:6px auto 0;padding:0 14px;font-size:12px;color:var(--mut)}
-.icon-rail{position:fixed;right:0;top:32%;width:46px;background:#fff;border:1px solid var(--bd);border-right:none;border-radius:8px 0 0 8px;display:flex;flex-direction:column;padding:6px 0;z-index:55}
-.rail-btn{width:100%;padding:9px 0;font-size:11px;color:var(--tx2);background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
-.rail-btn:hover{background:var(--ycl);color:var(--ycd)}
-.rail-btn.on{background:var(--yc);color:#fff}
-.rail-btn:disabled{opacity:.4;cursor:not-allowed}
 
 /* ---- Agent 同榜 ---- */
 .board{background:#fff;border:1px solid var(--bd);border-radius:12px;padding:16px 18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(30,41,72,.06)}
