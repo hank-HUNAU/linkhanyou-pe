@@ -59,6 +59,9 @@ function langOf(pair){ return /中译英|汉译英|中译外|汉译外/.test(pai
 /* ============ 考试广场（精简版：只保留与考试直接相关的元素） ============ */
 function renderExams(){
  document.body.className='';
+ /* 教师用开关：pe-exam.html#demo（本地演示时才显示"重置进入次数"）。
+    公开站点没有入口 —— 否则学生自己点一下就把"3 次上限"清零，防作弊形同虚设。 */
+ const isDemo = location.hash.indexOf('demo') >= 0;
  document.body.innerHTML = `
  <div class="yc-top">
  <div class="yc-brand"><span class="yc-logo">译</span>MTPE 模拟考场 <span class="en">译后编辑模拟考试</span></div>
@@ -66,7 +69,7 @@ function renderExams(){
  </div>
  <div class="wrap">
  <div class="page-t">考试广场</div>
- <div class="page-s">独立教学模拟工具，与任何商业平台无关。仅保留与考试作答直接相关的界面要素；作答模式含第九届赛制（无 AI·Agent 同榜）、轻度与深度。交卷成绩自动计入主平台「我的统计」。</div>
+ <div class="page-s">教学模拟工具：界面按第九届赛制还原，试题内容与正式考试无关。</div>
  ${TASKS.map(t=>{
  const draft=store.get('draft_'+t.id,null);
  const enters=store.get('enters_'+t.id,0);
@@ -87,11 +90,10 @@ function renderExams(){
  ${real?`<option value="${t.minutes}" selected>${t.minutes} 分钟（真题）</option>`:''}
  </select></span>
  <button class="btn btn-o" onclick="enterExam('${t.id}')">去考试</button>
- <span class="reset-link" onclick="resetEnters('${t.id}')">重置进入次数</span>
+ ${isDemo?`<span class="reset-link" onclick="resetEnters('${t.id}')">重置进入次数（教师）</span>`:''}
  </div>
  </div>`;
  }).join('')}
- <div class="page-s" style="margin-top:16px"> 交卷后在主平台可查看逐段修订痕迹、排行榜与成绩报告。</div>
  </div>
  <div id="modal-mask" class="mask hidden"><div class="modal" id="modal-box"></div></div>
  <div id="toast" style="opacity:0" role="status" aria-live="polite"></div>`;
@@ -136,6 +138,8 @@ function renderExam(){
  const {task,peMode}=S;
  const deep = peMode==='deep';
  const agent = peMode==='agent';
+ /* 语向标签按任务实际方向生成，不再写死"汉译外" */
+ const dirLabel = /中译英|汉译英|中译外|汉译外/.test(task.pair || '') ? '汉译英' : '英译汉';
  document.body.innerHTML=`
  <div class="yc-top">
  <div class="yc-brand"><span class="yc-logo">译</span>MTPE 模拟考场 <span class="en">译后编辑考试·${modeName(peMode)}</span></div>
@@ -173,7 +177,6 @@ function renderExam(){
  </div>
  <div class="exam-body">
  <div class="op-zone">
- <div class="zone-note">* 红框内为光标操作区域，请勿点击框外区域</div>
  <div class="seg-table">
  <div class="seg-row head">
  <div class="seg-num">#</div>
@@ -204,8 +207,7 @@ function renderExam(){
  <button class="btn btn-g" onclick="navSeg(1)">下一题 </button>
  </div>
  <div class="tp-card">
- <b>${agent?'汉译外译后编辑（第九届赛制）':deep?'汉译外深度译后编辑':'外译汉轻度译后编辑'}</b> <span class="muted">（机翻翻译译文由AI生成，仅供参考）</span>
- <div class="muted" style="margin-top:4px">${deep?'可点击右侧标签切换 AI 助手；Token 限额 10000。':agent?'第九届赛制：全程无 AI 助手；Agent 选手将与您同榜排名，交卷后见分晓。':'本题型不开放 AI 助手（真实赛制）。'}</div>
+ <b>${dirLabel} · ${agent?'译后编辑（第九届赛制）':deep?'深度译后编辑':'轻度译后编辑'}</b> <span class="muted">（机翻底稿，供修改）</span>
  </div>
  ${deep?`
  <div class="side-tabs">
@@ -250,7 +252,7 @@ function renderExam(){
  :`<button class="rail-btn" disabled onclick="toast('${agent?'第九届赛制全程无AI助手，Agent选手与您同榜排名':'轻度译后编辑不开放AI助手（真实赛制）'}')"><span>AI助手</span></button>`}
  <button class="rail-btn" onclick="runQA()"><span>QA</span></button>
  </div>
- <div class="ref-note">* 此界面为教学拟真还原，试题内容与正式考试无关。红框内为光标操作区域，请勿点击框外区域。</div>
+ <div class="ref-note">* 红框内为光标操作区域，请勿点击框外区域。</div>
  <div id="modal-mask" class="mask hidden"><div class="modal" id="modal-box"></div></div>
  <div id="toast" style="opacity:0" role="status" aria-live="polite"></div>`;
 

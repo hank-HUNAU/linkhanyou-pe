@@ -172,7 +172,7 @@ function renderPlaza() {
  const html = `
  <div class="plaza-head">
  <h2>② 改 · 译后编辑练习</h2>
- <p>在机翻底稿上动手改，交卷看修订率、逐段对照与参考译文点评。<b>练习分不是考场口径</b>——考场口径只在「③ 考 · 模拟参赛」。
+ <p>在机翻底稿上动手改，交卷看修订率、逐段对照与参考译文点评。
  ｜ <a href="index.html">← 返回首页</a> ｜ <a href="MQM错误类型参考手册.html">MQM 错误类型参考手册</a></p>
  <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
  <a class="btn btn-ghost" href="annotate.html" style="text-decoration:none">① 找 · 标注实训</a>
@@ -181,11 +181,7 @@ function renderPlaza() {
  <button class="btn btn-ghost" onclick="go('import')">导入自定义任务</button>
  </div>
  </div>
- <div class="mode-strip">
- <div class="mode-card"><b><span class="ic"></span>限时练习</b><span>可选 8/15/30/真题分钟限时作答、离开页面计数——<b>非考场口径</b>，分数仅供练习参考</span></div>
- <div class="mode-card"><b><span class="ic"></span>自由练习</b><span>不限时、可保存草稿，聚焦修订痕迹与修订率反馈</span></div>
- ${isTeacher ? '<div class="mode-card"><b><span class="ic"></span>教学演示</b><span>逐段查看错误类型点评与参考译文，适合课堂讲解</span></div>' : ''}
- </div>
+ <div class="page-s" style="margin:14px 0 18px">限时练习：8 / 15 / 30 分钟计时，离开页面计数 ｜ 自由练习：不限时、可存草稿</div>
  <div class="task-grid">
  ${tasks.map(t => {
  const wc = t.segs.reduce((s, g) => s + wordCount(g.src), 0);
@@ -416,7 +412,7 @@ function renderExam() {
  <div class="seg-cell src" id="src-${i}">${highlightTerms(g.src)}</div>
  <div class="seg-cell"><textarea id="ta-${i}" oninput="onAnswerInput(${i}, this.value)"
  onkeydown="if(event.ctrlKey&&event.key==='Enter'){event.preventDefault();focusSeg(${Math.min(i + 1, task.segs.length - 1)})}"
- placeholder="${mode === 'demo' ? '输入译后编辑结果……' : '在机翻译文基础上编辑'}"></textarea></div>
+ placeholder="${mode === 'demo' ? '输入译后编辑结果……' : '保留机翻正确处，只改该改的'}"></textarea></div>
  </div>`).join('')}
  </div>
  <div class="side-panel">
@@ -436,15 +432,8 @@ function renderExam() {
  <h4> ${mode === 'demo' ? '本任务译后编辑要点' : '译后编辑小贴士'}</h4>
  <ul class="tips-list">
  <li>${esc(task.tips)}</li>
- <li>优先解决<strong>准确性</strong>问题（漏译、误译、数字），再打磨流畅度。</li>
- <li>不必逐字重写：机翻正确时保留原文，避免过度编辑。</li>
  ${mode === 'demo' ? '<li>每段右下角“查看点评”在交卷前即可展开，边看边改。</li>' : ''}
  </ul>
- </div>
- <div class="panel kbd-hint">
- <b>快捷键</b><br>
- <span class="kbd">Ctrl</span>+<span class="kbd">Enter</span> 跳到下一段<br>
- 点击左侧段落序号可快速定位
  </div>
  </div>
  </div>`;
@@ -690,7 +679,6 @@ function renderStats() {
  <div class="stat-box"><div class="v green">${avgScore}</div><div class="l">平均得分</div></div>
  <div class="stat-box"><div class="v amber">${avgTer}%</div><div class="l">平均修订率</div></div>
  </div>
- <div class="page-s">说明：得分基于参考译文词级重合度（同义改写可能低估）；修订率中文按字切分，跨语向比较需谨慎。</div>
  ${annStatsHTML()}
  ${mqmProfileHTML(hs)}
  ${examProfileHTML(hs)}

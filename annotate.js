@@ -77,9 +77,10 @@ function renderSetup() {
  <div><label>机翻底稿</label><select id="f-mt"><option value="">含无底稿（跳过）</option><option value="1">仅限有底稿</option></select></div>
  <div><label>卷大小</label><select id="f-n">${[10, 15, 20, 30].map(k => `<option${String(pre.n) === String(k) ? ' selected' : ''}>${k}</option>`).join('')}</select></div>
  </div>
- <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
- <button class="btn btn-p" onclick="compose()">生成试卷 </button>
- <span class="muted">有种子标注的句对优先入选（训练轮），其余为盲标轮。</span>
+ <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+ <button class="btn btn-o" onclick="quickCompose()">一键组卷（推荐 10 句）</button>
+ <button class="btn btn-p" onclick="compose()">按筛选生成 </button>
+ <span class="muted">共 ${seedCount} 条带种子标注（交卷计分），其余为盲标练习（不计分）；种子优先入选。</span>
  </div>
  <div id="compose-out" class="page-s" style="margin-top:10px"></div>
  </div>
@@ -97,6 +98,14 @@ function renderSetup() {
  <div id="toast"></div>`;
  /* 由结果页"错题回练"直达：?wrong=1 自动开局 */
  if (P.get('wrong') && wbN) setTimeout(composeWrong, 300);
+}
+
+/* 一键组卷：不熟悉筛选时的默认路径 —— 清空筛选、10 句、种子优先 */
+function quickCompose() {
+ const set = (id, v) => { const el = $('#' + id); if (el) el.value = v; };
+ ['f-ed', 'f-stage', 'f-dir', 'f-dim', 'f-mt'].forEach((id) => set(id, ''));
+ set('f-n', '10');
+ compose();
 }
 
 function compose() {
@@ -168,14 +177,14 @@ function renderWork() {
  <div class="src-box"><div class="lab">原文</div>${esc(p.src)}</div>
  <div class="lab">机翻译文（选中错误片段后打标；无错误可选 M0）</div>
  ${p.mt ? `<div class="mt-box" id="mtbox">${renderMT(p.mt, anns)}</div>
- <div class="hint"> 鼠标划选片段后松开，在弹出的面板中选择标签与严重度；点击已标注的高亮可编辑或删除。</div>
+ <div class="hint">划选片段即弹出打标面板；点已有高亮可改或删。</div>
  <div class="ann-list" id="ann-list">
  ${anns.map((a, i) => `<div class="ann-item">
  <span>「${esc(a.text.slice(0, 30))}${a.text.length > 30 ? '…' : ''}」 <b>${TAG_LABEL[a.tag]}</b> · ${a.sev}${a.fix ? ' · 改：' + esc(a.fix.slice(0, 20)) : ''}</span>
  <button class="del" onclick="delAnn(${i})">删除</button>
  </div>`).join('')}
  </div>`
- : `<div class="mt-box empty-mt">（本条无官方机翻底稿——早期届次未公布逐句机翻，此句已自动跳过计分）</div>`}
+ : `<div class="mt-box empty-mt">（本条无官方机翻底稿，已跳过）</div>`}
  </div>
  <div class="nav-row">
  <button class="btn btn-g" onclick="navPair(-1)" ${A.idx === 0 ? 'disabled' : ''}> 上一条</button>
