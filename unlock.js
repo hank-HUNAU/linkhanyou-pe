@@ -78,7 +78,7 @@
  + '.mtpe-login-err{display:none;margin-top:10px;font-size:12.5px;color:#d70015;background:#fdeced;border-radius:8px;padding:7px 10px}'
  + '.mtpe-login-btn{margin-top:16px;width:100%;border:none;border-radius:980px;background:#0071e3;color:#fff;padding:11px 0;font-size:15px;font-weight:500;cursor:pointer}'
  + '.mtpe-login-btn:disabled{opacity:.6}'
- + '.mtpe-login-foot{margin-top:12px;font-size:11.5px;color:#86868b;text-align:center}';
+ ;
  document.head.appendChild(st);
  }
  const d = document.createElement('div');
