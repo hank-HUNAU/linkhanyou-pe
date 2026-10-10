@@ -149,7 +149,8 @@ function closeModal() { $('#modal-mask').classList.add('hidden'); }
 
 /* ---------------- 译后编辑实训 ---------------- */
 function renderPlaza() {
- const isTeacher = (window.mtpeIsTeacher && window.mtpeIsTeacher()) || localStorage.getItem('mtpe_role') === 'teacher';
+  // 教师登录相关代码已移除；课堂演示改为本地临时开关：用 index.html#demo 打开
+  const isTeacher = location.hash === '#demo';
  const tasks = allTasks();
  const html = `
  <div class="plaza-head">
