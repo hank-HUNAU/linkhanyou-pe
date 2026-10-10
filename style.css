@@ -302,6 +302,7 @@ th, td { border-color: var(--border) !important; }
 .home-next .hn-body { flex: 1; min-width: 0; }
 .home-next .hn-why { font-size: 14px; color: var(--text); line-height: 1.7; }
 .home-next .hn-act { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.home-next .hn-tip { font-size: 12.5px; color: var(--red); margin-top: 6px; }
 .home-next .hn-act .btn { text-decoration: none; }
 @media (max-width: 620px) { .home-next { flex-direction: column; gap: 8px; } }
 .home-progress .score-hero { margin: 12px 0 4px; }

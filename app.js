@@ -109,6 +109,9 @@ function now() { return new Date().toLocaleString('zh-CN', { hour12: false }); }
 let view = 'plaza';
 let S = null; // 当前答题会话 {task, mode, answers[], startTs, duration, cheat, timer, idx}
 const getNick = () => store.get('nickname', '');
+/* 是否填过"真实姓名/学号"：登录时系统会把昵称预置成账号名，那不算填过。
+   班级汇总按这个身份归档，所以导出作业前必须先填。 */
+const hasNick = () => !!store.get('nickname_set', 0);
 const allTasks = () => TASKS;
 const history = () => store.get('history', []);
 
@@ -155,6 +158,7 @@ function saveNickname() {
  const v = $('#nick-input').value.trim();
  if (!v) { toast('昵称不能为空'); return; }
  store.set('nickname', v);
+ store.set('nickname_set', 1);
  updateNickBadge();
  closeModal();
  if (window._nickCb) { const cb = window._nickCb; window._nickCb = null; cb(); }
@@ -200,7 +204,9 @@ function renderPlaza() {
  <span> ${t.segs.length} 段</span><span> 约 ${wc} 字</span>
  <span>⏱ 建议 ${t.minutes} 分钟</span>
  </div>
- ${draft ? `<div class="draft-tip"> 检测到未完成的练习草稿（${draft.done}/${t.segs.length} 段已编辑）</div>` : ''}
+ ${draft ? `<div class="draft-tip">${draft.mode === 'competition'
+ ? `有未完成的限时练习（剩余 ${fmtTime(Math.max(0, Math.floor(draft.remain || 0)))}，${draft.done || 0}/${t.segs.length} 段已编辑）`
+ : `检测到未完成的自由练习草稿（${draft.done || 0}/${t.segs.length} 段已编辑）`}</div>` : ''}
  <div class="task-actions">
  <button class="btn btn-primary" onclick="openSetup('${t.id}','competition')"> 限时练习</button>
  <button class="btn btn-outline" onclick="openSetup('${t.id}','practice')"> 自由练习</button>
@@ -237,6 +243,17 @@ function openSetup(taskId, mode) {
  </div>`;
 
  if (mode === 'competition') {
+ /* 有过没做完的限时练习 → 先问"继续还是重开"，继续时接着剩余时间计时 */
+ const d = store.get('draft_' + taskId, null);
+ if (d && d.mode === 'competition' && (d.remain || 0) > 30) {
+ openModal(`<h3>继续上次限时练习？</h3>
+ <div class="info-box">上次还剩 <b>${fmtTime(Math.floor(d.remain))}</b>，已编辑 ${d.done || 0}/${task.segs.length} 段。<br>继续会接着剩余时间计时（不会因为刷新而多出时间）。</div>
+ <div class="m-actions">
+ <button class="btn btn-ghost" onclick="closeModal();startSession('${taskId}','competition',true)">重新开始</button>
+ <button class="btn btn-primary" onclick="closeModal();startSession('${taskId}','competition',false,${Math.floor(d.remain)})">继续（剩余 ${fmtTime(Math.floor(d.remain))}）</button>
+ </div>`);
+ return;
+ }
  const durs = [Math.min(8, task.minutes), task.minutes, task.minutes * 2];
  body += `
  <div class="field"><label>限时时长</label>
@@ -261,21 +278,26 @@ function pickDur(el) {
 }
 
 /* ---------------- 答题会话 ---------------- */
-function startSession(taskId, mode, fresh) {
+function startSession(taskId, mode, fresh, remainSec) {
  const task = allTasks().find(t => t.id === taskId);
  if (!task) return;
  /* 起新会话前先收掉旧会话的计时器（详见 renderExam 里的注释） */
  if (S && S.timer) { clearInterval(S.timer); S.timer = null; }
  let answers = task.segs.map(() => '');
  let resumed = false;
- if (mode === 'practice' && !fresh) {
+ let dur = mode === 'competition' ? (window._dur || task.minutes) * 60 : 0;
+ if (mode !== 'demo' && !fresh) {
  const draft = store.get('draft_' + taskId, null);
- if (draft) { answers = draft.answers; resumed = true; }
+ if (draft && Array.isArray(draft.answers) && draft.answers.length) {
+ answers = draft.answers; resumed = true;
+ /* 限时练习：接着剩余时间计时（不是重新计时） */
+ if (mode === 'competition') dur = Math.max(30, Math.floor(remainSec || draft.remain || task.minutes * 60));
+ }
  }
  S = {
  task, mode, answers, idx: 0,
  startTs: Date.now(),
- duration: mode === 'competition' ? (window._dur || task.minutes) * 60 : 0,
+ duration: dur,
  cheat: 0, timer: null, draftSaveTm: null, done: false
  };
  window._sessionActive = true;
@@ -338,11 +360,18 @@ function onAnswerInput(i, val) {
  st.className = 'seg-status' + (edited ? ' done' : '');
  }
  updateProgress();
- if (S.mode === 'practice') {
+ /* 所有模式都存草稿：限时练习/考场中途误刷新不该丢整卷。
+    限时练习还要把"剩余秒数"一起存下来，继续时接着剩余时间计时 —— 不能靠刷新续时间。 */
+ if (S.mode !== 'demo') {
  clearTimeout(S.draftSaveTm);
  S.draftSaveTm = setTimeout(() => {
  const done = S.answers.filter((a, k) => a && a.trim() && a.trim() !== (S.task.segs[k].mt || '').trim()).length;
- store.set('draft_' + S.task.id, { answers: S.answers, done, savedAt: now() });
+ const rec = { answers: S.answers, done, savedAt: now(), mode: S.mode };
+ if (S.mode === 'competition') {
+ rec.dur = S.duration;
+ rec.remain = Math.max(0, S.duration - Math.floor((Date.now() - S.startTs) / 1000));
+ }
+ store.set('draft_' + S.task.id, rec);
  }, 600);
  }
 }
@@ -731,12 +760,17 @@ ${r.details.map(d => `<div class="blk"><b>第 ${d.i + 1} 段</b>（修订率 ${(
 
 /* 导出作业 JSON：交给老师汇总（含账号、作答记录与画像、标注实训成绩、错题本） */
 function exportHomework() {
- const account = (window.mtpeAccount && window.mtpeAccount()) || getNick() || '未登录';
+ /* 交作业前必须填姓名/学号：平台账号是课上统一发放的共享账号（每班只有个别几个），
+    班级汇总按"姓名"归档，不填就会把几十份作业并成两行。 */
+ if (!hasNick()) { askNickname(exportHomework); return; }
+ const loginAccount = (window.mtpeAccount && window.mtpeAccount()) || '';
+ const account = getNick();
  let ann = [], wrong = [];
  try { ann = JSON.parse(localStorage.getItem('mtpe_ann_stats') || '[]') || []; } catch (e) {}
  try { wrong = JSON.parse(localStorage.getItem('ann_wrongbook') || '[]') || []; } catch (e) {}
  const payload = {
  account: account,
+ loginAccount: loginAccount,
  exported: now(),
  tasks: (history() || []).length,
  history: history() || [],

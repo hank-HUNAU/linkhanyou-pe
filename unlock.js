@@ -94,6 +94,11 @@
     location.reload();
   };
 
+  /* 当前登录账号（供"导出作业"带上学号/账号信息；此前调用处一直取不到，见 audit_release） */
+  window.mtpeAccount = function () {
+    try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; }
+  };
+
   async function kekOf(pwd, salt) {
     const km = await crypto.subtle.importKey('raw', enc.encode(pwd), 'PBKDF2', false, ['deriveBits']);
     const bits = await crypto.subtle.deriveBits(

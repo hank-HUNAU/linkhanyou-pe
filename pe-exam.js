@@ -78,7 +78,7 @@ function renderExams(){
  <h3>${esc(t.name)} <span class="tag blue">${esc(t.pair)}</span>${t.corpus?'<span class="tag-fee">真题</span>':''}</h3>
  <div class="times">
  <span>题型：译后编辑 ｜ ${t.segs.length} 段 ｜ 建议时长 ${t.minutes} 分钟</span>
- <span>进入次数：已用 ${enters}/3 ${draft?`｜ <span style="color:var(--a)">有未完成答题记录（${draft.done}/${t.segs.length} 段），进入后可继续</span>`:''}</span>
+ <span>进入次数：已用 ${enters}/3 ${draft?`｜ <span style="color:var(--a)">有未完成作答（${draft.done}/${t.segs.length} 段${draft.remain?`，剩余 ${fmt(Math.floor(draft.remain))}`:''}），进入后接着剩余时间计时</span>`:''}</span>
  </div>
  </div>
  <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
@@ -108,9 +108,13 @@ function enterExam(id){
  store.set('enters_'+id, enters+1);
  const draft=store.get('draft_'+id,null);
  let answers=task.segs.map(g=>g.mt||''), resumed=false;
- if(draft){ answers=draft.answers; resumed=true; }
+ let duration=minutes*60;
+ if(draft){
+   answers=draft.answers; resumed=true;
+   if(draft.mode==='competition'&&draft.remain>30) duration=Math.floor(draft.remain);   // 接着剩余时间
+ }
  S={ task, minutes, peMode:'agent', answers,
- cur:0, startTs:Date.now(), duration:minutes*60, switches:0, timer:null, over:false };
+   cur:0, startTs:Date.now(), duration:duration, switches:0, timer:null, over:false };
  openModal(`<h3>进入答题页面（第 ${enters+1}/3 次）</h3>
  <div class="info-box"><b>仿真训练</b>：${esc(task.name)}（${esc(task.pair)} · ${task.segs.length} 段 · ${minutes} 分钟）</div>
  <div class="info-box">请勿切换页面/点击红框外区域（累计 <b>8 次</b>强制交卷）；禁止复制试题与粘贴内容；倒计时归零自动交卷。</div>
@@ -389,8 +393,10 @@ function forceSubmit(msg){ if(S&&S.over)return; openModal(`<h3>强制交卷</h3>
  <div class="m-actions"><button class="btn btn-p" onclick="closeModal();doSubmit('强制交卷')">查看结果</button></div>`); }
 function saveExit(){
  const done=S.answers.filter((a,k)=>a&&a!==S.task.segs[k].mt).length;
- store.set('draft_'+S.task.id,{answers:S.answers,done,savedAt:Date.now()});
- endExam(); renderExams(); toast('答题记录已保存，可从「去考试」继续');
+ /* 连同"剩余秒数"一起存：再次进入时接着剩余时间计时，避免靠退出/刷新换回满时长 */
+ store.set('draft_'+S.task.id,{answers:S.answers,done,savedAt:Date.now(),mode:'competition',
+   dur:S.duration,remain:Math.max(0,S.duration-Math.floor((Date.now()-S.startTs)/1000))});
+ endExam(); renderExams(); toast('答题记录已保存，可从「进入训练」继续（剩余时间保留）');
 }
 function endExam(){ if(S&&S.timer)clearInterval(S.timer); unbindAntiCheat(); if(S)S.over=true; }
 

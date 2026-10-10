@@ -86,7 +86,12 @@ function renderSetup() {
  <div class="row" style="margin-top:10px">
  <div><label>赛段</label><select id="f-stage"><option value="">全部</option>${stages.map(s => `<option${pre.stage === s ? ' selected' : ''}>${s}</option>`).join('')}</select></div>
  <div><label>方向</label><select id="f-dir"><option value="">全部</option>${dirs.map(d => `<option${pre.dir === d ? ' selected' : ''}>${d}</option>`).join('')}</select></div>
- <div><label>错误类型</label><select id="f-dim"><option value="">全部</option>${DIM_LIST.map(d => `<option${pre.dim === d ? ' selected' : ''}>${d}</option>`).join('')}</select></div>
+ <div><label>错误类型</label><select id="f-dim"><option value="">全部</option>${DIM_LIST.map(d => {
+ /* 标出每个维度有多少句可练；0 句的直接置灰，避免选完才知道"没有可用句对" */
+ const n = CORPUS_PAIRS.filter(p => (p.tags || []).includes(d)).length;
+ /* 必须显式写 value：否则 <option> 的取值会变成带后缀的整串文字，筛选就再也匹配不上 */
+ return `<option value="${d}"${pre.dim === d ? ' selected' : ''}${n ? '' : ' disabled'}>${d}${n ? '（' + n + ' 句）' : '（暂无语料）'}</option>`;
+ }).join('')}</select></div>
  <div><label>机翻底稿</label><select id="f-mt"><option value="">含无底稿（跳过）</option><option value="1">仅限有底稿</option></select></div>
  </div>
  </details>

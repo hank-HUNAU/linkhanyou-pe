@@ -77,6 +77,8 @@
   /* 只给一条"下一步"：学生进门先看到该做什么，而不是先看懂三个入口的区别。
      依据只有现有数据（草稿 / 标注 F1 / 练习次数 / 考场次数），不新增采集。 */
   function nextStep(s, dr) {
+    /* 平台账号是课上统一发放的共享账号 → 先让本人报上姓名/学号，成绩才认得出是谁 */
+    if (!get('nickname_set', 0)) return { setupName: true };
     if (dr.length) {
       return { href: 'practice.html', cta: '继续上次练习', why: '有 ' + dr.length + ' 份没做完的练习草稿，接着改比重新开一套划算。' };
     }
@@ -123,9 +125,16 @@
   <div class="home-next">
     <div class="hn-tag">下一步</div>
     <div class="hn-body">
+      ${nx.setupName ? `
+      <div class="hn-why">先填一下你的<b>姓名</b>（或"学号+姓名"）：导出作业、老师汇总班级成绩都要靠它认人——平台账号是课上统一发放的共享账号，不填就会把全班成绩并到一起。</div>
+      <div class="hn-act">
+        <input id="hn-name" maxlength="20" placeholder="例如：2024级翻译2班 张三" style="flex:1;min-width:220px;padding:9px 12px;border:1px solid rgba(0,0,0,.15);border-radius:10px;font-size:14px">
+        <button class="btn btn-primary" onclick="mtpeSaveName()">保存</button>
+      </div>
+      <div class="hn-tip" id="hn-tip"></div>` : `
       <div class="hn-why">${esc(nx.why)}</div>
       <div class="hn-act"><a class="btn btn-primary" href="${nx.href}">${esc(nx.cta)}</a>
-      <a class="btn btn-ghost" href="practice.html#stats">看我的统计</a></div>
+      <a class="btn btn-ghost" href="practice.html#stats">看我的统计</a></div>`}
     </div>
   </div>
 
@@ -184,6 +193,19 @@
     const note = document.getElementById('home-note');
     if (note) note.textContent = installNote();
   }
+
+  /* 首页内联保存姓名/学号（登录时昵称会被预置成账号名，所以要单独打个标） */
+  window.mtpeSaveName = function () {
+    const el = document.getElementById('hn-name');
+    const tip = document.getElementById('hn-tip');
+    const v = ((el && el.value) || '').trim();
+    if (!v) { if (tip) tip.textContent = '请填写姓名或学号后再保存。'; return; }
+    try {
+      localStorage.setItem('mtpe_nickname', JSON.stringify(v));
+      localStorage.setItem('mtpe_nickname_set', '1');
+    } catch (e) { if (tip) tip.textContent = '保存失败：本机存储不可用。'; return; }
+    render();
+  };
 
   document.addEventListener('mtpe-install-changed', syncInstall);
   document.addEventListener('mtpe-installed', syncInstall);
