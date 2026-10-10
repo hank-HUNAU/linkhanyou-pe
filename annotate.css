@@ -1,4 +1,16 @@
 /* ============ MTPE 标注实训 · 样式 ============ */
+/* ---------- 弹窗（本页不加载 style.css / pe-exam.css，必须自带一套） ----------
+   缺这段时：#modal-mask 只是个普通 div，会掉到页面最底部显示（实测就是这个故障） */
+.mask{position:fixed;inset:0;background:rgba(20,26,45,.45);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:#fff;border-radius:14px;padding:20px 22px;width:min(460px,100%);max-height:86vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.22)}
+.modal h3{font-size:17px;margin-bottom:12px}
+.modal .m-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+.modal .info-box{background:var(--anl);color:var(--and);border-radius:8px;padding:10px 12px;font-size:13px;margin-top:10px}
+.modal .warn-box{background:var(--rb);color:var(--r);border-radius:8px;padding:10px 12px;font-size:13px;margin-top:10px}
+
+/* 作答态：隐藏全站顶栏，只留本页自己那条（同样因为本页不加载 style.css，要写一份） */
+body.answering #mtpe-nav{display:none!important}
+body.answering{--mtpe-nav-h:0px}
 :root{
   --an:#0f766e; --and:#0d5f59; --anl:#e6f5f3;
   --bg:#f2f6f5; --card:#fff; --bd:#dbe4e2; --tx:#1f2a28; --tx2:#4f5f5c; --mut:#5f6f6c;

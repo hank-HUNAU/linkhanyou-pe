@@ -371,16 +371,20 @@ function countSwitch(reason){
 
 /* ---- 计时 / 交卷 ---- */
 function startExam(){
+ /* 先收掉可能还在跑的旧计时器：否则上一次进入考场留下的 interval 会给新会话
+    算出一个负的剩余时间，一进来就被强制交卷（与"改"页自由练习同一类问题） */
+ if(S.timer){clearInterval(S.timer);S.timer=null;}
  renderExam();
  S.startTs=Date.now();
- S.timer=setInterval(()=>{
- if(!S||S.over){clearInterval(S.timer);return;}
+ const tid=setInterval(()=>{
+ if(!S||S.over){clearInterval(tid);return;}     // 注意：S 可能已经是 null，不能再读 S.timer
  const left=S.duration-Math.floor((Date.now()-S.startTs)/1000);
  const el=$('#remain'); if(!el)return;
  el.textContent=fmt(Math.max(0,left));
  if(left<=60)el.classList.add('warn');
  if(left<=0)forceSubmit('考试时间已用完，系统自动交卷。');
  },500);
+ S.timer=tid;
  const ta=$('#ta-0'); if(ta)ta.focus();
  if(S.peMode==='light')toast('轻度译后编辑模式：以可理解为目标，只改硬伤');
  if(S.peMode==='agent')toast('第九届模式：全程无 AI，交卷后与 Agent 选手同榜排名');

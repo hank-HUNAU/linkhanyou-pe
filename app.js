@@ -266,6 +266,8 @@ function pickDur(el) {
 function startSession(taskId, mode, fresh) {
  const task = allTasks().find(t => t.id === taskId);
  if (!task) return;
+ /* 起新会话前先收掉旧会话的计时器（详见 renderExam 里的注释） */
+ if (S && S.timer) { clearInterval(S.timer); S.timer = null; }
  let answers = task.segs.map(() => '');
  let resumed = false;
  if (mode === 'practice' && !fresh) {
@@ -447,9 +449,14 @@ function renderExam() {
  updateProgress();
 
  // 计时
+ /* 先清掉可能还在跑的旧计时器：否则上一个会话（例如限时练习）留下的 interval
+    会作用到新会话上 —— 新会话如果是自由练习（duration=0），旧计时器一算就是
+    "已超时"，于是刚进作答页就被自动交卷、直接跳到结果页。 */
+ if (S.timer) { clearInterval(S.timer); S.timer = null; }
  if (mode === 'competition') {
- S.timer = setInterval(() => {
- if (!S) { clearInterval(S.timer); return; }
+ const tid = setInterval(() => {
+ if (!S) { clearInterval(tid); return; }
+ if (S.mode !== 'competition' || S.done) return;   // 旧计时器不得作用于新会话
  const left = S.duration - Math.floor((Date.now() - S.startTs) / 1000);
  const el = $('#timer');
  if (!el) return;
@@ -457,12 +464,14 @@ function renderExam() {
  if (left <= 60) el.classList.add('warn');
  if (left <= 0) { toast('时间到，系统自动交卷'); submitSession(); }
  }, 500);
+ S.timer = tid;
  } else {
- S.timer = setInterval(() => {
- if (!S) { clearInterval(S.timer); return; }
+ const tid = setInterval(() => {
+ if (!S) { clearInterval(tid); return; }
  const el = $('#timer');
  if (el && S.mode === 'practice') el.textContent = '已用时 ' + fmtTime(Math.floor((Date.now() - S.startTs) / 1000));
  }, 1000);
+ S.timer = tid;
  }
 }
 
