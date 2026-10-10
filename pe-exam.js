@@ -1,11 +1,11 @@
 /* ============================================================
  * MTPE 模拟考场 · 逻辑 v2
- * 依据真实界面截图（第四届全国翻译技术大赛决赛）校准：
- * - 右侧栏双模式：题目面板（默认） AI助手（仅深度译后编辑开放）
- * - 轻度/深度两种作答模式
+ * 依据真实界面截图（第四届翻译技术大赛决赛 / 第九届官方模拟赛）校准：
+ * - 右侧栏：题目面板 + 上一题/下一题 + 保存&退出 / 交卷
+ * - 两种作答模式：第九届模式（默认，无 AI、Agent 同榜）与轻度译后编辑
  * - 工具栏按第九届官方模拟赛实拍对齐：复制原文/清除译文、B I U Aa、S x² x₃ ¶、
  *   清除样式、查找替换、拼写检查、特殊字符（不再有格式刷/溶解样式）
- * - AI 模型声明为"大语言模型"（教学模拟，不使用真实品牌名），预置 4 条英文润色指令
+ * - 2026-10-10 瘦身：下线深度模式 / AI 助手拟真（与"第九届全程无 AI"矛盾）与右侧图标栏
  * ============================================================ */
 const $ = (s) => document.querySelector(s);
 const esc = (s) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -116,7 +116,7 @@ function enterExam(id){
  <div class="field" style="margin:10px 0">
  <div style="font-weight:600;font-size:13px;margin-bottom:6px">选择作答模式</div>
  <div class="mode-row">
- <div class="mode-btn" id="mode-light" onclick="pickMode(this,'light')"><b>轻度译后编辑</b><span>以可理解为目标，只改硬伤，不重写（真实赛制：不开放 AI 助手）</span></div>
+ <div class="mode-btn" id="mode-light" onclick="pickMode(this,'light')"><b>轻度译后编辑</b><span>以可理解为目标，只改硬伤，不重写</span></div>
  <div class="mode-btn sel" id="mode-agent" onclick="pickMode(this,'agent')"><b> 第九届模式（默认）</b><span>全程无 AI，交卷后与 Agent 选手同榜排名（对齐2026第九届赛制）</span></div>
  </div>
  <style>.mode-row{grid-template-columns:1fr 1fr 1fr}</style>
@@ -384,7 +384,7 @@ function startExam(){
  if(left<=0)forceSubmit('考试时间已用完，系统自动交卷。');
  },500);
  const ta=$('#ta-0'); if(ta)ta.focus();
- if(S.peMode==='light')toast('轻度译后编辑模式：AI 助手不可用（真实赛制）');
+ if(S.peMode==='light')toast('轻度译后编辑模式：以可理解为目标，只改硬伤');
  if(S.peMode==='agent')toast('第九届模式：全程无 AI，交卷后与 Agent 选手同榜排名');
 }
 function askSubmit(){
