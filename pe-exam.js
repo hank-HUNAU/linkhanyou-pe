@@ -174,17 +174,23 @@ function renderExam(){
  <div class="exam-body">
  <div class="op-zone">
  <div class="zone-note">* 红框内为光标操作区域，请勿点击框外区域</div>
- <table class="seg-table">
- <tr><th style="width:46px">#</th><th>原文<span class="col-lang">请输入原文（${langOf(task.pair)[0]}）</span></th><th>译文<span class="col-lang">请输入译文（${langOf(task.pair)[1]}）　Enter 确认句段</span></th></tr>
+ <div class="seg-table">
+ <div class="seg-row head">
+ <div class="seg-num">#</div>
+ <div class="seg-cell src">原文<span class="col-lang">请输入原文（${langOf(task.pair)[0]}）</span></div>
+ <div class="seg-cell pe">译文<span class="col-lang">请输入译文（${langOf(task.pair)[1]}）　Enter 确认句段</span>
+ <span class="col-tools"><button class="tb-btn" title="字号（拟真版不可用）" onclick="toast('拟真版：字号设置不可用')">Aa</button><button class="tb-btn" title="插入脚注标记" onclick="insertChar('*')">(*)</button><button class="tb-btn" title="特殊字符" onclick="openSpecial()">⊞</button><button class="tb-btn" title="上一段" onclick="navSeg(-1)">^</button><button class="tb-btn" title="下一段" onclick="navSeg(1)">v</button></span>
+ </div>
+ </div>
  ${task.segs.map((g,i)=>`
- <tr id="row-${i}" onclick="setCur(${i})">
- <td class="num">${i+1}<span class="st todo" id="st-${i}">○</span></td>
- <td class="src-cell" id="src-${i}">${hlTerms(g.src)}</td>
- <td class="pe-cell"><textarea id="ta-${i}" rows="3" aria-label="第${i}段译文编辑"
+ <div class="seg-row" id="row-${i}" onclick="setCur(${i})">
+ <div class="seg-num">${i+1}<span class="st todo" id="st-${i}">○</span></div>
+ <div class="seg-cell src" id="src-${i}">${hlTerms(g.src)}</div>
+ <div class="seg-cell pe"><textarea id="ta-${i}" rows="1" class="pe-edit" aria-label="第${i}段译文编辑"
  oninput="onInput(${i},this.value)"
- onkeydown="segKey(event,${i})"></textarea></td>
- </tr>`).join('')}
- </table>
+ onkeydown="segKey(event,${i})"></textarea></div>
+ </div>`).join('')}
+ </div>
  </div>
  <div class="side-col">
  <div class="task-panel">
@@ -251,6 +257,7 @@ function renderExam(){
  task.segs.forEach((g,i)=>{ const ta=$('#ta-'+i); ta.value=S.answers[i]||''; refreshStatus(i); });
  setCur(0);
  bindAntiCheat();
+ task.segs.forEach((g,i)=>{ autoGrow(i); });
 }
 
 function switchSide(w){
@@ -274,7 +281,7 @@ function refreshStatus(i){
 }
 function setCur(i){
  S.cur=Math.max(0,Math.min(i,S.task.segs.length-1));
- document.querySelectorAll('.seg-table tr').forEach(r=>r.classList.remove('cur'));
+ document.querySelectorAll('.seg-table .seg-row').forEach(r=>r.classList.remove('cur'));
  const row=$('#row-'+S.cur); if(row)row.classList.add('cur');
  const ai=$('#ai-seg'); if(ai)ai.textContent=S.cur+1;
  const pn=$('#page-num'); if(pn)pn.textContent=S.cur+1;
@@ -288,7 +295,13 @@ function confirmSeg(i){
  else toast('已是最后一个句段');
 }
 function jumpSeg(){ const n=parseInt($('#jump-n').value,10); if(n>=1&&n<=S.task.segs.length){ setCur(n-1); $('#ta-'+(n-1)).focus(); } }
-function onInput(i,v){ S.answers[i]=v; refreshStatus(i); }
+function onInput(i,v){ S.answers[i]=v; refreshStatus(i); autoGrow(i); }
+/* 译文编辑框按内容自动增高，并铺满本行（左右两栏因此等高） */
+function autoGrow(i){
+ const ta=$('#ta-'+i); if(!ta) return;
+ ta.style.minHeight='0px';
+ ta.style.minHeight=Math.max(40, ta.scrollHeight)+'px';
+}
 
 /* ---- 工具栏 ---- */
 function copySrc(){

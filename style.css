@@ -134,12 +134,14 @@ main { max-width: 1180px; margin: 0 auto; padding: 26px 20px 60px; }
 .seg-num { padding: 12px 8px; text-align: center; color: var(--muted); font-size: 13px; border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .seg-status { font-size: 11px; }
 .seg-status.done { color: var(--green); }
-.seg-cell { padding: 10px 14px; font-size: 14px; }
+.seg-cell { padding: 10px 14px; font-size: 14px; display: flex; flex-direction: column; }
+.seg-cell > .seg-hint { font-size: 12px; color: var(--muted); font-weight: 400; }
 .seg-cell.src { border-right: 1px solid var(--border); color: var(--text); }
 .seg-cell.src mark { background: #fff3bf; padding: 0 2px; border-radius: 3px; cursor: pointer; }
 .seg-cell textarea {
   width: 100%; min-height: 52px; border: 1px solid var(--border); border-radius: 8px;
-  padding: 8px 10px; font-family: inherit; font-size: 14px; line-height: 1.7; resize: vertical; background: #fcfdff;
+  padding: 8px 10px; font-family: inherit; font-size: 14px; line-height: 1.7; resize: none; background: #fcfdff;
+  flex: 1;
 }
 .seg-cell textarea:focus { outline: none; border-color: var(--primary); background: #fff; }
 .seg-cell textarea.empty-mt { color: var(--muted); font-style: italic; }

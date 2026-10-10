@@ -58,17 +58,23 @@ button{font-family:inherit;cursor:pointer}
 .op-zone{border:2px solid var(--r);border-radius:8px;background:#fff;box-shadow:0 1px 3px rgba(30,41,72,.06)}
 .zone-note{font-size:12px;color:var(--r);padding:6px 12px 0}
 
-.seg-table{width:100%;border-collapse:collapse}
-.seg-table th{background:#f7f9fd;font-size:12px;color:var(--mut);font-weight:600;padding:8px 10px;text-align:left;border-bottom:1px solid var(--bd)}
-.seg-table td{border-bottom:1px solid var(--bd);padding:10px;vertical-align:top}
-.seg-table tr.cur td{background:#f5f9ff}
-.num{width:46px;text-align:center;color:var(--mut);font-size:12px;cursor:pointer}
-.num .st{display:block;margin-top:3px}
+/* 双栏逐段编辑：左右等宽、同行等高（复刻第九届赛场布局） */
+.seg-table{width:100%}
+.seg-row{display:grid;grid-template-columns:40px 1fr 1fr;align-items:stretch;border-bottom:1px solid var(--bd)}
+.seg-row.head{background:#f7f9fd;font-size:12px;color:var(--mut);font-weight:600}
+.seg-row.cur{outline:2px solid var(--yc);outline-offset:-2px;background:#f5f9ff}
+.seg-num{padding:9px 6px;text-align:center;color:var(--mut);font-size:12px;border-right:1px solid var(--bd);cursor:pointer}
+.seg-num .st{display:block;margin-top:3px}
 .st.done{color:var(--g)}.st.editing{color:var(--yc)}.st.todo{color:var(--mut)}
-.src-cell{width:42%;font-size:14px}
-.src-cell mark{background:#fff3bf;padding:0 2px;border-radius:3px}
-.pe-cell textarea{width:100%;min-height:54px;border:1px solid var(--bd);border-radius:7px;padding:8px 10px;font-family:inherit;font-size:14px;resize:vertical;background:#fcfdff}
-.pe-cell textarea:focus{outline:none;border-color:var(--yc);background:#fff}
+.seg-cell{padding:9px 12px;font-size:14px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.seg-row.head .seg-cell{flex-direction:row;align-items:center;gap:6px;flex-wrap:wrap;padding-top:6px;padding-bottom:6px}
+.seg-cell.src{border-right:1px solid var(--bd);line-height:1.7;word-break:break-word}
+.seg-cell.src mark{background:#fff3bf;padding:0 2px;border-radius:3px}
+.seg-cell.pe{padding:0}
+.pe-edit{flex:1;width:100%;border:none;background:transparent;resize:none;overflow:hidden;
+  padding:9px 12px;font-family:inherit;font-size:14px;line-height:1.7;color:var(--tx);min-height:40px}
+.pe-edit:focus{outline:none;background:#fff}
+.col-tools{margin-left:auto;display:flex;gap:2px}
 
 /* 底栏 */
 .exam-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-top:1px solid var(--bd);background:#fafbfe;flex-wrap:wrap}

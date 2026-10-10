@@ -323,9 +323,18 @@ function focusSeg(i) {
  if (ta) ta.focus();
 }
 
+/* 译文编辑框按内容自动增高，并铺满本行——左右两栏因此保持同一尺寸 */
+function autoGrowTa(i) {
+ const ta = $('#ta-' + i);
+ if (!ta) return;
+ ta.style.minHeight = '0px';
+ ta.style.minHeight = Math.max(52, ta.scrollHeight) + 'px';
+}
+
 function onAnswerInput(i, val) {
  if (!S) return;
  S.answers[i] = val;
+ autoGrowTa(i);
  const row = document.querySelector('.seg-row[data-i="' + i + '"]');
  if (row) {
  const st = row.querySelector('.seg-status');
@@ -446,6 +455,7 @@ function renderExam() {
  if (g.mt) { ta.value = g.mt; S.answers[i] = g.mt; }
  updateSegStatus(i);
  });
+ task.segs.forEach((g, i) => autoGrowTa(i));
  updateProgress();
 
  // 计时
