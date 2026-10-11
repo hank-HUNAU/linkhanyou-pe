@@ -48,6 +48,46 @@ let A = null; // {paper:[pair...], idx, anns:{k:[...]}, seeded:Set(k)}
 let AUTO_BLIND = false;   // 由带 go=1 的练习建议链接置位：允许补盲标句对（组卷结果会标明不计分）
 
 /* ---------------- 组卷 ---------------- */
+/* 专项训练卷：围绕"同一个术语/专名在整篇里多处不一致"集中练。
+   与常规卷的分工（2026-10-11 定）：
+     · 常规卷——每个术语最多取 2-3 条种子，保证 F1 反映综合能力、推荐练习不重复送同一个坑；
+     · 专项卷——把整篇的相关句对全放进来（含已计分的那几处），练"逐一核对与统一"这项技能，
+       结果**不计入常规 F1**（另存 mtpe_ann_term_stats），避免单一知识点稀释诊断力。
+   规则按"术语是否出现在原文"实时取句，不用写死句号，语料更新后自动跟着变。 */
+const SPECIAL_PAPERS = [
+  { id: 'term-educ', name: '术语一致性 ·「通识」(educability)', ed: '7', stage: '初赛', terms: ['educability'],
+    desc: '全篇多处 educability 都该统一成官方定名「通识」——练"逐一核对与统一"' },
+  { id: 'name-valiant', name: '专名一致性 · Valiant', ed: '7', stage: '初赛', terms: ['Valiant'],
+    desc: '机翻把同一个人名写成「瓦连特／瓦里安特／英勇」——练"专名只能有一种写法"' },
+  { id: 'term-heyuan', name: '园林术语 · 扬州何园', ed: '7', stage: '决赛',
+    terms: ['片石山房', '复道回廊', '立体交通', '寄啸山庄', '赏月楼'],
+    desc: '园林专名与术语的定名（参考译文与术语表都给了标准写法）' },
+  { id: 'term-sh8', name: '文化术语 · 上海百年建筑史', ed: '8', stage: '决赛',
+    terms: ['注重功利', '中西合璧', '华洋分居', '功利'],
+    desc: '四字格与建筑语境术语的定名（注意术语表与参考译文个别处写法不同）' },
+  { id: 'term-etaste', name: '术语一致性 · e-taste（电子味觉）', ed: '8', stage: '初赛', terms: ['e-taste'],
+    desc: 'E-Taste 全篇的定名统一' }
+];
+const termIn = (text, s) => {
+  const needle = String(s).replace(/（[^）]*）/g, '').trim();
+  if (!needle) return false;
+  return /^[\x00-\x7F\s\-]+$/.test(needle)
+    ? new RegExp(needle.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&'), 'i').test(text)
+    : text.includes(needle);
+};
+const specialPairs = (sp) => CORPUS_PAIRS.filter((p) => p.ed === sp.ed && p.stage === sp.stage
+  && sp.terms.some((t) => termIn(p.src || '', t)));
+function startSpecial(id) {
+  const sp = SPECIAL_PAPERS.filter((x) => x.id === id)[0];
+  if (!sp) return;
+  const paper = specialPairs(sp);
+  if (!paper.length) { toast('这套专项卷当前没有可用句对'); return; }
+  A = { paper, idx: 0, anns: {}, seededK: new Set(SEEDS.map((s) => s.k)),
+    special: { id: sp.id, name: sp.name }, startedAt: Date.now(), wrongMode: false };
+  store.set('paper', { keys: paper.map((p) => p.k), idx: 0, anns: A.anns, startedAt: A.startedAt, special: sp.id });
+  renderWork();
+}
+
 function renderSetup() {
  setAnswering(false);
  V = 'setup';
@@ -105,6 +145,18 @@ function renderSetup() {
  <div class="muted" style="font-size:12.5px;margin-top:6px">默认只出<b>种子对照卷</b>（交卷计分）：全库 ${seedCount} 条有官方种子标注。</div>
  <div id="compose-out" class="page-s" style="margin-top:10px"></div>
  </div>
+ ${(() => {
+   const cards = SPECIAL_PAPERS.map((sp) => ({ sp, n: specialPairs(sp).length })).filter((x) => x.n >= 3);
+   if (!cards.length) return '';
+   return `<div class="card"><h3>专项训练（围绕同一术语的整篇一致性）</h3>
+   <div class="page-s" style="margin-bottom:10px">常规卷每个术语最多取 2–3 条，保证分数反映综合能力；专项卷把整篇相关句对集中练一遍，<b>不计入常规 F1</b>。</div>
+   ${cards.map(({ sp, n }) => `<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--bd)">
+   <div style="flex:1;min-width:0"><b style="font-size:13.5px">${esc(sp.name)}</b> <span class="muted" style="font-size:12.5px">· ${n} 句</span>
+   <div class="muted" style="font-size:12.5px;margin-top:2px">${esc(sp.desc)}</div></div>
+   <button class="btn btn-o" onclick="startSpecial('${sp.id}')">开始专项</button>
+   </div>`).join('')}
+   </div>`;
+ })()}
  ${wbN ? `<div class="card"><h3> 错题本（${wbN} 句 / ${wb.length} 处待回练）</h3>
  <div class="page-s">来自你以往标注实训中<b>漏检</b>或<b>标签判错</b>的种子错误。回练只重做这些句子，交卷后同样计分。</div>
  <ul style="margin:0 0 10px 18px;font-size:13px;color:var(--tx2)">${wb.slice(0, 6).map(w => `<li>${esc(w.k)} ｜「${esc(String(w.span).slice(0, 24))}」 → 应为 <b>${TAG_LABEL[w.tag] || w.tag}</b> · ${w.sev} <span class="muted">（${w.kind}）</span></li>`).join('')}</ul>
@@ -187,6 +239,7 @@ function resumePaper() {
  const map = Object.fromEntries(CORPUS_PAIRS.map(x => [x.k, x]));
  const paper = p.keys.map(k => map[k]).filter(Boolean);
  A = { paper, idx: p.idx || 0, anns: p.anns || {}, seededK: new Set(SEEDS.map(s => s.k)), startedAt: p.startedAt || Date.now() };
+ if (p.special) { const sp = SPECIAL_PAPERS.filter((x) => x.id === p.special)[0]; if (sp) A.special = { id: sp.id, name: sp.name }; }
  renderWork();
 }
 
@@ -208,6 +261,7 @@ function renderWork() {
  <div class="wrap">
  <div class="card">
  <div class="meta">
+ ${A.special ? `<span class="tag teal">专项训练 · ${esc(A.special.name)}（不计入常规 F1）</span>` : ''}
  ${A.wrongMode ? '<span class="tag teal">错题回练卷</span>' : ''}
  <span class="tag teal">${esc(p.dir)}</span><span class="tag gray">第${esc(p.ed)}届 · ${esc(p.stage)}</span>
  <span>引擎：${esc(p.eng) || '（未公布）'}</span>
@@ -386,11 +440,13 @@ function submitAnn() {
 
  const result = { date: new Date().toLocaleString('zh-CN', { hour12: false }), TP, FP, FN, tagWrong, sevWrong, precision, recall, f1, perPair, pairsN: A.paper.length, tagged: Object.values(A.anns).reduce((s, a) => s + a.length, 0), wrongAdded: wrongAdded.length, wrongTotal };
  const rs = store.get('results', []); rs.unshift(result); store.set('results', rs.slice(0, 50));
- /* 同步到主平台「我的统计」 */
+ /* 同步到主平台「我的统计」：
+    专项卷单独存 mtpe_ann_term_stats —— 它的题目围绕同一术语聚集，混进常规 F1 会稀释诊断力。 */
+ result.special = A.special ? A.special.name : '';
  try {
- const st = JSON.parse(localStorage.getItem('mtpe_ann_stats') || '[]');
- st.unshift({ date: result.date, precision, recall, f1, TP, FP, FN, tagWrong, sevWrong, pairsN: result.pairsN, tagged: result.tagged });
- localStorage.setItem('mtpe_ann_stats', JSON.stringify(st.slice(0, 50)));
+ const st = JSON.parse(localStorage.getItem(result.special ? 'mtpe_ann_term_stats' : 'mtpe_ann_stats') || '[]');
+ st.unshift({ date: result.date, paper: result.special || '', precision, recall, f1, TP, FP, FN, tagWrong, sevWrong, pairsN: result.pairsN, tagged: result.tagged });
+ localStorage.setItem(result.special ? 'mtpe_ann_term_stats' : 'mtpe_ann_stats', JSON.stringify(st.slice(0, 50)));
  } catch (e) {}
  store.del('paper');
  renderResult(result);
@@ -407,6 +463,7 @@ function renderResult(r) {
  </div>
  <div class="wrap">
  <h1>评分结果 · 与种子标注对比</h1>
+ ${r.special ? `<div class="info-box" style="margin-bottom:10px"><b>专项训练「${esc(r.special)}」</b>：本次成绩<b>不计入常规 F1</b>（常规 F1 只统计随机组卷的种子卷），用于集中练"同一术语/专名在整篇里统一"这项技能。漏检照样进错题本。</div>` : ''}
  <div class="page-s">计分范围：${r.perPair.filter(x => x.scored).length} 条种子对照卷（盲标条目不计分）；标签集 M1-M9/M0。</div>
  <div class="score-hero">
  <div class="stat-box"><div class="v">${r.precision}%</div><div class="l">查准率 Precision（标得对不对）</div></div>
