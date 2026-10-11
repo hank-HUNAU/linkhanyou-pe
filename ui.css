@@ -1,0 +1,174 @@
+/* ============================================================
+ * ui.css — 全站设计底座（2026-10-12）
+ *
+ * 四个页面都**先**加载本文件，再加载各自的页面样式。
+ *
+ * 为什么要有这一层：此前每个页面各写一套设计变量与按钮，
+ * 后果是"改 / 找 的按钮是 980px 胶囊、测 的按钮是 8px 圆角矩形"、
+ * 同一个"警告框"三种底色、顶栏的蓝和页面的蓝不是一个蓝。
+ * 现在颜色 / 圆角 / 字号 / 间距 / 阴影只有一份定义，改一处三页同步。
+ *
+ * 页面专属的版式（作答区、考场外壳、图表、统计表格）仍留在各自文件里。
+ * 主色：苹果蓝 #0071e3（2026-10-12 定）。
+ * ============================================================ */
+
+/* ---------- 1. 设计变量：全站唯一一份 ---------- */
+:root{
+  /* 主色 */
+  --primary:#0071e3; --primary-dark:#0058b0; --primary-light:#eaf3fd;
+  /* 语义色（琥珀比原来的 #d97706 深一档：原色配 #fef3e2 底只有 2.90 对比度，小字读不清） */
+  --green:#1c6e31; --green-bg:#e6f4ea;
+  --red:#d70015; --red-bg:#fdeced;
+  --amber:#a35a00; --amber-bg:#fdf0e3;
+  /* 中性色 */
+  --bg:#f5f5f7; --card:#fff; --border:rgba(0,0,0,.08);
+  --text:#1d1d1f; --text-2:#515154; --muted:#6e6e73; --sk:rgba(0,0,0,.06);
+  /* 步骤色：只用在 .step-tag，三页一眼看出自己在第几步 */
+  --step1:#0f766e; --step1-bg:#e6f5f3;
+  --step2:#0058b0; --step2-bg:#eaf3fd;
+  --step3:#1a5fd0; --step3-bg:#eaf2ff;
+  /* 圆角四档 */
+  --r-sm:8px; --r-md:10px; --r-lg:14px; --r-pill:999px; --radius:14px;
+  /* 字号五档 */
+  --fs-xs:12.5px; --fs-sm:13.5px; --fs-md:15px; --fs-lg:20px; --fs-xl:24px;
+  /* 间距六档 */
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px;
+  /* 阴影两档 */
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);
+  --shadow-lg:0 20px 60px rgba(0,0,0,.2);
+  /* ---- 兼容别名：页面样式里用的还是这些老名字，指到同一套变量，避免两套色 ---- */
+  --yc:var(--primary); --ycd:var(--primary-dark); --ycl:var(--primary-light);
+  --bd:var(--border); --tx:var(--text); --tx2:var(--text-2); --mut:var(--muted);
+  --g:var(--green); --gb:var(--green-bg);
+  --r:var(--red); --rb:var(--red-bg);
+  --a:var(--amber); --ab:var(--amber-bg);
+  --an:var(--step1); --and:#0d5f59; --anl:var(--step1-bg);
+}
+
+/* ---------- 2. 基础 ---------- */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","PingFang SC","Helvetica Neue","Microsoft YaHei",sans-serif;
+  background:var(--bg); color:var(--text); font-size:var(--fs-md); line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{letter-spacing:-.01em;font-weight:600}
+.hidden{display:none!important}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{border-radius:var(--r-md);border:1px solid var(--border);font-family:inherit}
+table{border-collapse:separate;border-spacing:0}
+th,td{border-color:var(--border)}
+img,svg{max-width:100%}
+
+/* ---------- 3. 焦点态：键盘走一遍必须看得见 ---------- */
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,
+textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:var(--r-sm)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+
+/* ---------- 4. 按钮：一套写法，改/找/测 完全一致 ---------- */
+.btn{
+  border:none;border-radius:var(--r-pill);padding:8px 16px;font-size:var(--fs-sm);font-weight:500;
+  display:inline-flex;align-items:center;gap:5px;transition:filter .15s ease,background .15s ease;
+  text-decoration:none;line-height:1.6;
+}
+.btn:hover{filter:brightness(1.05)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary,.btn-p{background:var(--primary);color:#fff}
+.btn-primary:hover,.btn-p:hover{background:var(--primary-dark);filter:none}
+.btn-outline,.btn-o{background:#fff;color:var(--primary-dark);border:1px solid var(--primary)}
+.btn-outline:hover,.btn-o:hover{background:var(--primary-light)}
+.btn-ghost,.btn-g{background:#eef1f7;color:var(--text-2)}
+.btn-ghost:hover,.btn-g:hover{background:#e5e9f3}
+.btn-danger,.btn-r{background:var(--red-bg);color:var(--red)}
+
+/* ---------- 5. 标签 ---------- */
+.tag{display:inline-block;padding:2px 10px;border-radius:var(--r-pill);font-size:var(--fs-xs);font-weight:600;white-space:nowrap}
+.tag.pair{background:var(--primary-light);color:var(--primary-dark)}
+.tag.domain{background:var(--green-bg);color:var(--green)}
+.tag.custom,.tag.need{background:var(--amber-bg);color:var(--amber)}
+.tag.blue{background:var(--primary-light);color:var(--primary-dark)}
+.tag.teal{background:var(--step1-bg);color:var(--step1)}
+.tag.gray{background:#f0f0f2;color:var(--text-2)}
+
+/* ---------- 6. 步骤标签（作答栏左端） ---------- */
+.step-tag{
+  display:inline-flex;align-items:center;font-size:var(--fs-xs);font-weight:700;line-height:1.5;
+  color:var(--step2);background:var(--step2-bg);border-radius:var(--r-pill);padding:3px 12px;white-space:nowrap;
+}
+.step-tag.s1{color:var(--step1);background:var(--step1-bg)}
+.step-tag.s2{color:var(--primary-dark);background:var(--step2-bg)}
+.step-tag.s3{color:var(--step3);background:var(--step3-bg)}
+
+/* ---------- 7. 广场页头与卡片（改 / 测 共用同一套） ---------- */
+.plaza-head{margin-bottom:var(--sp-5)}
+.plaza-head h2{font-size:22px}
+.plaza-head p{color:var(--text-2);font-size:14px;margin-top:var(--sp-1)}
+.page-s{color:var(--muted);font-size:13px;margin-bottom:var(--sp-4)}
+.page-t{font-size:var(--fs-lg);font-weight:700;margin-bottom:var(--sp-1)}
+.task-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:var(--sp-4)}
+.task-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);
+  padding:18px 20px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:var(--sp-3);
+}
+.task-card .t-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--sp-2)}
+.task-card h3{font-size:16px}
+.task-card .meta{font-size:var(--fs-xs);color:var(--text-2);display:flex;gap:var(--sp-3);flex-wrap:wrap;align-items:center}
+.task-actions{display:flex;gap:var(--sp-2);margin-top:auto;padding-top:6px;flex-wrap:wrap;align-items:center}
+.draft-tip{font-size:12px;color:var(--amber)}
+
+/* ---------- 8. 提示块 ---------- */
+.warn-box{background:var(--red-bg);color:var(--red);border-radius:var(--r-sm);padding:10px 12px;font-size:13px;margin-top:var(--sp-2)}
+.info-box{background:var(--primary-light);color:var(--primary-dark);border-radius:var(--r-sm);padding:10px 12px;font-size:13px;margin-top:var(--sp-2)}
+
+/* ---------- 9. 弹窗（三种叫法都指向同一套） ---------- */
+.mask,.modal-mask{
+  position:fixed;inset:0;background:rgba(20,26,45,.45);z-index:100;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.modal{
+  background:var(--card);border-radius:var(--r-lg);padding:22px 24px;width:min(440px,92vw);
+  box-shadow:var(--shadow-lg);max-height:86vh;overflow:auto;
+}
+.modal h3{font-size:17px;margin-bottom:var(--sp-3)}
+.modal .m-actions{display:flex;gap:var(--sp-2);justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+
+/* ---------- 10. Toast（两种叫法统一） ---------- */
+.toast,#toast{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1f2430;color:#fff;
+  padding:10px 18px;border-radius:var(--r-md);font-size:13px;z-index:200;
+  box-shadow:0 8px 24px rgba(0,0,0,.25);transition:opacity .2s;
+}
+
+/* ---------- 11. 空态 ---------- */
+.empty-tip{text-align:center;color:var(--muted);padding:40px 0}
+
+/* ---------- 12. 表格式内容的横向滚动（窄屏不再挤压） ---------- */
+.tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tbl-scroll table{min-width:600px}
+
+/* ---------- 13. 作答态：隐藏全站顶栏（三页同一条规则） ---------- */
+body.answering #mtpe-nav{display:none!important}
+body.answering{--mtpe-nav-h:0px}
+
+/* ---------- 14. 启动骨架：语料分片解密期间不再是一片空白 ---------- */
+.boot-skeleton{max-width:1180px;margin:0 auto;padding:28px 20px}
+.boot-skeleton .sk-t{height:22px;width:190px;border-radius:var(--r-sm);background:var(--sk);margin-bottom:18px}
+.boot-skeleton .sk-c{height:108px;border-radius:var(--r-lg);background:var(--sk);margin-bottom:14px}
+.boot-skeleton .sk-t,.boot-skeleton .sk-c{animation:sk-pulse 1.2s ease-in-out infinite}
+@keyframes sk-pulse{0%,100%{opacity:.55}50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.boot-skeleton .sk-t,.boot-skeleton .sk-c{animation:none}}
+
+/* ---------- 15. 统一断点（页面自己的特殊版式仍可在各自文件里另加） ---------- */
+@media (max-width:960px){
+  .task-grid{gap:var(--sp-3)}
+}
+@media (max-width:760px){
+  .plaza-head h2{font-size:var(--fs-lg)}
+}
+@media (max-width:620px){
+  .task-grid{grid-template-columns:1fr}
+  .task-card{padding:14px 16px}
+  .modal{padding:18px 16px;width:100%}
+  .boot-skeleton{padding:20px 14px}
+}

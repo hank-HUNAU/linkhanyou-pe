@@ -1,29 +1,7 @@
-/* ============ 译后编辑实训平台 · 样式（浅色主题） ============ */
-:root {
-  --primary: #2f5fe0;
-  --primary-dark: #2348b0;
-  --primary-light: #eef3ff;
-  --bg: #f4f6fb;
-  --card: #ffffff;
-  --border: #e3e8f2;
-  --text: #1f2430;
-  --text-2: #5a6478;
-  --muted: #667089;
-  --green: #16a34a;
-  --green-bg: #e8f7ee;
-  --red: #dc2626;
-  --red-bg: #fdecec;
-  --amber: #d97706;
-  --amber-bg: #fef3e2;
-  --radius: 12px;
-  --shadow: 0 1px 3px rgba(30, 41, 72, .06), 0 4px 16px rgba(30, 41, 72, .05);
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-  background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.6;
-}
-.hidden { display: none !important; }
+/* ============ ② 改 · 页面专属样式 ============
+   设计变量、基础重置、按钮 / 标签 / 卡片 / 弹窗 / Toast / 空态 / 焦点态
+   都已在共用的 ui.css 里（本页先加载 ui.css，再加载本文件）。
+   本文件只保留"改"这一页自己的版式：顶栏、三步走导引、作答区、统计与图表、首页各板块。 */
 
 /* ---------- 顶栏 ---------- */
 .topbar {
@@ -43,8 +21,8 @@ nav { display: flex; align-items: center; gap: 6px; }
   padding: 8px 14px; border-radius: 8px; cursor: pointer; color: var(--text-2);
   font-size: 14px; user-select: none;
 }
-.nav-link:hover { background: var(--primary-light); color: var(--primary); }
-.nav-link.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+.nav-link:hover { background: var(--primary-light); color: var(--primary-dark); }
+.nav-link.active { background: var(--primary-light); color: var(--primary-dark); font-weight: 600; }
 .nickname-badge {
   margin-left: 10px; padding: 6px 12px; border-radius: 999px; background: var(--primary-light);
   color: var(--primary); font-size: 13px; cursor: pointer;
@@ -52,40 +30,7 @@ nav { display: flex; align-items: center; gap: 6px; }
 
 main { max-width: 1180px; margin: 0 auto; padding: 26px 20px 60px; }
 
-/* ---------- 考试广场 ---------- */
-.plaza-head { margin-bottom: 20px; }
-.plaza-head h2 { font-size: 22px; }
-.plaza-head p { color: var(--text-2); font-size: 14px; margin-top: 4px; }
-
-.task-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 16px; }
-.task-card {
-  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 18px 20px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px;
-}
-.task-card .t-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-.task-card h3 { font-size: 16px; }
-.task-card .meta { font-size: 12.5px; color: var(--text-2); display: flex; gap: 12px; flex-wrap: wrap; }
-.tag {
-  display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600;
-}
-.tag.pair { background: var(--primary-light); color: var(--primary); }
-.tag.domain { background: var(--green-bg); color: var(--green); }
-.tag.custom { background: var(--amber-bg); color: var(--amber); }
-.task-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 6px; flex-wrap: wrap; }
-
-.btn {
-  border: none; border-radius: 8px; padding: 8px 14px; font-size: 13.5px; cursor: pointer;
-  font-family: inherit; transition: all .15s; display: inline-flex; align-items: center; gap: 5px;
-}
-.btn-primary { background: var(--primary); color: #fff; }
-.btn-primary:hover { background: var(--primary-dark); }
-.btn-outline { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
-.btn-outline:hover { background: var(--primary-light); }
-.btn-ghost { background: #f0f2f8; color: var(--text-2); }
-.btn-ghost:hover { background: #e5e9f3; }
-.btn-danger { background: var(--red-bg); color: var(--red); }
-.btn:disabled { opacity: .5; cursor: not-allowed; }
-.draft-tip { font-size: 12px; color: var(--amber); }
+/* 广场页头、卡片、标签、按钮、提示块：见 ui.css（三页共用一份） */
 
 /* ---------- 实训端：三步走导引（找 → 改 → 考） ---------- */
 .step-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; margin-top: 12px; }
@@ -105,16 +50,9 @@ main { max-width: 1180px; margin: 0 auto; padding: 26px 20px 60px; }
   display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
   position: sticky; top: calc(var(--mtpe-nav-h, 57px) + 6px); z-index: 40;
 }
-/* 作答态（改 / 找）：隐藏全站顶栏，页面自己那条就是顶部栏。
-   两条栏叠着白占一行高度；更麻烦的是"退出"（回列表）与顶栏的"退出"（退出登录）同名。 */
-body.answering #mtpe-nav { display: none !important; }
-body.answering { --mtpe-nav-h: 0px; }
+/* 作答态隐藏顶栏的规则在 ui.css（三页同一条） */
 .exam-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-/* 步骤标签：三页作答栏左端统一用带编号的形式（① 找 · 作答中 / ② 改 · 限时练习 / ③ 测 · 仿真训练） */
-.step-tag { display: inline-flex; align-items: center; font-size: 12.5px; font-weight: 700; line-height: 1.5; color: #0071e3; background: rgba(0, 113, 227, .10); border-radius: 999px; padding: 3px 12px; white-space: nowrap; }
-.exam-title .mode-chip { font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 999px; background: var(--primary-light); color: var(--primary); }
-.mode-chip.demo { background: var(--amber-bg); color: var(--amber); }
-.mode-chip.prac { background: var(--green-bg); color: var(--green); }
+/* .step-tag 在 ui.css（带 s1/s2/s3 三档步骤色） */
 .timer { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--primary); }
 .timer.warn { color: var(--red); }
 .progress-wrap { display: flex; align-items: center; gap: 10px; }
@@ -217,19 +155,7 @@ textarea.big:focus { outline: none; border-color: var(--primary); }
 }
 .field input:focus, .field select:focus { outline: none; border-color: var(--primary); }
 
-/* ---------- 弹窗 / Toast ---------- */
-.modal-mask {
-  position: fixed; inset: 0; background: rgba(20, 26, 45, .45); z-index: 100;
-  display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px);
-}
-.modal {
-  background: #fff; border-radius: 16px; padding: 24px 26px; width: min(440px, 92vw);
-  box-shadow: 0 20px 60px rgba(0,0,0,.2); max-height: 86vh; overflow: auto;
-}
-.modal h3 { font-size: 17px; margin-bottom: 12px; }
-.modal .m-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
-.modal .warn-box { background: var(--red-bg); color: var(--red); border-radius: 8px; padding: 10px 12px; font-size: 13px; margin-top: 10px; }
-.modal .info-box { background: var(--primary-light); color: var(--primary-dark); border-radius: 8px; padding: 10px 12px; font-size: 13px; margin-top: 10px; }
+/* 弹窗与 Toast：见 ui.css（.mask / .modal-mask / .modal / #toast 三页同一套） */
 .dur-picker { display: flex; gap: 8px; flex-wrap: wrap; }
 .dur-btn { flex: 1; text-align: center; padding: 9px 6px; border: 1.5px solid var(--border); border-radius: 9px; cursor: pointer; font-size: 13.5px; user-select: none; }
 .dur-btn.sel { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 700; }
@@ -242,47 +168,18 @@ textarea.big:focus { outline: none; border-color: var(--primary); }
 @keyframes fadeIn { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
 
 .page-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
-.page-title h2 { font-size: 20px; }
+.page-title h2 { font-size: var(--fs-lg); }
 .muted { color: var(--muted); font-size: 13px; }
-.empty-tip { text-align: center; color: var(--muted); padding: 40px 0; }
+/* .empty-tip 在 ui.css */
 
 /* ---- 得分说明 / MQM 自评 ---- */
 .score-note{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--amber);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--text-2);margin-bottom:16px}
 
 
-/* ===== Apple 设计语言覆盖（2026-10-09） ===== */
-:root {
-  --primary: #0071e3;
-  --primary-dark: #0058b0;
-  --primary-light: #eaf3fd;
-  --bg: #f5f5f7;
-  --card: #ffffff;
-  --border: rgba(0,0,0,.08);
-  --text: #1d1d1f;
-  --text-2: #6e6e73;
-  --muted: #86868b;
-  --green: #248a3d;
-  --green-bg: #e6f4ea;
-  --red: #d70015;
-  --red-bg: #fdeced;
-  --amber: #b25000;
-  --amber-bg: #fdf0e3;
-  --radius: 14px;
-  --shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.05);
-}
-body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
-h1,h2,h3 { letter-spacing: -.01em; font-weight: 600; }
-.btn, .btn-p, button { border-radius: 980px !important; font-weight: 500; transition: all .15s ease; }
-.btn:hover, .btn-p:hover { filter: brightness(1.05); transform: none; }
-.btn-g, .btn-ghost, .btn-o { border-radius: 980px !important; border: 1px solid var(--border) !important; background: #fff !important; }
-.btn-p, .btn.btn-p { background: var(--primary) !important; }
-.topbar, header { background: rgba(255,255,255,.72) !important; backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 1px solid var(--border) !important; }
-.tag, .pill, .tagpill { border-radius: 980px !important; font-size: 12px; }
-.muted, .sub, .page-s { color: var(--muted) !important; }
-input, select, textarea { border-radius: 10px !important; border: 1px solid var(--border) !important; font-family: inherit; }
-table { border-collapse: separate; border-spacing: 0; }
-th, td { border-color: var(--border) !important; }
+/* 2026-10-12：原先这里叠了一整块「Apple 设计语言覆盖（2026-10-09）」，
+   用 !important 压住按钮 / 标签 / 输入框的圆角与配色——而 pe-exam.css 从未吃到这块，
+   于是"改/找 是胶囊按钮、测 是圆角矩形"。现已全部上移到共用的 ui.css，
+   不再需要 !important，三页自动一致。 */
 
 /* ---------- 一级首页（index.html） ---------- */
 .home-hero { margin: 4px 0 20px; }

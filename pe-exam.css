@@ -1,21 +1,10 @@
-/* ============ MTPE 模拟考场 · 样式 ============ */
-:root{
-  --yc:#2b7cff; --ycd:#1e5fd0; --ycl:#eaf2ff;
-  --bg:#f0f3f8; --card:#fff; --bd:#dfe5ef; --tx:#252b3a; --tx2:#5a6478; --mut:#667089;
-  --g:#16a34a; --gb:#e8f7ee; --r:#e5484d; --rb:#fdecec; --a:#d97706; --ab:#fef3e2;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--tx);font-size:14px;line-height:1.6}
-.hidden{display:none!important}
-button{font-family:inherit;cursor:pointer}
+/* ============ ③ 测 · 页面专属样式 ============
+   2026-10-12：设计变量、基础重置、按钮 / 标签 / 卡片 / 弹窗 / Toast / 空态 / 焦点态 /
+   "作答态隐藏顶栏" 都已上移到共用的 ui.css。此前这一页从未吃到 2026-10-09 那轮主题覆盖，
+   于是"改/找 是胶囊按钮、测 是圆角矩形"——现在三页由 ui.css 统一。
+   本文件只留考场外壳、双栏作答区、右侧面板与结果画像。 */
 
 /* ---- 顶栏（模拟考场风格） ---- */
-/* 作答态：隐藏全站顶栏，本页顶上去独占整页（与 ① 找 / ② 改 同一条规则） */
-body.answering #mtpe-nav{display:none!important}
-body.answering{--mtpe-nav-h:0px}
-
-/* 步骤标签：三页统一的作答栏左端（① 找 · 作答中 / ② 改 · 限时练习 / ③ 测 · 仿真训练） */
-.step-tag{display:inline-flex;align-items:center;font-size:12.5px;font-weight:700;line-height:1.5;color:#0071e3;background:rgba(0,113,227,.10);border-radius:999px;padding:3px 12px;white-space:nowrap}
 
 .yc-top{background:#fff;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;padding:0 18px;height:52px;position:sticky;top:var(--mtpe-nav-h, 57px);z-index:60}
 .yc-brand{display:flex;align-items:center;gap:10px;font-weight:700}
@@ -34,41 +23,10 @@ body.answering{--mtpe-nav-h:0px}
    这样 .task-grid 在两边都是每行 3 张（1000 宽只能排 2 张，两页对不上）。 */
 .wrap{max-width:1000px;margin:0 auto;padding:26px 18px 70px}
 .wrap.wide{max-width:1180px;padding-left:20px;padding-right:20px}
-.page-t{font-size:20px;font-weight:700;margin-bottom:4px}
-.page-s{color:var(--mut);font-size:13px;margin-bottom:18px}
-.tag{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600}
-/* ---- 广场卡片：与 ② 改 用同一套写法（本页不加载 style.css，变量换成 --yc/--ycl 这套） ---- */
-.plaza-head{margin-bottom:20px}
-.plaza-head h2{font-size:22px}
-.plaza-head p{color:var(--tx2);font-size:14px;margin-top:4px}
-.task-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px}
-.task-card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:18px 20px;
-  box-shadow:0 1px 3px rgba(30,41,72,.06),0 4px 16px rgba(30,41,72,.05);display:flex;flex-direction:column;gap:10px}
-.task-card .t-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
-.task-card h3{font-size:16px}
-.task-card .meta{font-size:12.5px;color:var(--tx2);display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-.tag.pair{background:var(--ycl);color:var(--yc)}
-.tag.domain{background:var(--gb);color:var(--g)}
-.task-actions{display:flex;gap:8px;margin-top:auto;padding-top:6px;flex-wrap:wrap;align-items:center}
-.draft-tip{font-size:12px;color:var(--a)}
-.tag.blue{background:var(--ycl);color:var(--ycd)}
-.tag.need{background:var(--ab);color:var(--a)}
+/* 广场页头、卡片、标签、按钮、提示块：见 ui.css（三页共用一份） */
 .dur{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--tx2)}
 .dur select{border:1px solid var(--bd);border-radius:7px;padding:5px 8px;font-family:inherit}
 
-.btn{border:none;border-radius:8px;padding:8px 16px;font-size:13.5px;transition:all .15s}
-.btn-p{background:var(--yc);color:#fff}
-.btn-p:hover{background:var(--ycd)}
-/* 与 ② 改 同名（那边写 btn-primary / btn-ghost），指向本页同一套颜色 */
-.btn-primary{background:var(--yc);color:#fff}
-.btn-primary:hover{background:var(--ycd)}
-.btn-ghost{background:#eef1f7;color:var(--tx2)}
-.btn-ghost:hover{background:#e5e9f3}
-.btn-o{background:#fff;color:var(--yc);border:1px solid var(--yc)}
-.btn-o:hover{background:var(--ycl)}
-.btn-g{background:#eef1f7;color:var(--tx2)}
-.btn-r{background:var(--r);color:#fff}
-.btn:disabled{opacity:.5;cursor:not-allowed}
 .reset-link{font-size:12px;color:var(--mut);cursor:pointer;text-decoration:underline}
 
 /* ---- 答题页布局 ---- */
@@ -116,13 +74,7 @@ body.answering{--mtpe-nav-h:0px}
 .msg .think-body{display:none;color:var(--mut);font-size:12px;background:#fff;border-left:3px solid var(--bd);padding:4px 8px;margin:4px 0}
 
 /* 弹窗 / toast */
-.mask{position:fixed;inset:0;background:rgba(20,26,45,.45);z-index:100;display:flex;align-items:center;justify-content:center}
-.modal{background:#fff;border-radius:14px;padding:22px 24px;width:min(430px,92vw);box-shadow:0 20px 60px rgba(0,0,0,.2)}
-.modal h3{font-size:16px;margin-bottom:10px}
-.modal .m-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
-.warn-box{background:var(--rb);color:var(--r);border-radius:8px;padding:9px 12px;font-size:13px;margin-top:8px}
-.info-box{background:var(--ycl);color:var(--ycd);border-radius:8px;padding:9px 12px;font-size:13px;margin-top:8px}
-#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1f2430;color:#fff;padding:9px 18px;border-radius:9px;font-size:13px;z-index:200;transition:opacity .2s}
+/* 弹窗、提示块与 Toast：见 ui.css（.mask / .modal / .warn-box / .info-box / #toast 三页同一套） */
 
 /* 结果页 */
 .res-hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}

@@ -21,6 +21,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="译后编辑">
+<link rel="stylesheet" href="ui.css">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -34,7 +35,9 @@
 <script src="unlock.js"></script>
 <script src="help.js"></script>
 
-<main id="app"></main>
+<main id="app"><!-- 语料分片解密期间先显示骨架，页面脚本就绪后整块替换 -->
+  <div class="boot-skeleton"><div class="sk-t"></div><div class="sk-c"></div><div class="sk-c"></div></div>
+</main>
 
 <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 

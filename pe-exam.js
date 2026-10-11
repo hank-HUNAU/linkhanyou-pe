@@ -63,7 +63,7 @@ function langOf(pair){ return /中译英|汉译英|中译外|汉译外/.test(pai
    作答态加 body.answering 隐藏顶栏（CSS 在 pe-exam.css），做到"整页独占"。
    作答栏左侧统一用带编号的步骤标签：③ 测 · xxx —— 与 ① 找 / ② 改 对得上。 */
 const NAV_HOST = '<div id="mtpe-nav"></div>';
-const stepTag = (txt) => '<span class="step-tag">' + txt + '</span>';
+const stepTag = (txt) => '<span class="step-tag s3">' + txt + '</span>';   // 样式在 ui.css，本页用 s3
 function setAnswering(on){ try{ document.body.classList.toggle('answering', !!on); }catch(e){} }
 function syncNav(){ try{ if(window.mtpeNavRender) window.mtpeNavRender(); }catch(e){} }
 

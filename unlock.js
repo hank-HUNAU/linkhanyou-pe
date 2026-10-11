@@ -183,7 +183,8 @@
   /* 打不开时的兜底提示（语料解不开、密钥过期都不至于白屏） */
   window.mtpeBootFallback = function (msg) {
     const app = document.getElementById('app');
-    if (app && !app.innerHTML.trim()) {
+    /* 直接覆盖：启动骨架会一直在 #app 里，不能靠"内容为空"来判断要不要出提示 */
+    if (app) {
       app.innerHTML = '<div style="max-width:560px;margin:80px auto;padding:24px;font:15px/1.8 -apple-system,BlinkMacSystemFont,\'PingFang SC\',\'Microsoft YaHei\',sans-serif;color:#6e6e73">'
         + '<h2 style="color:#1d1d1f;font-size:19px;margin:0 0 8px">语料没有加载出来</h2>'
         + (msg || '请检查网络后刷新页面；若提示登录，请重新输入账号口令。')

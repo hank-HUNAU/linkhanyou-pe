@@ -130,8 +130,9 @@ function setAnswering(on) {
  try { document.body.classList.toggle('answering', !!on); } catch (e) {}
 }
 
-/* 步骤标签：三页作答栏左端统一用带编号的形式（① 找 · 作答中 / ② 改 · 限时练习 / ③ 测 · 仿真训练） */
-const stepTag = (t) => '<span class="step-tag">' + t + '</span>';
+/* 步骤标签：三页作答栏左端统一用带编号的形式（① 找 · 作答中 / ② 改 · 限时练习 / ③ 测 · 仿真训练）
+   样式与三档步骤色在 ui.css；本页固定用 s2。 */
+const stepTag = (t) => '<span class="step-tag s2">' + t + '</span>';
 
 /* ---------------- 视图切换 ---------------- */
 function go(v) {
@@ -719,6 +720,7 @@ function renderStats() {
  </div>
  <div class="board"><h3> 作答记录（${rows.length} 条）</h3>
  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">${fbtn('all', '全部')}${fbtn('practice', '② 改 · 练习')}${fbtn('exam', '③ 测 · 仿真训练')}</div>
+ <div class="tbl-scroll">
  <table>
  <tr><th>时间</th><th>任务</th><th>模式</th><th>得分</th><th>修订率</th><th>完成</th><th>用时</th><th></th></tr>
  ${shown.map(h => `
@@ -731,6 +733,7 @@ function renderStats() {
  <td><button class="btn btn-ghost" style="padding:4px 10px" onclick="viewRecord('${h.id}')">查看</button></td>
  </tr>`).join('')}
  </table>
+ </div>
  ${rows.length > shown.length ? `<div style="margin-top:12px"><button class="btn btn-ghost" onclick="statsShown(${rows.length})">展开全部（共 ${rows.length} 条）</button></div>` : ''}
  </div>`;
 }

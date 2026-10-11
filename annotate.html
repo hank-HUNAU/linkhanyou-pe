@@ -12,13 +12,16 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="译后编辑">
+<link rel="stylesheet" href="ui.css">
 <link rel="stylesheet" href="annotate.css">
 </head>
 <body>
 <div id="mtpe-nav"></div>
 <script src="nav.js"></script>
 <script src="pwa.js"></script>
-<div id="app"></div>
+<div id="app"><!-- 语料分片解密期间先显示骨架，页面脚本就绪后整块替换 -->
+  <div class="boot-skeleton"><div class="sk-t"></div><div class="sk-c"></div><div class="sk-c"></div></div>
+</div>
 <!-- secure.js（密钥环 + meta 片，约 10KB）按需加载，见 unlock.js 的 sealReady()；
      本页要用的 s-pairs.js 由 annotate-data.js 触发按需解密 -->
 <script src="unlock.js"></script>

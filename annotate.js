@@ -42,8 +42,9 @@ function setAnswering(on) {
  try { document.body.classList.toggle('answering', !!on); } catch (e) {}
 }
 
-/* 步骤标签：三页作答栏左端统一用带编号的形式（① 找 · 作答中 / ② 改 · 限时练习 / ③ 测 · 仿真训练） */
-const stepTag = (t) => '<span class="step-tag">' + t + '</span>';
+/* 步骤标签：三页作答栏左端统一用带编号的形式（① 找 · 作答中 / ② 改 · 限时练习 / ③ 测 · 仿真训练）
+   样式与三档步骤色在 ui.css；本页固定用 s1。 */
+const stepTag = (t) => '<span class="step-tag s1">' + t + '</span>';
 
 /* ---------------- 全局状态 ---------------- */
 let V = 'setup';
