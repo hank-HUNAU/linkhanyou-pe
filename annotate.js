@@ -97,6 +97,7 @@ function renderSetup() {
  const stages = [...new Set(CORPUS_PAIRS.map(p => p.stage))];
  const seededK = new Set(SEEDS.map(s => s.k));
  const seedCount = CORPUS_PAIRS.filter(p => seededK.has(p.k)).length;
+  const mtCount = CORPUS_PAIRS.filter(p => p.mt).length;   // 有官方机翻底稿、可打标的句对数
  const pre = { ed: P.get('ed') || '', stage: P.get('stage') || '', dir: P.get('dir') || '', dim: P.get('dim') || '', n: P.get('n') || '15' };
  /* 由「测评结果页 / 首页」的练习建议带参数进来时：高级筛选默认展开，让学生看得见为什么这么组卷；
      带 go=1 的链接直接开局（等价于点一次"按筛选生成"）。 */
@@ -114,7 +115,7 @@ function renderSetup() {
  <h1>标注实训</h1>
  ${fromLink ? `<div class="page-s" style="margin-bottom:10px">已按练习建议预置筛选条件${pre.dim ? '：错误维度「' + esc(pre.dim) + '」' : ''}${pre.ed ? ' · 第' + esc(pre.ed) + '届' + esc(pre.stage || '') : ''}。</div>` : ''}
  <div class="page-s">在机翻译文中<b>选中错误片段</b>并标注类别与严重度；交卷后与已校对种子标注对比，计算查准率 / 查全率 / F1。
- 数据：历届大赛 ${CORPUS_PAIRS.length} 条 A 级句对（其中 ${seedCount} 条有种子标注可对照，其余为盲标）。标签集 M1-M9 + M0 见 <a href="MQM错误类型参考手册.html">MQM 手册</a>。</div>
+ 数据：历届大赛 ${CORPUS_PAIRS.length} 条 A 级句对，其中 <b>${mtCount}</b> 条带官方机翻底稿可打标（另 ${CORPUS_PAIRS.length - mtCount} 条缺底稿，组卷默认排除），<b>${seedCount}</b> 条有种子标注可对照、其余为盲标。标签集 M1-M9 + M0 见 <a href="MQM错误类型参考手册.html">MQM 手册</a>。</div>
  <div class="card">
  <h3> 组卷筛选</h3>
  <div class="row">
@@ -132,7 +133,7 @@ function renderSetup() {
  /* 必须显式写 value：否则 <option> 的取值会变成带后缀的整串文字，筛选就再也匹配不上 */
  return `<option value="${d}"${pre.dim === d ? ' selected' : ''}${n ? '' : ' disabled'}>${d}${n ? '（' + n + ' 句）' : '（暂无语料）'}</option>`;
  }).join('')}</select></div>
- <div><label>机翻底稿</label><select id="f-mt"><option value="">含无底稿（跳过）</option><option value="1">仅限有底稿</option></select></div>
+  <div><label>机翻底稿</label><select id="f-mt"><option value="1" selected>仅限有底稿（推荐）</option><option value="">含无底稿（会跳过）</option></select></div>
  </div>
  </details>
  <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">

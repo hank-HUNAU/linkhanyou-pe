@@ -59,19 +59,12 @@ function langOf(pair){ return /中译英|汉译英|中译外|汉译外/.test(pai
 /* ============ 仿真训练广场（精简版：只保留与作答直接相关的元素） ============ */
 function renderExams(){
  document.body.className='';
- document.body.innerHTML = `
- <div class="yc-top">
- <div class="yc-brand"><span class="yc-logo">译</span>MTPE 仿真训练 <span class="en">译后编辑 · 仿真训练</span></div>
- <div class="yc-top-right"><a class="mi" href="index.html" style="text-decoration:none">返回首页</a></div>
- </div>
- <div class="wrap">
- <div class="page-t">仿真训练</div>
- <div class="page-s">教学仿真工具：界面按官方赛场还原，题目内容与正式测评无关。</div>
- ${TASKS.map(t=>{
- const draft=store.get('draft_'+t.id,null);
- const enters=store.get('enters_'+t.id,0);
- const real = ![8,15,30].includes(t.minutes);
- return `
+ /* 卡片模板抽成函数：最新届次与历史卷（第 1-6 届，14 套整卷）共用 */
+ const card = (t) => {
+   const draft=store.get('draft_'+t.id,null);
+   const enters=store.get('enters_'+t.id,0);
+   const real = ![8,15,30].includes(t.minutes);
+   return `
  <div class="exam-card-v3">
  <div class="mtpe-logo"><span class="big">MTPE</span><span class="sm">${t.corpus?'历届真题':'仿真训练'}</span></div>
  <div class="ec-v3-body">
@@ -89,7 +82,20 @@ function renderExams(){
  <button class="btn btn-o" onclick="enterExam('${t.id}')">进入训练</button>
  </div>
  </div>`;
- }).join('')}
+ };
+ const main = TASKS.filter((t) => t.group !== 'history');
+ const hist = TASKS.filter((t) => t.group === 'history');
+ document.body.innerHTML = `
+ <div class="yc-top">
+ <div class="yc-brand"><span class="yc-logo">译</span>MTPE 仿真训练 <span class="en">译后编辑 · 仿真训练</span></div>
+ <div class="yc-top-right"><a class="mi" href="index.html" style="text-decoration:none">返回首页</a></div>
+ </div>
+ <div class="wrap">
+ <div class="page-t">仿真训练</div>
+ <div class="page-s">教学仿真工具：界面按官方赛场还原，题目内容与正式测评无关。</div>
+ ${main.map(card).join('')}
+ ${hist.length?`<details class="adv" style="margin:16px 0"><summary>更多届次：第 1–6 届真题 ${hist.length} 套（整卷，按官方对照表归并句段）</summary>
+ <div style="margin-top:12px">${hist.map(card).join('')}</div></details>`:''}
  </div>
  <div id="modal-mask" class="mask hidden"><div class="modal" id="modal-box"></div></div>
  <div id="toast" style="opacity:0" role="status" aria-live="polite"></div>`;

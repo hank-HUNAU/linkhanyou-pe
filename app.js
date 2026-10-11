@@ -188,7 +188,7 @@ function renderPlaza() {
  </div>
  <div class="page-s" style="margin:14px 0 18px">限时练习：8 / 15 / 30 分钟计时，离开页面计数 ｜ 自由练习：不限时、可存草稿</div>
  <div class="task-grid">
- ${tasks.map(t => {
+ ${tasks.filter(t => t.group !== 'history').map(t => {
  const wc = t.segs.reduce((s, g) => s + wordCount(g.src), 0);
  const draft = store.get('draft_' + t.id, null);
  return `
@@ -214,7 +214,35 @@ function renderPlaza() {
  </div>
  </div>`;
  }).join('')}
+ </div>` + (() => {
+ /* 历史卷（第 1-6 届，共 14 套整卷）默认折叠：摊开会把广场拉得很长 */
+ const hist = tasks.filter((t) => t.group === 'history');
+ if (!hist.length) return '';
+ return `<details class="adv" style="margin-top:16px"><summary>更多届次：第 1–6 届真题 ${hist.length} 套（整卷，按官方对照表归并句段）</summary>
+ <div class="task-grid" style="margin-top:12px">
+ ${hist.map((t) => {
+ const wc = t.segs.reduce((s, g) => s + wordCount(g.src), 0);
+ const draft = store.get('draft_' + t.id, null);
+ return `
+ <div class="task-card">
+ <div class="t-head">
+ <h3>${esc(t.name)}</h3>
+ <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+ <span class="tag pair">${esc(t.pair)}</span>
+ <span class="tag domain">${esc(t.domain)}</span>
+ </div>
+ </div>
+ <div class="meta"><span> ${t.segs.length} 段</span><span> 约 ${wc} 字</span><span>⏱ 建议 ${t.minutes} 分钟</span></div>
+ ${draft ? `<div class="draft-tip">有未完成的练习草稿（${draft.done || 0}/${t.segs.length} 段已编辑）</div>` : ''}
+ <div class="task-actions">
+ <button class="btn btn-primary" onclick="openSetup('${t.id}','competition')"> 限时练习</button>
+ <button class="btn btn-outline" onclick="openSetup('${t.id}','practice')"> 自由练习</button>
+ ${isTeacher ? `<button class="btn btn-ghost" onclick="openSetup('${t.id}','demo')"> 教学演示</button>` : ''}
+ </div>
  </div>`;
+ }).join('')}
+ </div></details>`;
+ })();
  app.innerHTML = html;
 }
 
