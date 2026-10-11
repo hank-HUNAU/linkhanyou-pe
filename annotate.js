@@ -98,7 +98,7 @@ function renderSetup() {
  const seededK = new Set(SEEDS.map(s => s.k));
  const seedCount = CORPUS_PAIRS.filter(p => seededK.has(p.k)).length;
  const pre = { ed: P.get('ed') || '', stage: P.get('stage') || '', dir: P.get('dir') || '', dim: P.get('dim') || '', n: P.get('n') || '15' };
- /* 由「考场结果页 / 首页」的练习建议带参数进来时：高级筛选默认展开，让学生看得见为什么这么组卷；
+ /* 由「测评结果页 / 首页」的练习建议带参数进来时：高级筛选默认展开，让学生看得见为什么这么组卷；
      带 go=1 的链接直接开局（等价于点一次"按筛选生成"）。 */
  const fromLink = !!(pre.ed || pre.stage || pre.dir || pre.dim);
  const autoGo = P.get('go') === '1';

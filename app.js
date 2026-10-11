@@ -261,7 +261,7 @@ function openSetup(taskId, mode) {
  ${durs.map((d, i) => `<div class="dur-btn${i === 1 ? ' sel' : ''}" data-d="${d}" onclick="pickDur(this)">${d} 分钟${i === 1 ? '（建议）' : ''}</div>`).join('')}
  </div>
  </div>
- <div class="warn-box">限时练习规则：作答期间离开页面会被记录；倒计时归零将自动交卷；交卷后不可再修改。练习分仅供自己追踪，考场口径请用「③ 考 · 仿真训练」。</div>`;
+ <div class="warn-box">限时练习规则：作答期间离开页面会被记录；倒计时归零将自动交卷；交卷后不可再修改。练习分仅供自己追踪，测评口径请用「③ 测 · 仿真训练」。</div>`;
  }
  body += `
  <div class="m-actions">
@@ -360,7 +360,7 @@ function onAnswerInput(i, val) {
  st.className = 'seg-status' + (edited ? ' done' : '');
  }
  updateProgress();
- /* 所有模式都存草稿：限时练习/考场中途误刷新不该丢整卷。
+ /* 所有模式都存草稿：限时练习/仿真测评中途误刷新不该丢整卷。
     限时练习还要把"剩余秒数"一起存下来，继续时接着剩余时间计时 —— 不能靠刷新续时间。 */
  if (S.mode !== 'demo') {
  clearTimeout(S.draftSaveTm);
@@ -704,7 +704,7 @@ function examProfileHTML(hs) {
   <div class="stat-box"><div class="v">${avg('speed')}</div><div class="l">平均速度（段/分）</div></div>
   <div class="stat-box"><div class="v ${stab < 0 ? 'amber' : 'green'}">${stab >= 0 ? '+' : ''}${stab}</div><div class="l">后半程平均变化</div></div>
   </div>
- <div class="board-note">编辑倾向分布：${quadTxt}　｜　最多的是「${mainQ}」，各次交卷的四项画像见 <a href="pe-exam.html">③ 考</a> 的结果页。</div>
+ <div class="board-note">编辑倾向分布：${quadTxt}　｜　最多的是「${mainQ}」，各次交卷的四项画像见 <a href="pe-exam.html">③ 测</a> 的结果页。</div>
   </div>`;
 }
 

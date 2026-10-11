@@ -1,6 +1,6 @@
 /* ============================================================
  * home.js — 一级首页
- * 职责只有两件事：① 告诉学生"找 / 改 / 考"三个入口各是做什么的；
+ * 职责只有两件事：① 告诉学生"找 / 改 / 测"三个入口各是做什么的；
  *                ② 回显"我的进度"，让人知道下一步该做什么。
  * 不加载语料（secure.js 之外的 corpus/annotate-data 都不需要），
  * 因此首页永远轻量、永远打得开——即使语料未解锁。
@@ -30,7 +30,7 @@
     return out;
   }
 
-  /* 进度汇总：只读 localStorage（练习/考场记录 + 标注交卷摘要） */
+  /* 进度汇总：只读 localStorage（练习/测评记录 + 标注交卷摘要） */
   function summary() {
     const hs = get('history', []) || [];
     const ann = get('ann_stats', []) || [];
@@ -59,8 +59,8 @@
     return '在 Chrome / Edge 里打开本页可安装到桌面（离线可用）；若没看到按钮，点浏览器地址栏右侧的「安装」图标即可。';
   }
 
-  /* 最弱错误维度：取自"最近一次考场交卷"的画像（dims = 你的译文里各维度还剩多少处没改对）。
-     只读既有数据，不新增采集；与考场结果页的推荐练习同一口径。 */
+  /* 最弱错误维度：取自"最近一次测评交卷"的画像（dims = 你的译文里各维度还剩多少处没改对）。
+     只读既有数据，不新增采集；与测评结果页的推荐练习同一口径。 */
   const DIMS = ['准确性', '术语', '语言规范', '风格', '格式'];
   function weakestDim() {
     const exams = (get('history', []) || []).filter((h) => h.mode === 'competition' && h.profile && h.profile.dims);
@@ -75,7 +75,7 @@
   }
 
   /* 只给一条"下一步"：学生进门先看到该做什么，而不是先看懂三个入口的区别。
-     依据只有现有数据（草稿 / 标注 F1 / 练习次数 / 考场次数），不新增采集。 */
+ 依据只有现有数据（草稿 / 标注 F1 / 练习次数 / 测评次数），不新增采集。 */
   function nextStep(s, dr) {
     /* 平台账号是课上统一发放的共享账号 → 先让本人报上姓名/学号，成绩才认得出是谁 */
     if (!get('nickname_set', 0)) return { setupName: true };
@@ -85,13 +85,13 @@
     if (!s.annN && !s.practiceN && !s.examN) {
       return { href: 'annotate.html', cta: '开始第一练 · 标注 10 句', why: '先练「找」：判断哪里该改是译后编辑的第一步，10 句约 10 分钟，交卷立即有查准率 / 查全率 / F1。' };
     }
-    /* 有考场画像时优先给"针对最弱维度"的建议 —— 这是全站最有信息量的一条线索 */
+    /* 有测评画像时优先给"针对最弱维度"的建议 —— 这是全站最有信息量的一条线索 */
     const wd = weakestDim();
     if (wd) {
       return {
         href: 'annotate.html?dim=' + encodeURIComponent(wd.dim) + '&n=15&go=1',
         cta: '加练「' + wd.dim + '」15 句',
-        why: '上次考场里「' + wd.dim + '」还剩 ' + wd.n + ' 处没改对（五个维度中最多）。点进去已按该维度组好 15 句——这类句对多数没有种子标注，交卷不计分，练的是手感。'
+        why: '上次测评里「' + wd.dim + '」还剩 ' + wd.n + ' 处没改对（五个维度中最多）。点进去已按该维度组好 15 句——这类句对多数没有种子标注，交卷不计分，练的是手感。'
       };
     }
     if (s.annN && s.annF1 != null && s.annF1 < 70) {
@@ -101,9 +101,9 @@
       return { href: 'practice.html', cta: '开始练「改」', why: '还没做过整篇改写：在机翻底稿上动手改一遍，才知道"该改的地方"改到什么程度算够。' };
     }
     if (!s.examN) {
-      return { href: 'pe-exam.html', cta: '去「考」估一次分', why: '还没交过卷。练习分不是考场口径，先摸清自己在考场口径下的位置。' };
+      return { href: 'pe-exam.html', cta: '去「测」估一次分', why: '还没交过卷。练习分不是测评口径，先摸清自己在测评口径下的位置。' };
     }
-    return { href: 'pe-exam.html', cta: '再考一次', why: '考场最好成绩 ' + num(s.examBest) + ' 分。换一套没做过的卷子，检验这段时间的进步。' };
+    return { href: 'pe-exam.html', cta: '再测一次', why: '测评最好成绩 ' + num(s.examBest) + ' 分。换一套没做过的卷子，检验这段时间的进步。' };
   }
 
   function render() {
@@ -118,8 +118,8 @@
     app.innerHTML = `
   <section class="home-hero">
     <h1>译后编辑实训平台</h1>
-    <p>按「<b>找 → 改 → 考</b>」三步走练机器翻译译后编辑：先练<strong>发现哪里该改</strong>，再练<strong>动手改</strong>，最后进考场练<strong>临场状态</strong>。
-    练「找」「改」是实训，<strong>「考」是唯一考场口径</strong>的仿真训练。语料为历届大赛真题；登录一次，三个页面之间往返无需再登录。</p>
+    <p>按「<b>找 → 改 → 测</b>」三步走练机器翻译译后编辑：先练<strong>发现哪里该改</strong>，再练<strong>动手改</strong>，最后进仿真测评环境练<strong>临场状态</strong>。
+    练「找」「改」是实训，<strong>「测」是唯一测评口径</strong>的仿真训练。语料为历届大赛真题；登录一次，三个页面之间往返无需再登录。</p>
   </section>
 
   <div class="home-next">
@@ -147,10 +147,10 @@
     <a class="step-card" href="practice.html">
       <b>② 改 · 译后编辑练习</b>
       <span>在机翻底稿上动手改：限时练习可选 8 / 15 / 30 分钟（离开页面计数），自由练习不限时、可存草稿；交卷看修订率、逐段对照与参考译文点评。</span>
-      <em>练手法：练习分不是考场口径</em>
+      <em>练手法：练习分不是测评口径</em>
     </a>
     <a class="step-card" href="pe-exam.html">
-      <b>③ 考 · 仿真训练</b>
+      <b>③ 测 · 仿真训练</b>
       <span>全真赛场界面：整页独占、防作弊（切屏计数、禁复制粘贴、倒计时）、TER 分与结果画像，交卷后给出编辑倾向与推荐练习。</span>
       <em>练状态：赛前用它估分、找短板</em>
     </a>
@@ -163,8 +163,8 @@
       <div class="stat-box"><div class="v green">${num(s.practiceAvg)}</div><div class="l">「改」平均得分</div></div>
       <div class="stat-box"><div class="v">${s.annN}</div><div class="l">「找」标注卷数</div></div>
       <div class="stat-box"><div class="v green">${pct(s.annF1)}</div><div class="l">「找」平均 F1</div></div>
-      <div class="stat-box"><div class="v">${s.examN}</div><div class="l">「考」交卷次数</div></div>
-      <div class="stat-box"><div class="v amber">${num(s.examBest)}</div><div class="l">「考」最高分</div></div>
+      <div class="stat-box"><div class="v">${s.examN}</div><div class="l">「测」交卷次数</div></div>
+      <div class="stat-box"><div class="v amber">${num(s.examBest)}</div><div class="l">「测」最高分</div></div>
     </div>
     ${lastBits.length ? `<div class="home-last">${lastBits.join(' ｜ ')}</div>` : ''}
     <div class="home-actions">

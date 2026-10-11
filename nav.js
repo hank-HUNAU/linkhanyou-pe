@@ -1,5 +1,5 @@
 /* ============================================================
- * nav.js — 全站共享顶栏（首页 / ① 找 / ② 改 / ③ 考 + 账号 + 安装到桌面）
+ * nav.js — 全站共享顶栏（首页 / ① 找 / ② 改 / ③ 测 + 账号 + 安装到桌面）
  * 登录 / 解密逻辑在 unlock.js（配 secure.js）；本文件只负责渲染顶栏。
  * 一级首页 index.html 与三个二级页共用；仿真训练 pe-exam.html 刻意不挂，
  * 那一页要贴近真实赛场的整页独占。教师登录按钮与相关代码已移除，教学端仅本地使用。
@@ -7,12 +7,12 @@
  * ============================================================ */
 (function () {
  const KEY = 'mtpe_account';
- /* 顺序与首页「找 → 改 → 考」一致 */
+ /* 顺序与首页「找 → 改 → 测」一致 */
  const TABS = [
    { href: 'index.html',    file: 'index.html',    label: '首页' },
    { href: 'annotate.html', file: 'annotate.html', label: '① 找' },
    { href: 'practice.html', file: 'practice.html', label: '② 改' },
-   { href: 'pe-exam.html',  file: 'pe-exam.html',  label: '③ 考' }
+   { href: 'pe-exam.html',  file: 'pe-exam.html',  label: '③ 测' }
  ];
  function render() {
  const host = document.getElementById('mtpe-nav');

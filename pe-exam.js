@@ -35,7 +35,7 @@ function revisionRate(mt,pe){ const A=tokenize(mt),B=tokenize(pe); if(!A.length&
  const e=diffTokens(A,B).filter(o=>o.op!=='same').length; return A.length?e/A.length:1; }
 function similarity(pe,ref){ const A=tokenize(pe),B=tokenize(ref); if(!A.length&&!B.length)return 100; if(!A.length||!B.length)return 0;
  const e=diffTokens(A,B).filter(o=>o.op!=='same').length; return Math.max(0,Math.round((1-e/Math.max(A.length,B.length))*1000)/10); }
-/* 考场口径：TER(答案,参考) —— 与训练效果模拟/校准基准同口径（K=1.2，晋级线84） */
+/* 测评口径：TER(答案,参考) —— 与训练效果模拟/校准基准同口径（K=1.2，晋级线84） */
 const TER_K = 1.2, PASS_LINE = 84;
 function terRef(pe,ref){ const A=tokenize(pe),B=tokenize(ref); if(!B.length)return 0; if(!A.length)return 1;
  const e=diffTokens(A,B).filter(o=>o.op!=='same').length; return e/B.length; }
@@ -66,7 +66,7 @@ function renderExams(){
  </div>
  <div class="wrap">
  <div class="page-t">仿真训练</div>
- <div class="page-s">教学仿真工具：界面按官方赛场还原，试题内容与正式考试无关。</div>
+ <div class="page-s">教学仿真工具：界面按官方赛场还原，题目内容与正式测评无关。</div>
  ${TASKS.map(t=>{
  const draft=store.get('draft_'+t.id,null);
  const enters=store.get('enters_'+t.id,0);
@@ -103,7 +103,7 @@ function enterExam(id){
  const task=TASKS.find(t=>t.id===id); if(!task)return;
  const minutes=parseInt(($('#dur-'+id)||{}).value||'15',10);
  const enters=store.get('enters_'+id,0);
- if(enters>=3){ openModal(`<h3>无法进入考试</h3><div class="warn-box">该考试进入答题页面的次数已达 3 次上限（对齐真实赛制），无法再次作答。换一套试卷练习即可。</div>
+ if(enters>=3){ openModal(`<h3>无法进入测评</h3><div class="warn-box">该测评进入答题页面的次数已达 3 次上限（对齐真实赛制），无法再次作答。换一套试卷练习即可。</div>
  <div class="m-actions"><button class="btn btn-g" onclick="closeModal()">知道了</button></div>`); return; }
  store.set('enters_'+id, enters+1);
  const draft=store.get('draft_'+id,null);
@@ -259,7 +259,7 @@ function autoGrow(i){
 function copySrc(){
  const src=S.task.segs[S.cur].src;
  try{ navigator.clipboard.writeText(src); }catch(e){}
- toast('原文已复制（考试中仍禁止粘贴）');
+ toast('原文已复制（测评中仍禁止粘贴）');
 }
 function clearPe(){
  if(!confirm('确定清除当前句段译文？'))return;
@@ -340,9 +340,9 @@ function hlTerms(src){
 function bindAntiCheat(){
  S._vis=()=>{ if(document.visibilityState==='hidden')return; countSwitch('窗口切回'); };
  S._blur=()=>countSwitch('失去焦点');
- S._ctx=e=>{ e.preventDefault(); toast('考试模式禁止右键操作'); };
- S._copy=e=>{ e.preventDefault(); toast('考试模式禁止复制试题内容'); };
- S._paste=e=>{ e.preventDefault(); toast('考试模式禁止粘贴内容'); };
+ S._ctx=e=>{ e.preventDefault(); toast('测评模式禁止右键操作'); };
+ S._copy=e=>{ e.preventDefault(); toast('测评模式禁止复制题目内容'); };
+ S._paste=e=>{ e.preventDefault(); toast('测评模式禁止粘贴内容'); };
  document.addEventListener('visibilitychange',S._vis);
  window.addEventListener('blur',S._blur);
  const oz=document.querySelector('.op-zone');
@@ -367,7 +367,7 @@ function countSwitch(reason){
 
 /* ---- 计时 / 交卷 ---- */
 function startExam(){
- /* 先收掉可能还在跑的旧计时器：否则上一次进入考场留下的 interval 会给新会话
+ /* 先收掉可能还在跑的旧计时器：否则上一次进入测评留下的 interval 会给新会话
     算出一个负的剩余时间，一进来就被强制交卷（与"改"页自由练习同一类问题） */
  if(S.timer){clearInterval(S.timer);S.timer=null;}
  renderExam();
@@ -378,7 +378,7 @@ function startExam(){
  const el=$('#remain'); if(!el)return;
  el.textContent=fmt(Math.max(0,left));
  if(left<=60)el.classList.add('warn');
- if(left<=0)forceSubmit('考试时间已用完，系统自动交卷。');
+ if(left<=0)forceSubmit('测评时间已用完，系统自动交卷。');
  },500);
  S.timer=tid;
  const ta=$('#ta-0'); if(ta)ta.focus();
@@ -488,7 +488,7 @@ function getNickYcx(){ return store.get('nickname_yx','我'); }
 /* ============ 结果画像（优化A） ============
  * 四项：① 错误维度雷达 ② 编辑倾向四象限 ③ 速度与稳定性 ④ 参照系
  * 维度归并同标注体系：M1-M3→准确性，M4→术语，M5-M7→语言规范，M8→风格，M9→格式。
- * 注意：考场无人工标注，维度分布由"逐段机翻↔参考 diff"启发式初筛，精确口径以第一期 MQM 人工标注为准。
+ * 注意：测评无人工标注，维度分布由"逐段机翻↔参考 diff"启发式初筛，精确口径以第一期 MQM 人工标注为准。
  */
 const DIMS = ['准确性', '术语', '语言规范', '风格', '格式'];
 const M_DIM = { M1:'准确性', M2:'准确性', M3:'准确性', M4:'术语',
@@ -775,7 +775,7 @@ function renderResult(r){
  document.body.innerHTML=`
  <div class="yc-top">
  <div class="yc-brand"><span class="yc-logo">译</span>MTPE 仿真训练 <span class="en">仿真训练结果</span></div>
- <div class="yc-top-right"><a class="mi" href="pe-exam.html" style="text-decoration:none">返回考试中心</a></div>
+ <div class="yc-top-right"><a class="mi" href="pe-exam.html" style="text-decoration:none">返回测评中心</a></div>
  </div>
  <div class="wrap">
  <div class="page-t">「决赛${esc(r.task.pair)}」${esc(r.task.name)} <span class="tag blue">${esc(r.reason)} · ${modeName(r.peMode)}译后编辑</span></div>
@@ -783,14 +783,14 @@ function renderResult(r){
  <div class="warn-box" style="margin-bottom:14px"> 得分说明：综合得分基于与参考译文的<b>词级重合度</b>，同义改写或更优表达可能被低估，请以逐段修订痕迹自行判断质量；修订率中文按字切分，跨语向比较需谨慎。</div>
  <div class="res-hero">
  <div class="res-box"><div class="v">${r.score}</div><div class="l">综合得分（vs 参考译文）</div></div>
- <div class="res-box"><div class="v a">${r.terScore}</div><div class="l">考场口径分（TER×1.2）</div></div>
+ <div class="res-box"><div class="v a">${r.terScore}</div><div class="l">测评口径分（TER×1.2）</div></div>
  <div class="res-box"><div class="v a">${(r.avgTer*100).toFixed(1)}%</div><div class="l">平均修订率</div></div>
  <div class="res-box"><div class="v">${r.editedN}/${r.task.segs.length}</div><div class="l">编辑段数</div></div>
  <div class="res-box"><div class="v g">${fmt(r.timeUsed)}</div><div class="l">用时</div></div>
  <div class="res-box"><div class="v ${r.switches>=5?'r':''}">${r.switches}</div><div class="l">切屏次数（上限8）</div></div>
  <div class="res-box"><div class="v ${r.enters>=3?'r':''}">${r.enters}/3</div><div class="l">进入次数</div></div>
  </div>
- <div class="${(r.terScore||0)>=PASS_LINE?'info-box':'warn-box'}" style="margin-bottom:14px"> <b>考场口径（TER×${TER_K}，与训练效果模拟同源）：</b>${r.terScore} 分 —— ${(r.terScore||0)>=PASS_LINE?`<b>达到模拟晋级线 ${PASS_LINE}（前20%水平）</b>`:`未达模拟晋级线 ${PASS_LINE}，差 ${(PASS_LINE-(r.terScore||0)).toFixed(1)} 分`}。晋级线取自 1000 人模拟池第 80 百分位。</div>
+ <div class="${(r.terScore||0)>=PASS_LINE?'info-box':'warn-box'}" style="margin-bottom:14px"> <b>测评口径（TER×${TER_K}，与训练效果模拟同源）：</b>${r.terScore} 分 —— ${(r.terScore||0)>=PASS_LINE?`<b>达到模拟晋级线 ${PASS_LINE}（前20%水平）</b>`:`未达模拟晋级线 ${PASS_LINE}，差 ${(PASS_LINE-(r.terScore||0)).toFixed(1)} 分`}。晋级线取自 1000 人模拟池第 80 百分位。</div>
  <div class="${r.noEditN>r.details.length*0.6||r.noEditN<3?'warn-box':'info-box'}" style="margin-bottom:14px"> <b>编辑率诊断：</b>未编辑 ${r.noEditN}/${r.details.length} 段。${r.noEditN>r.details.length*0.6?'改动过少——机翻对的句子保留是得分动作，但文化专有词与文学表达处需果断改，先练"判断哪里该改"。':r.noEditN<3?'几乎逐句都改——警惕过度编辑：大模型底稿错误少而隐蔽，机翻对的部分不动才是得分动作（M0 思维）。':'编辑节奏适中。'}</div>
  ${profileHTML(r)}
  ${recommendHTML(r)}
@@ -802,7 +802,7 @@ function renderResult(r){
  <div class="muted" style="margin-top:4px">${esc(d.pe||d.mt)}</div>
  </div>`).join('')}
  <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
- <a class="btn btn-p" href="pe-exam.html" style="text-decoration:none">返回我的考试</a>
+ <a class="btn btn-p" href="pe-exam.html" style="text-decoration:none">返回我的测评</a>
  <a class="btn btn-o" href="practice.html#stats" style="text-decoration:none">去「改」看逐段修订痕迹与统计</a>
  </div>
  </div>
