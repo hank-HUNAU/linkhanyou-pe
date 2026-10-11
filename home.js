@@ -168,7 +168,6 @@
       <a class="btn btn-primary" href="annotate.html">开始练「找」</a>
       <a class="btn btn-primary" href="practice.html">开始练「改」</a>
     <a class="btn btn-outline" href="pe-exam.html">进入仿真训练</a>
-      <a class="btn btn-ghost" href="practice.html#stats">我的统计</a>
       <button id="mtpe-install-btn" class="btn btn-ghost hidden" onclick="mtpeInstall()">安装到桌面</button>
     </div>
   </div>
@@ -176,7 +175,7 @@
   <div class="board">
     <h3>学习资源</h3>
     <p class="muted" style="line-height:2">
-      · <a href="MQM错误类型参考手册.html">MQM 错误类型参考手册</a>：M1–M9 / M0 的定义与严重度判据　｜　导出成绩（CSV / 作业 JSON）在「② 改 → 我的统计」
+      · <a href="MQM错误类型参考手册.html">MQM 错误类型参考手册</a>：M1–M9 / M0 的定义与严重度判据　｜　导出成绩（作业 JSON / CSV）在顶栏「我的统计」
     </p>
   </div>`;
 

@@ -195,9 +195,6 @@ function renderPlaza() {
   <h2>② 改 · 译后编辑练习</h2>
   <p>在机器译文底稿上动手改，交卷看修订率与逐段对照。
   ｜ <a href="MQM错误类型参考手册.html">MQM 错误类型参考手册</a> ｜ <a href="#" onclick="mtpeHelp();return false">帮助</a></p>
- <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
- <button class="btn btn-ghost" onclick="go('stats')">我的统计</button>
- </div>
  </div>
  <div class="page-s" style="margin:14px 0 18px">限时练习：8 / 15 / 30 分钟计时，离开页面计数 ｜ 自由练习：不限时、可存草稿</div>
  <div class="task-grid">
@@ -864,7 +861,7 @@ function download(name, content, type) {
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 updateNickBadge();
 (function boot() {
- /* 支持 practice.html#stats / #import 直接落到对应视图（首页的「我的统计」就是这么跳的） */
+ /* 支持 #stats / #import 直接落到对应视图（顶栏的「我的统计」就是跳到 #stats） */
  const h = (location.hash || '').replace(/^#/, '');
  if (h === 'stats' || h === 'plaza') go(h);
  else renderPlaza();

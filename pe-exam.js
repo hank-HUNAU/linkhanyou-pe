@@ -75,22 +75,24 @@ function renderExams(){
    const draft=store.get('draft_'+t.id,null);
    const enters=store.get('enters_'+t.id,0);
    const real = ![8,15,30].includes(t.minutes);
+   const wc = t.segs.reduce((s,g)=>s+wordCountSrc(g.src),0);
    return `
- <div class="exam-card-v3">
- <div class="mtpe-logo"><span class="big">MTPE</span><span class="sm">${t.corpus?'历届真题':'仿真训练'}</span></div>
- <div class="ec-v3-body">
- <h3>${esc(t.name)} <span class="tag blue">${esc(t.pair)}</span>${t.corpus?'<span class="tag-fee">真题</span>':''}</h3>
- <div class="times">
- <span>题型：译后编辑 ｜ ${t.segs.length} 段 ｜ 建议时长 ${t.minutes} 分钟</span>
- <span>进入次数：已用 ${enters}/3 ${draft?`｜ <span style="color:var(--a)">有未完成作答（${draft.done}/${t.segs.length} 段${draft.remain?`，剩余 ${fmt(Math.floor(draft.remain))}`:''}），进入后接着剩余时间计时</span>`:''}</span>
+ <div class="task-card">
+ <div class="t-head">
+ <h3>${esc(t.name)}</h3>
+ <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+ <span class="tag pair">${esc(t.pair)}</span>
+ <span class="tag domain">${esc(t.domain)}</span>
  </div>
  </div>
- <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+ <div class="meta"><span> ${t.segs.length} 段</span><span> 约 ${wc} 字</span><span>⏱ 建议 ${t.minutes} 分钟</span><span> 进入次数 已用 ${enters}/3</span></div>
+ ${draft?`<div class="draft-tip">有未完成作答（${draft.done}/${t.segs.length} 段${draft.remain?`，剩余 ${fmt(Math.floor(draft.remain))}`:''}），进入后接着剩余时间计时</div>`:''}
+ <div class="task-actions">
  <span class="dur">时长 <select id="dur-${t.id}">
  <option value="8">8 分钟</option><option value="15">15 分钟</option><option value="30">30 分钟</option>
- ${real?`<option value="${t.minutes}" selected>${t.minutes} 分钟（真题）</option>`:''}
+ ${real?`<option value="${t.minutes}" selected>${t.minutes} 分钟</option>`:''}
  </select></span>
- <button class="btn btn-o" onclick="enterExam('${t.id}')">进入训练</button>
+ <button class="btn btn-primary" onclick="enterExam('${t.id}')">进入训练</button>
  </div>
  </div>`;
  };
@@ -99,11 +101,15 @@ function renderExams(){
   setAnswering(false);
   document.body.innerHTML = NAV_HOST + `
   <div class="wrap">
-  <div class="page-t">③ 测 · 仿真训练</div>
-  <div class="page-s">教学仿真工具：界面按真实作业环境还原，题目内容与正式测评无关。</div>
- ${main.map(card).join('')}
+  <div class="plaza-head">
+  <h2>③ 测 · 仿真训练</h2>
+  <p>限时交卷，给出综合评分与错误维度、编辑倾向、速度稳定性、参照系四项画像。
+  ｜ <a href="#" onclick="mtpeHelp();return false">帮助</a></p>
+  </div>
+  <div class="page-s" style="margin:14px 0 18px">教学仿真工具，题目内容与正式测评无关 ｜ 每卷最多进入 3 次（对齐真实赛制）</div>
+  <div class="task-grid">${main.map(card).join('')}</div>
  ${hist.length?`<details class="adv" style="margin:16px 0"><summary>更多届次：第 1–6 届真题 ${hist.length} 套（整卷，按官方对照表归并句段）</summary>
- <div style="margin-top:12px">${hist.map(card).join('')}</div></details>`:''}
+ <div class="task-grid" style="margin-top:12px">${hist.map(card).join('')}</div></details>`:''}
  </div>
  <div id="modal-mask" class="mask hidden"><div class="modal" id="modal-box"></div></div>
  <div id="toast" style="opacity:0" role="status" aria-live="polite"></div>`;
@@ -818,7 +824,6 @@ function renderResult(r){
  </div>`).join('')}
  <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
  <a class="btn btn-p" href="pe-exam.html" style="text-decoration:none">返回我的测评</a>
- <a class="btn btn-o" href="practice.html#stats" style="text-decoration:none">去「改」看逐段修订痕迹与统计</a>
  </div>
  </div>
  <div id="toast" style="opacity:0" role="status" aria-live="polite"></div>`;

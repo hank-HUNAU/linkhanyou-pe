@@ -34,6 +34,20 @@ body.answering{--mtpe-nav-h:0px}
 .page-t{font-size:20px;font-weight:700;margin-bottom:4px}
 .page-s{color:var(--mut);font-size:13px;margin-bottom:18px}
 .tag{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600}
+/* ---- 广场卡片：与 ② 改 用同一套写法（本页不加载 style.css，变量换成 --yc/--ycl 这套） ---- */
+.plaza-head{margin-bottom:20px}
+.plaza-head h2{font-size:22px}
+.plaza-head p{color:var(--tx2);font-size:14px;margin-top:4px}
+.task-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px}
+.task-card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:18px 20px;
+  box-shadow:0 1px 3px rgba(30,41,72,.06),0 4px 16px rgba(30,41,72,.05);display:flex;flex-direction:column;gap:10px}
+.task-card .t-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.task-card h3{font-size:16px}
+.task-card .meta{font-size:12.5px;color:var(--tx2);display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.tag.pair{background:var(--ycl);color:var(--yc)}
+.tag.domain{background:var(--gb);color:var(--g)}
+.task-actions{display:flex;gap:8px;margin-top:auto;padding-top:6px;flex-wrap:wrap;align-items:center}
+.draft-tip{font-size:12px;color:var(--a)}
 .tag.blue{background:var(--ycl);color:var(--ycd)}
 .tag.need{background:var(--ab);color:var(--a)}
 .dur{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--tx2)}
@@ -42,6 +56,11 @@ body.answering{--mtpe-nav-h:0px}
 .btn{border:none;border-radius:8px;padding:8px 16px;font-size:13.5px;transition:all .15s}
 .btn-p{background:var(--yc);color:#fff}
 .btn-p:hover{background:var(--ycd)}
+/* 与 ② 改 同名（那边写 btn-primary / btn-ghost），指向本页同一套颜色 */
+.btn-primary{background:var(--yc);color:#fff}
+.btn-primary:hover{background:var(--ycd)}
+.btn-ghost{background:#eef1f7;color:var(--tx2)}
+.btn-ghost:hover{background:#e5e9f3}
 .btn-o{background:#fff;color:var(--yc);border:1px solid var(--yc)}
 .btn-o:hover{background:var(--ycl)}
 .btn-g{background:#eef1f7;color:var(--tx2)}
@@ -127,13 +146,6 @@ body.answering{--mtpe-nav-h:0px}
 .qa-row.ok{background:var(--gb);color:var(--g)}
 
 /* ---- v3：真实截图校准（第八届大赛） ---- */
-.exam-card-v3{background:#fff;border:1px solid var(--bd);border-radius:10px;padding:14px 16px;margin-bottom:12px;display:flex;gap:14px;align-items:center;box-shadow:0 1px 3px rgba(30,41,72,.05)}
-.mtpe-logo{width:74px;height:74px;border-radius:10px;background:linear-gradient(135deg,#173a8f,#2b7cff);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;flex-shrink:0}
-.mtpe-logo .big{font-size:22px;letter-spacing:1px}
-.mtpe-logo .sm{font-size:10px;font-weight:400;opacity:.85}
-.ec-v3-body{flex:1;min-width:0}
-.ec-v3-body h3{font-size:15px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-.ec-v3-body .times{font-size:12.5px;color:var(--tx2);margin-top:5px;display:flex;flex-direction:column;gap:2px}
 /* 整页红框：改用 fixed 覆盖层画完整四边。旧写法用 body border，上边线会被吸顶顶栏压掉
    （还显式写了 border-top:none），看起来像没画完。 */
 body.exam-on::after{content:'';position:fixed;inset:0;border:3px solid #e5484d;pointer-events:none;z-index:90}
