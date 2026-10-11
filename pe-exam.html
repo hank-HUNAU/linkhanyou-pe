@@ -21,6 +21,11 @@
 <link rel="stylesheet" href="pe-exam.css">
 </head>
 <body>
+<!-- 全站顶栏：浏览态常驻（与 ① 找 / ② 改 完全一致）；进入作答态由 body.answering 隐藏，
+     整页独占交给仿真界面本身。pe-exam.js 会整体替换 body.innerHTML，
+     所以每次重绘后由它调用 window.mtpeNavRender() 重新挂上 -->
+<div id="mtpe-nav"></div>
+<script src="nav.js"></script>
 <div id="app"></div>
 <script src="pwa.js"></script>
 <!-- secure.js（密钥环 + meta 片，约 10KB）按需加载，见 unlock.js 的 sealReady()；

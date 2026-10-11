@@ -120,6 +120,9 @@ function setAnswering(on) {
  try { document.body.classList.toggle('answering', !!on); } catch (e) {}
 }
 
+/* 步骤标签：三页作答栏左端统一用带编号的形式（① 找 · 作答中 / ② 改 · 限时练习 / ③ 测 · 仿真训练） */
+const stepTag = (t) => '<span class="step-tag">' + t + '</span>';
+
 /* ---------------- 视图切换 ---------------- */
 function go(v) {
  if (S && view !== v && (v === 'plaza' || v === 'stats' || v === 'import')) {
@@ -179,7 +182,7 @@ function renderPlaza() {
  const tasks = allTasks();
  const html = `
  <div class="plaza-head">
- <h2>译后编辑练习</h2>
+  <h2>② 改 · 译后编辑练习</h2>
  <p>在机翻底稿上动手改，交卷看修订率、逐段对照与参考译文点评。
  ｜ <a href="MQM错误类型参考手册.html">MQM 错误类型参考手册</a></p>
  <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
@@ -430,16 +433,16 @@ function showTerm(title) { toast(title.replace('术语：', ' ')); }
 function renderExam() {
  setAnswering(true);
  const { task, mode } = S;
-  const modeChip = mode === 'competition' ? '<span class="mode-chip">限时练习</span>'
- : mode === 'demo' ? '<span class="mode-chip demo">教学演示</span>'
- : '<span class="mode-chip prac">自由练习</span>';
+   const modeChip = mode === 'competition' ? '限时练习'
+  : mode === 'demo' ? '教学演示'
+  : '自由练习';
  const timerHtml = mode === 'competition'
  ? `<div class="timer" id="timer">--:--</div>`
  : `<div class="muted" id="timer">${mode === 'demo' ? '教学演示 · 不计时' : '自由练习 · 不限时'}</div>`;
 
  app.innerHTML = `
  <div class="exam-top">
- <div class="exam-title">${esc(task.name)} ${modeChip}
+  <div class="exam-title">${stepTag('② 改 · ' + modeChip)} ${esc(task.name)}
  ${mode === 'competition' ? `<span class="cheat-badge hidden" id="cheat-badge">已离开页面 0 次</span>` : ''}
  </div>
  <div class="progress-wrap">

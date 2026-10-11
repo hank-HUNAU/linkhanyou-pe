@@ -42,6 +42,9 @@ function setAnswering(on) {
  try { document.body.classList.toggle('answering', !!on); } catch (e) {}
 }
 
+/* 步骤标签：三页作答栏左端统一用带编号的形式（① 找 · 作答中 / ② 改 · 限时练习 / ③ 测 · 仿真训练） */
+const stepTag = (t) => '<span class="step-tag">' + t + '</span>';
+
 /* ---------------- 全局状态 ---------------- */
 let V = 'setup';
 let A = null; // {paper:[pair...], idx, anns:{k:[...]}, seeded:Set(k)}
@@ -108,12 +111,8 @@ function renderSetup() {
  const wb = wrongbook();
  const wbN = wrongKeys().length;
  app.innerHTML = `
- <div class="top">
- <div class="brand"><span class="logo">标</span>MTPE 标注实训 <span class="en">错误标注 · 种子对照</span></div>
- <a class="muted" href="index.html" style="text-decoration:none">返回首页</a>
- </div>
  <div class="wrap">
- <h1>标注实训</h1>
+  <h1>① 找 · 标注实训</h1>
  ${fromLink ? `<div class="page-s" style="margin-bottom:10px">已按练习建议预置筛选条件${pre.dim ? '：错误维度「' + esc(pre.dim) + '」' : ''}${pre.ed ? ' · 第' + esc(pre.ed) + '届' + esc(pre.stage || '') : ''}。</div>` : ''}
  <div class="page-s">在机翻译文中<b>选中错误片段</b>并标注类别与严重度；交卷后与已校对种子标注对比，计算查准率 / 查全率 / F1。
  数据：历届大赛 ${CORPUS_PAIRS.length} 条 A 级句对，${mtCount === CORPUS_PAIRS.length ? '全部' : '其中 <b>' + mtCount + '</b> 条'}带机翻底稿可打标${rbCount ? '（第 3/5 届共 ' + rbCount + ' 条为 <b>AI 重构底稿</b>——这两届官方只公布"原文 + 参考译文"，当年引擎输出未公开；参考译文仍为官方原文）' : ''}${CORPUS_PAIRS.length - mtCount ? '；另 ' + (CORPUS_PAIRS.length - mtCount) + ' 条无底稿，组卷默认排除' : ''}。<b>${seedCount}</b> 条有种子标注可对照、其余为盲标。标签集 M1-M9 + M0 见 <a href="MQM错误类型参考手册.html">MQM 手册</a>。</div>
@@ -257,8 +256,12 @@ function renderWork() {
  const seeded = A.seededK.has(k);
  app.innerHTML = `
  <div class="top">
- <div class="brand"><span class="logo">标</span>MTPE 标注实训 <span class="en">作答中</span></div>
- <div class="muted">第 ${A.idx + 1}/${A.paper.length} 条 ｜ <a href="annotate.html" style="text-decoration:none" onclick="saveSession()">退出</a></div>
+  ${stepTag('① 找 · 作答中')}
+  <div class="muted">第 ${A.idx + 1}/${A.paper.length} 条</div>
+  <div class="top-acts">
+  <button class="btn btn-p" onclick="confirmSubmit()">交卷</button>
+  <a class="muted" href="annotate.html" style="text-decoration:none" onclick="saveSession()">退出</a>
+  </div>
  </div>
  <div class="wrap">
  <div class="card">
@@ -460,8 +463,8 @@ function renderResult(r) {
  V = 'result';
  app.innerHTML = `
  <div class="top">
- <div class="brand"><span class="logo">标</span>MTPE 标注实训 <span class="en">评分结果</span></div>
- <a class="muted" href="annotate.html" style="text-decoration:none"> 返回组卷</a>
+  ${stepTag('① 找 · 评分结果')}
+  <a class="muted" href="annotate.html" style="text-decoration:none">返回组卷</a>
  </div>
  <div class="wrap">
  <h1>评分结果 · 与种子标注对比</h1>

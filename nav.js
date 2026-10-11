@@ -59,6 +59,8 @@
  syncInstall();
  }
  }
+/* 供"整页重绘"的页面使用：仿真训练会整体替换 body.innerHTML，重绘后要重新挂上顶栏 */
+window.mtpeNavRender = render;
  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', render);
  else render();
 })();

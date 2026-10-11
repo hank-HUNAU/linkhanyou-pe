@@ -22,6 +22,9 @@ body{font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;backgroun
 button{font-family:inherit;cursor:pointer}
 .wrap{max-width:960px;margin:0 auto;padding:24px 18px 70px}
 .top{background:#fff;border-bottom:1px solid var(--bd);padding:12px 22px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:var(--mtpe-nav-h, 57px);z-index:40}
+/* 作答栏三页统一：左=步骤标签，中=进度，右=交卷/退出（与 ② 改 / ③ 测 同一版式） */
+.top-acts{display:flex;align-items:center;gap:10px}
+.step-tag{display:inline-flex;align-items:center;font-size:12.5px;font-weight:700;line-height:1.5;color:#0071e3;background:rgba(0,113,227,.10);border-radius:999px;padding:3px 12px;white-space:nowrap}
 .brand{display:flex;align-items:center;gap:10px;font-weight:700}
 .logo{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--an),#2dd4bf);color:#fff;display:flex;align-items:center;justify-content:center}
 .brand .en{color:var(--mut);font-size:12px;font-weight:400}

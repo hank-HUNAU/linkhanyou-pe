@@ -56,6 +56,17 @@ function modeName(m){ return m==='light'?'轻度':'仿真训练'; }
 /* 按语言方向给出列头语言代码（对齐真实界面的"请输入原文（en-US）"） */
 function langOf(pair){ return /中译英|汉译英|中译外|汉译外/.test(pair || '') ? ['zh-CN', 'en-US'] : ['en-US', 'zh-CN']; }
 
+/* ---- 与全站顶栏的衔接（与 ① 找 / ② 改 同一套规则） ----
+   本页会整体替换 body.innerHTML，所以：
+     ① 每份模板都带一个空的 #mtpe-nav 容器；
+     ② 重绘后调 mtpeNavRender() 把顶栏挂回去（nav.js 暴露的口子）。
+   作答态加 body.answering 隐藏顶栏（CSS 在 pe-exam.css），做到"整页独占"。
+   作答栏左侧统一用带编号的步骤标签：③ 测 · xxx —— 与 ① 找 / ② 改 对得上。 */
+const NAV_HOST = '<div id="mtpe-nav"></div>';
+const stepTag = (txt) => '<span class="step-tag">' + txt + '</span>';
+function setAnswering(on){ try{ document.body.classList.toggle('answering', !!on); }catch(e){} }
+function syncNav(){ try{ if(window.mtpeNavRender) window.mtpeNavRender(); }catch(e){} }
+
 /* ============ 仿真训练广场（精简版：只保留与作答直接相关的元素） ============ */
 function renderExams(){
  document.body.className='';
@@ -85,20 +96,18 @@ function renderExams(){
  };
  const main = TASKS.filter((t) => t.group !== 'history');
  const hist = TASKS.filter((t) => t.group === 'history');
- document.body.innerHTML = `
- <div class="yc-top">
- <div class="yc-brand"><span class="yc-logo">译</span>MTPE 仿真训练 <span class="en">译后编辑 · 仿真训练</span></div>
- <div class="yc-top-right"><a class="mi" href="index.html" style="text-decoration:none">返回首页</a></div>
- </div>
- <div class="wrap">
- <div class="page-t">仿真训练</div>
- <div class="page-s">教学仿真工具：界面按官方赛场还原，题目内容与正式测评无关。</div>
+  setAnswering(false);
+  document.body.innerHTML = NAV_HOST + `
+  <div class="wrap">
+  <div class="page-t">③ 测 · 仿真训练</div>
+  <div class="page-s">教学仿真工具：界面按真实作业环境还原，题目内容与正式测评无关。</div>
  ${main.map(card).join('')}
  ${hist.length?`<details class="adv" style="margin:16px 0"><summary>更多届次：第 1–6 届真题 ${hist.length} 套（整卷，按官方对照表归并句段）</summary>
  <div style="margin-top:12px">${hist.map(card).join('')}</div></details>`:''}
  </div>
  <div id="modal-mask" class="mask hidden"><div class="modal" id="modal-box"></div></div>
  <div id="toast" style="opacity:0" role="status" aria-live="polite"></div>`;
+  syncNav();
 }
 
 /* 重置某个任务的进入次数（拟真规则上限 3 次）。界面上不再提供入口 ——
@@ -135,9 +144,10 @@ function renderExam(){
  const agent = peMode==='agent';
  /* 语向标签按任务实际方向生成，不再写死"汉译外" */
  const dirLabel = /中译英|汉译英|中译外|汉译外/.test(task.pair || '') ? '汉译英' : '英译汉';
- document.body.innerHTML=`
- <div class="yc-top">
- <div class="yc-brand"><span class="yc-logo">译</span>MTPE 仿真训练 <span class="en">译后编辑 · ${modeName(peMode)}</span></div>
+  setAnswering(true);
+  document.body.innerHTML= NAV_HOST + `
+  <div class="yc-top">
+  ${stepTag('③ 测 · ' + (modeName(peMode) === '轻度' ? '轻度译后编辑' : '仿真训练'))}
  <div class="exam-meta">
  <span class="switch-chip ok" id="sw-chip">切屏 0/8</span>
  <span class="remain" id="remain">剩余时间 ${fmt(S.duration)}</span>
@@ -221,6 +231,7 @@ function renderExam(){
  <div id="modal-mask" class="mask hidden"><div class="modal" id="modal-box"></div></div>
  <div id="toast" style="opacity:0" role="status" aria-live="polite"></div>`;
 
+  syncNav();                       // 重绘后把顶栏挂回来（作答态由 body.answering 隐藏）
  task.segs.forEach((g,i)=>{ const ta=$('#ta-'+i); ta.value=S.answers[i]||''; refreshStatus(i); });
  setCur(0);
  bindAntiCheat();
@@ -778,11 +789,11 @@ function recommendHTML(r){
 function renderResult(r){
  V='result'; S=null;
  document.body.className='';
- document.body.innerHTML=`
- <div class="yc-top">
- <div class="yc-brand"><span class="yc-logo">译</span>MTPE 仿真训练 <span class="en">仿真训练结果</span></div>
- <div class="yc-top-right"><a class="mi" href="pe-exam.html" style="text-decoration:none">返回测评中心</a></div>
- </div>
+  setAnswering(false);
+  document.body.innerHTML= NAV_HOST + `
+  <div class="yc-top">
+  ${stepTag('③ 测 · 测评结果')}
+  </div>
  <div class="wrap">
  <div class="page-t">「决赛${esc(r.task.pair)}」${esc(r.task.name)} <span class="tag blue">${esc(r.reason)} · ${modeName(r.peMode)}译后编辑</span></div>
  <div class="page-s">仿真训练结果：计算机辅助指标实时计算；正式大赛以“机器智能评分 + 人工评阅”为准（赛场显示满分 100）${r.peMode==='agent'?'，赛制引入 Agent 选手与人类同榜，下方为同榜结果':''}。</div>
@@ -813,6 +824,7 @@ function renderResult(r){
  </div>
  </div>
  <div id="toast" style="opacity:0" role="status" aria-live="polite"></div>`;
+  syncNav();
 }
 
 /* ---- 弹窗 ---- */
