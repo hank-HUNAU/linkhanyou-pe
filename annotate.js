@@ -114,8 +114,7 @@ function renderSetup() {
  <div class="wrap">
   <h1>① 找 · 标注实训</h1>
  ${fromLink ? `<div class="page-s" style="margin-bottom:10px">已按练习建议预置筛选条件${pre.dim ? '：错误维度「' + esc(pre.dim) + '」' : ''}${pre.ed ? ' · 第' + esc(pre.ed) + '届' + esc(pre.stage || '') : ''}。</div>` : ''}
- <div class="page-s">在机翻译文中<b>选中错误片段</b>并标注类别与严重度；交卷后与已校对种子标注对比，计算查准率 / 查全率 / F1。
- 数据：历届大赛 ${CORPUS_PAIRS.length} 条 A 级句对，${mtCount === CORPUS_PAIRS.length ? '全部' : '其中 <b>' + mtCount + '</b> 条'}带机翻底稿可打标${rbCount ? '（第 3/5 届共 ' + rbCount + ' 条为 <b>AI 重构底稿</b>——这两届官方只公布"原文 + 参考译文"，当年引擎输出未公开；参考译文仍为官方原文）' : ''}${CORPUS_PAIRS.length - mtCount ? '；另 ' + (CORPUS_PAIRS.length - mtCount) + ' 条无底稿，组卷默认排除' : ''}。<b>${seedCount}</b> 条有种子标注可对照、其余为盲标。标签集 M1-M9 + M0 见 <a href="MQM错误类型参考手册.html">MQM 手册</a>。</div>
+  <div class="page-s">在机翻译文中<b>选中错误片段</b>并标注类别与严重度；交卷后与种子标注对比，计算查准率 / 查全率 / F1。标签集见 <a href="MQM错误类型参考手册.html">MQM 手册</a>。</div>
  <div class="card">
  <h3> 组卷筛选</h3>
  <div class="row">
@@ -133,7 +132,7 @@ function renderSetup() {
  /* 必须显式写 value：否则 <option> 的取值会变成带后缀的整串文字，筛选就再也匹配不上 */
  return `<option value="${d}"${pre.dim === d ? ' selected' : ''}${n ? '' : ' disabled'}>${d}${n ? '（' + n + ' 句）' : '（暂无语料）'}</option>`;
  }).join('')}</select></div>
-  <div><label>机翻底稿</label><select id="f-mt"><option value="1" selected>仅限有底稿（推荐）</option><option value="">含无底稿（会跳过）</option></select></div>
+  <div><label>机翻底稿</label><select id="f-mt"><option value="1" selected>仅限有底稿</option><option value="">含无底稿</option></select></div>
  </div>
  </details>
  <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
@@ -143,14 +142,14 @@ function renderSetup() {
  <label class="muted" style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;margin-top:8px">
  <input type="checkbox" id="f-blind"> 种子不足时补盲标句对（不计分）
  </label>
- <div class="muted" style="font-size:12.5px;margin-top:6px">默认只出<b>种子对照卷</b>（交卷计分）：全库 ${seedCount} 条有官方种子标注。</div>
+  <div class="muted" style="font-size:12.5px;margin-top:6px">默认只出<b>种子对照卷</b>（交卷计分）。</div>
  <div id="compose-out" class="page-s" style="margin-top:10px"></div>
  </div>
  ${(() => {
    const cards = SPECIAL_PAPERS.map((sp) => ({ sp, n: specialPairs(sp).length })).filter((x) => x.n >= 3);
    if (!cards.length) return '';
    return `<div class="card"><h3>专项训练（围绕同一术语的整篇一致性）</h3>
-   <div class="page-s" style="margin-bottom:10px">常规卷每个术语最多取 2–3 条，保证分数反映综合能力；专项卷把整篇相关句对集中练一遍，<b>不计入常规 F1</b>。</div>
+    <div class="page-s" style="margin-bottom:10px">专项卷把同一术语 / 专名的整篇相关句对集中练一遍，<b>不计入常规 F1</b>。</div>
    ${cards.map(({ sp, n }) => `<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--bd)">
    <div style="flex:1;min-width:0"><b style="font-size:13.5px">${esc(sp.name)}</b> <span class="muted" style="font-size:12.5px">· ${n} 句</span>
    <div class="muted" style="font-size:12.5px;margin-top:2px">${esc(sp.desc)}</div></div>
@@ -159,7 +158,7 @@ function renderSetup() {
    </div>`;
  })()}
  ${wbN ? `<div class="card"><h3> 错题本（${wbN} 句 / ${wb.length} 处待回练）</h3>
- <div class="page-s">来自你以往标注实训中<b>漏检</b>或<b>标签判错</b>的种子错误。回练只重做这些句子，交卷后同样计分。</div>
+  <div class="page-s">只重做你以往<b>漏检</b>或<b>标签判错</b>的句子，交卷同样计分。</div>
  <ul style="margin:0 0 10px 18px;font-size:13px;color:var(--tx2)">${wb.slice(0, 6).map(w => `<li>${esc(w.k)} ｜「${esc(String(w.span).slice(0, 24))}」 → 应为 <b>${TAG_LABEL[w.tag] || w.tag}</b> · ${w.sev} <span class="muted">（${w.kind}）</span></li>`).join('')}</ul>
  ${wb.length > 6 ? `<div class="muted" style="margin-bottom:8px">…… 其余 ${wb.length - 6} 处</div>` : ''}
  <button class="btn btn-p" onclick="composeWrong()">错题回练（${wbN} 句）</button>
@@ -276,7 +275,6 @@ function renderWork() {
  <div class="src-box"><div class="lab">原文</div>${esc(p.src)}</div>
  <div class="lab">机翻译文（选中错误片段后打标；无错误可选 M0）</div>
  ${p.mt ? `<div class="mt-box" id="mtbox">${renderMT(p.mt, anns)}</div>
- <div class="hint">划选片段即弹出打标面板；点已有高亮可改或删。</div>
  <div class="ann-list" id="ann-list">
  ${anns.map((a, i) => `<div class="ann-item">
  <span>「${esc(a.text.slice(0, 30))}${a.text.length > 30 ? '…' : ''}」 <b>${TAG_LABEL[a.tag]}</b> · ${a.sev}${a.fix ? ' · 改：' + esc(a.fix.slice(0, 20)) : ''}</span>
@@ -468,8 +466,7 @@ function renderResult(r) {
  </div>
  <div class="wrap">
  <h1>评分结果 · 与种子标注对比</h1>
- ${r.special ? `<div class="info-box" style="margin-bottom:10px"><b>专项训练「${esc(r.special)}」</b>：本次成绩<b>不计入常规 F1</b>（常规 F1 只统计随机组卷的种子卷），用于集中练"同一术语/专名在整篇里统一"这项技能。漏检照样进错题本。</div>` : ''}
- <div class="page-s">计分范围：${r.perPair.filter(x => x.scored).length} 条种子对照卷（盲标条目不计分）；标签集 M1-M9/M0。</div>
+  ${r.special ? `<div class="info-box" style="margin-bottom:10px"><b>专项训练「${esc(r.special)}」</b>：本次成绩<b>不计入常规 F1</b>，漏检照样进错题本。</div>` : ''}
  <div class="score-hero">
  <div class="stat-box"><div class="v">${r.precision}%</div><div class="l">查准率 Precision（标得对不对）</div></div>
  <div class="stat-box"><div class="v g">${r.recall}%</div><div class="l">查全率 Recall（漏了多少）</div></div>

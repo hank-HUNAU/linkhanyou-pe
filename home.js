@@ -51,14 +51,6 @@
     };
   }
 
-  function installNote() {
-    if (!window.mtpeIsStandalone) return '';
-    if (window.mtpeIsStandalone()) return '已作为桌面应用运行：断网也能继续练，数据仍存在本机浏览器里。';
-    if (window.mtpeCanInstall && window.mtpeCanInstall()) return '点「安装到桌面」可装成独立应用，断网也能用。';
-    if (location.protocol === 'file:') return '当前是双击本地文件打开（file://）：功能照常，但安装到桌面与离线缓存不可用。想要这两项，用线上网址打开即可。';
-    return '在 Chrome / Edge 里打开本页可安装到桌面（离线可用）；若没看到按钮，点浏览器地址栏右侧的「安装」图标即可。';
-  }
-
   /* 最弱错误维度：取自"最近一次测评交卷"的画像（dims = 你的译文里各维度还剩多少处没改对）。
      只读既有数据，不新增采集；与测评结果页的推荐练习同一口径。 */
   const DIMS = ['准确性', '术语', '语言规范', '风格', '格式'];
@@ -118,8 +110,7 @@
     app.innerHTML = `
   <section class="home-hero">
     <h1>译后编辑实训平台</h1>
-    <p>按「<b>找 → 改 → 测</b>」三步走练机器翻译译后编辑：先练<strong>发现哪里该改</strong>，再练<strong>动手改</strong>，最后进仿真测评环境练<strong>临场状态</strong>。
-    练「找」「改」是实训，<strong>「测」是唯一测评口径</strong>的仿真训练。语料为历届大赛真题；登录一次，三个页面之间往返无需再登录。</p>
+    <p>按「<b>找 → 改 → 测</b>」三步练译后编辑。</p>
   </section>
 
   <div class="home-next">
@@ -141,17 +132,17 @@
   <div class="step-strip home-steps">
     <a class="step-card" href="annotate.html">
       <b>① 找 · 标注实训</b>
-      <span>判断「哪里该改」：在机翻句对上划选错误片段并定性（M1–M9 / M0 + 严重度）。交卷后与官方种子标注比对，给出查准率 / 查全率 / F1，错题自动入本。</span>
+      <span>在机器译文上划出错误片段并定性。交卷与种子标注比对，给出查准率 / 查全率 / F1。</span>
       <em>练眼力：漏检和过度标注都算错</em>
     </a>
     <a class="step-card" href="practice.html">
       <b>② 改 · 译后编辑练习</b>
-      <span>在机翻底稿上动手改：限时练习可选 8 / 15 / 30 分钟（离开页面计数），自由练习不限时、可存草稿；交卷看修订率、逐段对照与参考译文点评。</span>
+      <span>在机器译文底稿上动手改。限时或自由练习，交卷看修订率与逐段对照。</span>
       <em>练手法：练习分不是测评口径</em>
     </a>
     <a class="step-card" href="pe-exam.html">
       <b>③ 测 · 仿真训练</b>
-      <span>全真赛场界面：整页独占、防作弊（切屏计数、禁复制粘贴、倒计时）、TER 分与结果画像，交卷后给出编辑倾向与推荐练习。</span>
+      <span>限时交卷：整页独占、切屏计数、禁复制粘贴、倒计时。交卷给出评分与四项画像。</span>
       <em>练状态：赛前用它估分、找短板</em>
     </a>
   </div>
@@ -174,7 +165,6 @@
       <a class="btn btn-ghost" href="practice.html#stats">我的统计</a>
       <button id="mtpe-install-btn" class="btn btn-ghost hidden" onclick="mtpeInstall()">安装到桌面</button>
     </div>
-    <div class="board-note" id="home-note"></div>
   </div>
 
   <div class="board">
@@ -190,8 +180,6 @@
   function syncInstall() {
     const btn = document.getElementById('mtpe-install-btn');
     if (btn) btn.classList.toggle('hidden', !(window.mtpeCanInstall && window.mtpeCanInstall()));
-    const note = document.getElementById('home-note');
-    if (note) note.textContent = installNote();
   }
 
   /* 首页内联保存姓名/学号（登录时昵称会被预置成账号名，所以要单独打个标） */

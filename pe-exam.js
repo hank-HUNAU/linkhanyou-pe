@@ -201,7 +201,7 @@ function renderExam(){
  </div>
  <div class="side-col">
  <div class="task-panel">
- <div class="tp-title">译后编辑仿真训练（界面按官方赛场还原）</div>
+  <div class="tp-title">译后编辑仿真训练</div>
  <div class="notice-box">
  <b>试题须知</b>
  <div>满分 100 ｜ 请直接在所提供的机器译文基础上修改，系统将自动记录修订位置，<b>无需另行标注修改痕迹</b>。</div>
@@ -497,7 +497,6 @@ function agentBoardHTML(r){ const agents=(AGENT_BOARD[r.task.id]||AGENT_DEFAULT)
  </tr>`).join('')}
  </table>
  <div style="margin-top:10px;padding:10px 12px;border-radius:8px;background:${beaten===total?'var(--gb)':'var(--ab)'};font-size:13.5px">${verdict}</div>
- <div class="board-note">* Agent 成绩为拟真数据。正式赛制中 Agent 选手的译文由组委会统一生成并评分后与人类选手合并排名。</div>
  </div>`;
 }
 function getNickYcx(){ return store.get('nickname_yx','我'); }
@@ -694,7 +693,7 @@ function profileHTML(r){
  ${radarSVG(fixRates(p), '#2b7cff')}
  <div class="prof-legend"><span><i style="background:#2b7cff"></i>该维度已改对率</span></div>
  ${dimTable(p.draft, p.out)}
- <div class="prof-note">按 M1-M9 归并为 5 维。机翻底稿共 ${p.draftTotal} 处问题 → 你的译文献余 ${p.outTotal} 处。此分布由逐段 diff 启发式初筛，精确口径以第一期人工 MQM 标注为准；该维度机翻本无问题的按 100% 计。</div>
+  <div class="prof-note">机翻底稿共 ${p.draftTotal} 处问题 → 你的译文献余 ${p.outTotal} 处（启发式初筛，见帮助）。</div>
  </div>
  <div class="prof-card">
  <h3>② 编辑倾向定位</h3>
@@ -716,7 +715,6 @@ function profileHTML(r){
  <div class="prof-kv"><span>本次进步</span><b class="${best !== null && r.score >= best ? 'pos' : ''}">${best === null ? '—' : (r.score - best >= 0 ? '+' : '') + (r.score - best).toFixed(1) + ' 分'}</b></div>
  <div class="prof-kv"><span>同榜 Agent 最高分</span><b>${agentBest} 分（拟真）</b></div>
  <div class="prof-kv"><span>班级百分位</span><b class="muted">待教师导入</b></div>
- <div class="prof-note">历史最好取自本机「我的统计」中同一份卷子的既往成绩；班级参照需教师汇总后导入。</div>
  </div>
  </div>`;
 }
@@ -781,7 +779,6 @@ function recommendHTML(r){
  <div class="prof-head">下一步练什么 <span class="tag blue">画像 → 推荐 → 回练</span></div>
  <div class="board">
  ${list}
- <div class="board-note">推荐由本次画像自动生成：先补最弱维度，再练同源卷，最后回练错题；链接直达标注实训的组卷筛选（按届次 / 赛段 / 错误类型）。可用句数来自全库句对的错误维度预计算。</div>
  </div>`;
 }
 
@@ -796,8 +793,7 @@ function renderResult(r){
   </div>
  <div class="wrap">
  <div class="page-t">「决赛${esc(r.task.pair)}」${esc(r.task.name)} <span class="tag blue">${esc(r.reason)} · ${modeName(r.peMode)}译后编辑</span></div>
- <div class="page-s">仿真训练结果：计算机辅助指标实时计算；正式大赛以“机器智能评分 + 人工评阅”为准（赛场显示满分 100）${r.peMode==='agent'?'，赛制引入 Agent 选手与人类同榜，下方为同榜结果':''}。</div>
- <div class="warn-box" style="margin-bottom:14px"> 得分说明：综合得分基于与参考译文的<b>词级重合度</b>，同义改写或更优表达可能被低估，请以逐段修订痕迹自行判断质量；修订率中文按字切分，跨语向比较需谨慎。</div>
+  <div class="page-s">计算机辅助指标实时计算，仅供教学参考${r.peMode==='agent'?'；下方为 Agent 同榜结果':''}。口径与局限见 <a href="#" onclick="mtpeHelp();return false">帮助</a>。</div>
  <div class="res-hero">
  <div class="res-box"><div class="v">${r.score}</div><div class="l">综合得分（vs 参考译文）</div></div>
  <div class="res-box"><div class="v a">${r.terScore}</div><div class="l">测评口径分（TER×1.2）</div></div>
@@ -807,8 +803,8 @@ function renderResult(r){
  <div class="res-box"><div class="v ${r.switches>=5?'r':''}">${r.switches}</div><div class="l">切屏次数（上限8）</div></div>
  <div class="res-box"><div class="v ${r.enters>=3?'r':''}">${r.enters}/3</div><div class="l">进入次数</div></div>
  </div>
- <div class="${(r.terScore||0)>=PASS_LINE?'info-box':'warn-box'}" style="margin-bottom:14px"> <b>测评口径（TER×${TER_K}，与训练效果模拟同源）：</b>${r.terScore} 分 —— ${(r.terScore||0)>=PASS_LINE?`<b>达到模拟晋级线 ${PASS_LINE}（前20%水平）</b>`:`未达模拟晋级线 ${PASS_LINE}，差 ${(PASS_LINE-(r.terScore||0)).toFixed(1)} 分`}。晋级线取自 1000 人模拟池第 80 百分位。</div>
- <div class="${r.noEditN>r.details.length*0.6||r.noEditN<3?'warn-box':'info-box'}" style="margin-bottom:14px"> <b>编辑率诊断：</b>未编辑 ${r.noEditN}/${r.details.length} 段。${r.noEditN>r.details.length*0.6?'改动过少——机翻对的句子保留是得分动作，但文化专有词与文学表达处需果断改，先练"判断哪里该改"。':r.noEditN<3?'几乎逐句都改——警惕过度编辑：大模型底稿错误少而隐蔽，机翻对的部分不动才是得分动作（M0 思维）。':'编辑节奏适中。'}</div>
+  <div class="${(r.terScore||0)>=PASS_LINE?'info-box':'warn-box'}" style="margin-bottom:14px"><b>测评口径（TER×${TER_K}）：</b>${r.terScore} 分 —— ${(r.terScore||0)>=PASS_LINE?`<b>达到模拟晋级线 ${PASS_LINE}</b>`:`未达模拟晋级线 ${PASS_LINE}，差 ${(PASS_LINE-(r.terScore||0)).toFixed(1)} 分`}。</div>
+  <div class="${r.noEditN>r.details.length*0.6||r.noEditN<3?'warn-box':'info-box'}" style="margin-bottom:14px"><b>编辑率诊断：</b>未编辑 ${r.noEditN}/${r.details.length} 段。${r.noEditN>r.details.length*0.6?'改动过少——机翻对的部分保留是得分动作，文化词与长难句才该果断改。':r.noEditN<3?'几乎逐句都改——警惕过度编辑，机翻对的部分不动才是得分动作。':'编辑节奏适中。'}</div>
  ${profileHTML(r)}
  ${recommendHTML(r)}
  ${r.peMode==='agent'?agentBoardHTML(r):''}

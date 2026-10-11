@@ -183,8 +183,8 @@ function renderPlaza() {
  const html = `
  <div class="plaza-head">
   <h2>② 改 · 译后编辑练习</h2>
- <p>在机翻底稿上动手改，交卷看修订率、逐段对照与参考译文点评。
- ｜ <a href="MQM错误类型参考手册.html">MQM 错误类型参考手册</a></p>
+  <p>在机器译文底稿上动手改，交卷看修订率与逐段对照。
+  ｜ <a href="MQM错误类型参考手册.html">MQM 错误类型参考手册</a> ｜ <a href="#" onclick="mtpeHelp();return false">帮助</a></p>
  <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
  <button class="btn btn-ghost" onclick="go('stats')">我的统计</button>
  </div>
@@ -292,7 +292,7 @@ function openSetup(taskId, mode) {
  ${durs.map((d, i) => `<div class="dur-btn${i === 1 ? ' sel' : ''}" data-d="${d}" onclick="pickDur(this)">${d} 分钟${i === 1 ? '（建议）' : ''}</div>`).join('')}
  </div>
  </div>
- <div class="warn-box">限时练习规则：作答期间离开页面会被记录；倒计时归零将自动交卷；交卷后不可再修改。练习分仅供自己追踪，测评口径请用「③ 测 · 仿真训练」。</div>`;
+  <div class="warn-box">作答期间离开页面会被记录；倒计时归零自动交卷；交卷后不可再修改。</div>`;
  }
  body += `
  <div class="m-actions">
@@ -457,7 +457,7 @@ function renderExam() {
  <div class="seg-table">
  <div class="seg-row header">
  <div class="seg-num">#</div>
- <div class="seg-cell">原文 Source（黄色高亮为术语，悬停/点击可查看译法）</div>
+  <div class="seg-cell">原文 Source</div>
  <div class="seg-cell">机翻译文 MT 请在此基础编辑（Ctrl+Enter 跳下一段）</div>
  </div>
  ${task.segs.map((g, i) => `
@@ -480,14 +480,15 @@ function renderExam() {
  <span class="t">${esc(t.t)}</span>
  </div>`).join('')}
  </div>
- <div class="kbd-hint" style="margin-top:8px"> 点击术语 = 将译法插入光标处</div>
  </div>
  <div class="panel">
- <h4> ${mode === 'demo' ? '本任务译后编辑要点' : '译后编辑小贴士'}</h4>
- <ul class="tips-list">
+  <details class="adv">
+  <summary>${mode === 'demo' ? '本任务译后编辑要点' : '本卷说明'}</summary>
+  <ul class="tips-list" style="margin-top:8px">
  <li>${esc(task.tips)}</li>
  ${mode === 'demo' ? '<li>每段右下角“查看点评”在交卷前即可展开，边看边改。</li>' : ''}
  </ul>
+  </details>
  </div>
  </div>
  </div>`;
@@ -630,7 +631,7 @@ function renderResult(r) {
  <div class="stat-box"><div class="v green">${fmtTime(r.timeUsed)}</div><div class="l">用时</div></div>
  <div class="stat-box"><div class="v">${r.words}</div><div class="l">任务字数</div></div>
  </div>
- <div class="score-note"> 得分说明：综合得分基于与参考译文的<b>词级重合度</b>，同义改写或更优表达可能被低估，仅供历次练习横向对比；修订率按词级编辑量计算，<b>中文按字切分</b>，跨语向比较需谨慎。请结合下方逐段修订痕迹自行判断质量。</div>
+  <div class="score-note">得分基于与参考译文的<b>词级重合度</b>，仅供自己纵向对比；口径与局限见 <a href="#" onclick="mtpeHelp();return false">帮助</a>。</div>
 
  <h3 style="margin:6px 0 12px"> 逐段修订痕迹与点评</h3>
  ${r.details.map(d => `
@@ -762,7 +763,6 @@ function annStatsHTML() {
  <td>${(x.tagWrong || 0) + (x.sevWrong || 0)}</td><td>${x.FN || 0}</td><td>${x.FP || 0}</td>
  </tr>`).join('')}
  </table>
- <div class="board-note">数据来自 <a href="annotate.html">标注实训</a> 交卷自动同步：漏检（FN）说明该改的没找到，多余（FP）说明标了机翻本来没问题的地方。</div>
  </div>`;
 }
 
