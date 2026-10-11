@@ -1,0 +1,49 @@
+NOTICE · 适用范围说明 / Scope Notice
+====================================
+
+一、本许可覆盖什么
+    本仓库的 MIT 许可（全文见 LICENSE）**仅适用于源代码**，即 HTML / CSS / JavaScript
+    等程序文件（index.html、app.js、pe-exam.js、annotate.js、unlock.js、sw.js 等）。
+
+二、本许可**不**覆盖什么
+    仓库与站点内以**密文**形式存放的**历届机器翻译译后编辑大赛真题语料**，包括但不限于：
+      · 赛题原文（源语文本）
+      · 大赛官方参考译文
+      · 由本平台派生的分句、句段切分、标注数据、错误维度统计与重构底稿
+    **不受 MIT 许可授权**。上述内容的著作权归大赛组委会及相关权利人所有。
+
+三、使用范围
+    本仓库与站点仅将上述语料用于**课堂教学与非商业学术研究**，
+    **不构成任何形式的再分发许可，亦不得用于任何商业用途**。
+
+    语料以 AES-GCM 加密存放并按分片下发，读取需课程负责人发放的内置账号口令；
+    未获账号者只能取到密文。**加密与账号控制只限制接触，不改变语料的权利归属。**
+
+    需要引用或转载本站语料时，请先取得权利人许可并注明出处；
+    历届赛题与参考译文一律以大赛官方发布为准。
+
+四、第 3 / 5 届训练底稿的来源（如实披露）
+    第 3 届（2020，腾讯 TranSmart）与第 5 届（2022，火山翻译）官方只公布了
+    「原文 + 参考译文」，**机翻输出从未公开**。这 691 条训练底稿由 DeepSeek-V3
+    按机翻输出风格重构生成，平台在卷名（`…（DeepSeek-V3 重构 底稿）`）、任务说明与
+    数据结构（`rb:1` 标记）中均标注为「重构底稿 / 非官方底稿」，**不与官方机翻底稿混称**；
+    这两届的**参考译文仍为官方原文**。引用本平台数据时，请勿把重构底稿表述为官方输出。
+
+五、其他
+    · 平台界面是为教学目的所做的**拟真还原**，**不是任何赛事的官方平台**；本仓库与站点
+      不使用任何赛事或厂商的标识与 Logo，相关流程仅作事实性描述。
+    · 教师端（teacher.html / review.html）不在公开仓库发布，公开站点上仅为说明页。
+    · 若权利人认为本站内容的使用超出上述范围，请通过仓库 Issue 或课程负责人联系，
+      我们将**立即停止使用并下架**相关内容。
+
+完整说明另见 README.md 的「数据与授权声明」小节。
+
+--------------------------------------------------------------------------------
+
+English summary
+    The MIT License in LICENSE applies ONLY to the source code of this repository.
+    The competition corpus (contest source texts, official reference translations, and
+    the derived segmentation / annotation data) stored here as ciphertext is NOT
+    licensed under MIT. All rights therein remain with the contest organizer and the
+    respective rights holders. It is used solely for classroom teaching and
+    non-commercial academic research, with no right of redistribution granted.

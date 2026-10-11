@@ -1,20 +1,3 @@
-适用范围说明 / Scope Notice
-
-本文件中的 MIT 许可（见下文）**仅适用于源代码**（HTML / CSS / JavaScript 等程序文件）。
-
-仓库与站点内以密文形式存放的**历届机器翻译译后编辑大赛真题语料**（赛题原文、官方参考译文，
-以及由平台派生的分句、标注与统计数据）**不受 MIT 许可授权**，其著作权归大赛组委会及
-相关权利人所有。本仓库与站点仅将其用于课堂教学与非商业学术研究，不构成再分发许可，
-亦不得用于任何商业用途。详见 README.md 的「数据与授权声明」。
-
-The MIT License below applies ONLY to the source code in this repository.
-The competition corpus (contest source texts, official reference translations, and the
-derived segmentation / annotation data) stored as ciphertext in this repository is
-NOT licensed under MIT. All rights therein remain with the contest organizer and the
-respective rights holders. See the "数据与授权声明" section in README.md.
-
---------------------------------------------------------------------------------
-
 MIT License
 
 Copyright (c) 2026 hankilab
