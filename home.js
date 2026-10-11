@@ -107,6 +107,10 @@
     const s = summary();
     const dr = drafts();
     const nx = nextStep(s, dr);
+    /* 2026-10-12：首页按状态分两个版本——
+       新账号只看到"下一步建议 + 三步入口卡"（那三张卡本身就是入口，不必再摆一排 0 与按钮）；
+       有记录后把三步卡收掉、让"我的进度"顶上来。 */
+    const empty = (s.practiceN + s.annN + s.examN) === 0;
     const lastBits = [];
     if (s.lastPractice) lastBits.push('上次练习《' + esc(s.lastPractice.taskName) + '》得分 ' + s.lastPractice.score);
     if (s.lastExam) lastBits.push('上次仿真训练《' + esc(s.lastExam.taskName) + '》得分 ' + s.lastExam.score
@@ -133,7 +137,7 @@
     </div>
   </div>
 
-  <div class="step-strip home-steps">
+  ${empty ? `<div class="step-strip home-steps">
     <a class="step-card" href="annotate.html">
       <b>① 找 · 标注实训</b>
       <span>在机器译文上划出错误片段并定性。交卷与种子标注比对，给出查准率 / 查全率 / F1。</span>
@@ -149,12 +153,10 @@
       <span>限时交卷：整页独占、切屏计数、禁复制粘贴、倒计时。交卷给出评分与四项画像。</span>
       <em>练状态：赛前用它估分、找短板</em>
     </a>
-  </div>
+  </div>` : ''}
 
-  <div class="board home-progress">
+  ${empty ? '' : `<div class="board home-progress">
     <h3>我的进度</h3>
-    ${(s.practiceN + s.annN + s.examN) === 0 ? `
-    <div class="empty-tip" style="padding:14px 0">还没有记录。做完第一次练习、标注或仿真训练，这里会显示你的进度。</div>` : `
     <div class="score-hero">
       <div class="stat-box"><div class="v">${s.practiceN}</div><div class="l">「改」完成次数</div></div>
       <div class="stat-box"><div class="v green">${num(s.practiceAvg)}</div><div class="l">「改」平均得分</div></div>
@@ -162,7 +164,7 @@
       <div class="stat-box"><div class="v green">${pct(s.annF1)}</div><div class="l">「找」平均 F1</div></div>
       <div class="stat-box"><div class="v">${s.examN}</div><div class="l">「测」交卷次数</div></div>
       <div class="stat-box"><div class="v amber">${num(s.examBest)}</div><div class="l">「测」最高分</div></div>
-    </div>`}
+    </div>
     ${lastBits.length ? `<div class="home-last">${lastBits.join(' ｜ ')}</div>` : ''}
     <div class="home-actions">
       <a class="btn btn-primary" href="annotate.html">开始练「找」</a>
@@ -170,7 +172,7 @@
     <a class="btn btn-outline" href="pe-exam.html">进入仿真训练</a>
       <button id="mtpe-install-btn" class="btn btn-ghost hidden" onclick="mtpeInstall()">安装到桌面</button>
     </div>
-  </div>
+  </div>`}
 
   <div class="board">
     <h3>学习资源</h3>

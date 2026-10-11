@@ -81,15 +81,8 @@ function similarity(pe, ref) {
  return Math.max(0, Math.round((1 - edits / Math.max(A.length, B.length)) * 1000) / 10);
 }
 
-/* 合并式修订痕迹渲染：del=红色删除线（机翻原文被删），ins=绿色（用户新增） */
-function renderDiffHTML(mt, pe) {
- const ops = diffTokens(tokenize(mt), tokenize(pe));
- return ops.map(o => {
- if (o.op === 'same') return esc(o.t);
- if (o.op === 'del') return '<del>' + esc(o.t) + '</del>';
- return '<ins>' + esc(o.t) + '</ins>';
- }).join(' ').replace(/ <(del|ins)>/g, ' <$1>').replace(/<(del|ins)> /g, '<$1> ');
-}
+/* 2026-10-12：renderDiffHTML / 结果页 / 报告导出 已移到共用的 report.js
+   （② 改 交卷后与「我的统计」的「查看」共用同一份，避免抄两块） */
 
 /* 字数统计：中文按字符，英文按词 */
 function wordCount(s) {
@@ -115,15 +108,8 @@ const hasNick = () => !!store.get('nickname_set', 0);
 const allTasks = () => TASKS;
 const history = () => store.get('history', []);
 
-/* ---- 历史记录里两类"交卷"的口径 ---- 
-   ②改 的限时练习与 ③测 的仿真训练过去共用 mode='competition'，导致"我的统计"
-   把它们混在一个平均分里（首页与统计页因此会给出两个数）。
-   2026-10-12 起 ③测 写 mode='exam'；旧记录用 profile 字段反推（②改 的记录不带 profile）。 */
-function isExamRecord(h) { return !!h && (h.mode === 'exam' || h.profile !== undefined); }
-function modeLabel(h) {
-  if (isExamRecord(h)) return '仿真训练';
-  return { competition: '限时练习', practice: '自由练习', demo: '教学演示' }[h.mode] || h.mode;
-}
+/* 两类"交卷"的口径判断（isExamRecord）与统计页一起搬到了 report.js / stats.js；
+   本页只在结果页标题里用到它，改由 window.mtpeIsExamRecord 提供。 */
 
 /* 作答态：隐藏全站顶栏，作答页自己那条就是顶部栏（见 style.css 的 body.answering） */
 function setAnswering(on) {
@@ -136,7 +122,7 @@ const stepTag = (t) => '<span class="step-tag s2">' + t + '</span>';
 
 /* ---------------- 视图切换 ---------------- */
 function go(v) {
- if (S && view !== v && (v === 'plaza' || v === 'stats' || v === 'import')) {
+ if (S && view !== v && (v === 'plaza' || v === 'import')) {
  if (!confirm('答题正在进行中，离开将放弃本次作答。确定离开？')) return;
  stopSession(false);
  }
@@ -145,7 +131,7 @@ function go(v) {
  const nav = $('#nav-' + v);
  if (nav) nav.classList.add('active');
  if (v === 'plaza') renderPlaza();
- else if (v === 'stats') renderStats();
+ /* 「我的统计」已独立成 stats.html（2026-10-12），本页不再有 stats 视图 */
  window.scrollTo(0, 0);
 }
 
@@ -622,250 +608,20 @@ function submitSession() {
 }
 
 /* ---------------- 成绩页 ---------------- */
-function renderResult(r) {
- setAnswering(false);
- app.innerHTML = `
- <div class="page-title">
-  <h2> ${isExamRecord(r) ? '仿真训练成绩' : r.mode === 'competition' ? '限时练习成绩' : r.mode === 'demo' ? '演示结果' : '练习结果'} · ${esc(r.taskName)}</h2>
- <div style="display:flex;gap:8px">
- <button class="btn btn-outline" onclick="exportReport('${r.id}')"> 导出成绩报告</button>
- <button class="btn btn-primary" onclick="go('plaza')">返回译后编辑实训</button>
- </div>
- </div>
- <div class="score-hero">
- <div class="stat-box"><div class="v">${r.score}</div><div class="l">综合得分（vs 参考译文）</div></div>
- <div class="stat-box"><div class="v amber">${r.ter}%</div><div class="l">平均机翻修订率</div></div>
- <div class="stat-box"><div class="v">${r.segDone}/${r.total}</div><div class="l">完成段数</div></div>
- <div class="stat-box"><div class="v green">${fmtTime(r.timeUsed)}</div><div class="l">用时</div></div>
- <div class="stat-box"><div class="v">${r.words}</div><div class="l">任务字数</div></div>
- </div>
-  <div class="score-note">得分基于与参考译文的<b>词级重合度</b>，仅供自己纵向对比；口径与局限见 <a href="#" onclick="mtpeHelp();return false">帮助</a>。</div>
+/* 结果页已移到共用的 report.js（window.renderResult(r, backHtml)），
+   ② 改 交卷后与「我的统计」里点「查看」共用同一份。 */
 
- <h3 style="margin:6px 0 12px"> 逐段修订痕迹与点评</h3>
- ${r.details.map(d => `
- <div class="review-block">
- <h4>第 ${d.i + 1} 段
- ${d.empty ? '<span class="mini-tag" style="background:var(--red-bg);color:var(--red)">未作答</span>' : ''}
- ${!d.empty && d.ter === 0 ? '<span class="mini-tag ok">保留机翻</span>' : ''}
- ${!d.empty && d.ter > 0 ? `<span class="mini-tag edited">修订率 ${(d.ter * 100).toFixed(1)}%</span>` : ''}
- <span class="muted" style="font-weight:400;font-size:12px">与参考译文相似度 ${d.sim}%</span>
- </h4>
- <div class="rv-grid">
- <div class="rv-cell"><div class="lab">原文 Source</div>${esc(d.src)}</div>
- <div class="rv-cell"><div class="lab">我的译文（修订痕迹：红=删除机翻，绿=新增）</div><div class="diff">${d.empty ? '<span class="muted">（未作答）</span>' : renderDiffHTML(d.mt, d.pe)}</div></div>
- <div class="rv-cell"><div class="lab">机翻译文 MT</div>${esc(d.mt)}</div>
- <div class="rv-cell"><div class="lab">参考译文 Reference</div>${esc(d.ref)}</div>
- </div>
- ${d.notes.length ? `<div style="margin-top:8px">${d.notes.map(n => `<div class="note-item"><b>${esc(n.type)}</b>${esc(n.text)}</div>`).join('')}</div>` : ''}
- </div>`).join('')}
- `;
-}
-
-/* ---------------- 我的统计 ---------------- */
-/* 表格视图状态：默认最近 10 条，可展开全部 / 按来源筛选 */
-let statsRows = 10, statsMode = 'all';
-function statsShown(n) { statsRows = n; renderStats(); }
-function statsFilter(m) { statsMode = m; statsRows = 10; renderStats(); }
-
-function renderStats() {
- setAnswering(false);
- const hs = history();
- let hasAnn = false;
- try { hasAnn = (JSON.parse(localStorage.getItem('mtpe_ann_stats') || '[]')).length > 0; } catch (e) {}
- if (!hs.length && !hasAnn) {
- app.innerHTML = `<div class="page-title"><h2>我的统计</h2></div>
- <div class="empty-tip">还没有作答记录，去<a href="practice.html">译后编辑练习</a>开始第一次练习，或去<a href="annotate.html">标注实训</a>完成一卷错误标注。</div>`;
- return;
- }
- /* 口径分离：②改 的练习（限时 + 自由）与 ③测 的仿真训练不是一个尺子，分开算。
-    此前首页排除了 competition、本页却全算，同一个"平均得分"给出两个数。 */
- const practice = hs.filter((h) => !isExamRecord(h));
- const exams = hs.filter(isExamRecord);
- const sum = (a, k) => a.reduce((s, h) => s + (Number(h[k]) || 0), 0);
- const avgOn = (a, k) => (a.length ? Math.round(sum(a, k) / a.length * 10) / 10 : '—');
- /* 走势图一次只画一类：优先练习；只有仿真训练时自动切成 TER 口径并改标题 */
- const usePractice = practice.length > 0;
- const trend = (usePractice ? practice : exams).slice(0, 6).reverse();
- const trendCaliber = (usePractice ? '② 改 · 最近 ' : '③ 测 · 最近 ') + trend.length
-  + ' 次得分走势（' + (usePractice ? '词级重合度' : 'TER') + ' 口径）';
- const rows = hs.filter((h) => (statsMode === 'all' ? true : statsMode === 'exam' ? isExamRecord(h) : !isExamRecord(h)));
- const shown = rows.slice(0, statsRows);
- const fbtn = (k, t) => `<button class="btn ${statsMode === k ? 'btn-primary' : 'btn-ghost'}" style="padding:5px 12px" onclick="statsFilter('${k}')">${t}</button>`;
-
- app.innerHTML = `
- <div class="page-title">
- <h2>我的统计</h2>
- <button class="btn btn-primary" onclick="exportHomework()"> 导出作业 JSON（交给老师汇总）</button>
- <button class="btn btn-ghost" onclick="exportCSV()">导出明细 CSV</button>
- </div>
- <div class="score-hero">
- <div class="stat-box"><div class="v">${practice.length}</div><div class="l">「改」完成次数</div></div>
- <div class="stat-box"><div class="v">${sum(practice, 'words')}</div><div class="l">累计实训字数</div></div>
- <div class="stat-box"><div class="v green">${avgOn(practice, 'score')}</div><div class="l">「改」平均得分</div></div>
- <div class="stat-box"><div class="v amber">${avgOn(practice, 'ter')}${practice.length ? '%' : ''}</div><div class="l">「改」平均修订率</div></div>
- </div>
- <div class="board-note" style="margin-bottom:18px">以上仅统计 <b>② 改</b> 的练习（限时与自由），<b>不含 ③ 测 的仿真训练</b>——两者口径不同，不能混算、也不能横向比。仿真训练见下方画像，逐次明细在 <a href="pe-exam.html">③ 测</a>。</div>
- ${annStatsHTML()}
- ${examProfileHTML(hs)}
- <div class="board"><h3> ${trendCaliber}</h3>
- <div class="chart">
- ${trend.map(h => `
- <div class="bar-wrap">
- <span class="bar-v">${h.score}</span>
- <div class="bar" style="height:${Math.max(4, h.score)}%"></div>
- <span class="bar-l" title="${esc(h.taskName)}">${esc(h.taskName.slice(0, 6))}</span>
- </div>`).join('')}
- </div>
- <div class="board-note">一次只画一类：同一张图里的分数来自同一套口径，可以直接比高低。</div>
- </div>
- <div class="board"><h3> 作答记录（${rows.length} 条）</h3>
- <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">${fbtn('all', '全部')}${fbtn('practice', '② 改 · 练习')}${fbtn('exam', '③ 测 · 仿真训练')}</div>
- <div class="tbl-scroll">
- <table>
- <tr><th>时间</th><th>任务</th><th>模式</th><th>得分</th><th>修订率</th><th>完成</th><th>用时</th><th></th></tr>
- ${shown.map(h => `
- <tr>
- <td class="muted">${esc(h.date)}</td>
- <td>${esc(h.taskName)}</td>
- <td>${modeLabel(h)}</td>
- <td><b>${h.score}</b></td><td>${h.ter}%</td>
- <td>${h.segDone}/${h.total}</td><td>${fmtTime(h.timeUsed)}</td>
- <td><button class="btn btn-ghost" style="padding:4px 10px" onclick="viewRecord('${h.id}')">查看</button></td>
- </tr>`).join('')}
- </table>
- </div>
- ${rows.length > shown.length ? `<div style="margin-top:12px"><button class="btn btn-ghost" onclick="statsShown(${rows.length})">展开全部（共 ${rows.length} 条）</button></div>` : ''}
- </div>`;
-}
-
-function viewRecord(id) {
- const r = history().find(h => h.id === id);
- if (r) renderResult(r);
- window.scrollTo(0, 0);
-}
-
-/* ---------------- 仿真训练结果画像（pe-exam 交卷同步聚合） ---------------- */
-function examProfileHTML(hs) {
- const recs = (hs || []).filter(h => h && h.profile);
- if (!recs.length) {
- return `<div class="board"><h3>仿真训练结果画像</h3>
- <div class="empty-tip" style="padding:16px 0">暂无仿真训练记录。去 <a href="pe-exam.html">仿真训练</a> 交一次卷，这里会汇总你的编辑倾向（精准型 / 过度编辑型 / 保守型 / 鲁莽型）、编辑命中率与后半程稳定性。</div></div>`;
- }
- const avg = (k) => Math.round(recs.reduce((s, h) => s + (Number(h.profile[k]) || 0), 0) / recs.length * 10) / 10;
- const QUADS = ['精准型', '过度编辑型', '保守型', '鲁莽型'];
- const quadCount = {};
- recs.forEach(h => { const q = h.profile.quadrant || '—'; quadCount[q] = (quadCount[q] || 0) + 1; });
- const mainQ = QUADS.slice().sort((a, b) => (quadCount[b] || 0) - (quadCount[a] || 0))[0];
- const quadTxt = QUADS.filter(q => quadCount[q]).map(q => `${q} ${quadCount[q]} 次`).join('　｜　') || '—';
- const stab = avg('stability');
- return `<div class="board"><h3> 仿真训练结果画像（共 ${recs.length} 次交卷）</h3>
-  <div class="score-hero" style="margin-bottom:10px">
-  <div class="stat-box"><div class="v">${avg('editRate')}%</div><div class="l">平均编辑率</div></div>
-  <div class="stat-box"><div class="v green">${avg('effRate')}%</div><div class="l">平均有效编辑率</div></div>
-  <div class="stat-box"><div class="v">${avg('speed')}</div><div class="l">平均速度（段/分）</div></div>
-  <div class="stat-box"><div class="v ${stab < 0 ? 'amber' : 'green'}">${stab >= 0 ? '+' : ''}${stab}</div><div class="l">后半程平均变化</div></div>
-  </div>
- <div class="board-note">编辑倾向分布：${quadTxt}　｜　最多的是「${mainQ}」，各次交卷的四项画像见 <a href="pe-exam.html">③ 测</a> 的结果页。</div>
-  </div>`;
-}
-
-/* ---------------- 标注实训能力（annotate.html 同步） ---------------- */
-function annStatsHTML() {
- let st = [];
- try { st = JSON.parse(localStorage.getItem('mtpe_ann_stats') || '[]'); } catch (e) {}
- if (!st.length) {
- return `<div class="board"><h3> 标注实训能力</h3>
- <div class="empty-tip" style="padding:16px 0">暂无标注记录。去 <a href="annotate.html">标注实训</a> 完成一卷错误标注（与种子标注对比），这里会展示你的查准率 / 查全率 / F1 走势。</div></div>`;
- }
- const avg = (k) => Math.round(st.reduce((s, x) => s + (x[k] || 0), 0) / st.length * 10) / 10;
- return `<div class="board"><h3> 标注实训能力（共 ${st.length} 卷）</h3>
- <div class="score-hero" style="margin-bottom:10px">
- <div class="stat-box"><div class="v">${avg('precision')}%</div><div class="l">平均查准率</div></div>
- <div class="stat-box"><div class="v green">${avg('recall')}%</div><div class="l">平均查全率</div></div>
- <div class="stat-box"><div class="v">${avg('f1')}%</div><div class="l">平均 F1</div></div>
- <div class="stat-box"><div class="v amber">${st.reduce((s, x) => s + (x.tagWrong || 0) + (x.sevWrong || 0), 0)}</div><div class="l">累计标签/严重度偏差</div></div>
- </div>
- <table>
- <tr><th>时间</th><th>查准率</th><th>查全率</th><th>F1</th><th>标签/严重度偏差</th><th>漏检</th><th>多余</th></tr>
- ${st.slice(0, 10).map(x => `<tr>
- <td class="muted">${esc(x.date)}</td><td><b>${x.precision}%</b></td><td>${x.recall}%</td><td>${x.f1}%</td>
- <td>${(x.tagWrong || 0) + (x.sevWrong || 0)}</td><td>${x.FN || 0}</td><td>${x.FP || 0}</td>
- </tr>`).join('')}
- </table>
- </div>`;
-}
-
-/* ---------------- 导出 ---------------- */
-function exportReport(id) {
- const r = history().find(h => h.id === id);
- if (!r) return;
- const html = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>MTPE 成绩报告 · ${esc(r.taskName)}</title>
-<style>body{font-family:"Microsoft YaHei",sans-serif;max-width:900px;margin:30px auto;padding:0 20px;color:#1f2430}
-h1{font-size:22px}table{width:100%;border-collapse:collapse;margin:14px 0}
-td,th{border:1px solid #ddd;padding:8px 10px;font-size:14px;text-align:left}
-.blk{border:1px solid #e3e8f2;border-radius:10px;padding:14px;margin:12px 0}
-del{background:#fdecec;color:#dc2626}ins{background:#e8f7ee;color:#16a34a;text-decoration:none}
-.meta{color:#5a6478;font-size:13px}.score{font-size:34px;font-weight:800;color:#2f5fe0}</style></head><body>
-<h1>译后编辑成绩报告</h1>
-<p class="meta">选手：${esc(r.nickname)} ｜ 任务：${esc(r.taskName)}（${esc(r.pair)} · ${esc(r.domain)}）<br>
-模式：${r.mode} ｜ 时间：${esc(r.date)} ｜ 用时：${fmtTime(r.timeUsed)}</p>
-<p><span class="score">${r.score}</span> 综合得分　｜　平均修订率 ${r.ter}% ｜ 完成 ${r.segDone}/${r.total} 段</p>
-${r.details.map(d => `<div class="blk"><b>第 ${d.i + 1} 段</b>（修订率 ${(d.ter * 100).toFixed(1)}% · 相似度 ${d.sim}%）
-<p>原文：${esc(d.src)}</p><p>机翻：${esc(d.mt)}</p>
-<p>我的译文（修订痕迹）：<span style="text-decoration:none">${d.empty ? '（未作答）' : renderDiffHTML(d.mt, d.pe)}</span></p>
-<p>参考：${esc(d.ref)}</p>${d.notes.map(n => `<p>【${esc(n.type)}】${esc(n.text)}</p>`).join('')}</div>`).join('')}
-</body></html>`;
- download('MTPE成绩报告_' + r.taskName.slice(0, 12) + '.html', html, 'text/html');
-}
-
-/* 导出作业 JSON：交给老师汇总（含账号、作答记录与画像、标注实训成绩、错题本） */
-function exportHomework() {
- /* 交作业前必须填姓名/学号：平台账号是课上统一发放的共享账号（每班只有个别几个），
-    班级汇总按"姓名"归档，不填就会把几十份作业并成两行。 */
- if (!hasNick()) { askNickname(exportHomework); return; }
- const loginAccount = (window.mtpeAccount && window.mtpeAccount()) || '';
- const account = getNick();
- let ann = [], wrong = [];
- try { ann = JSON.parse(localStorage.getItem('mtpe_ann_stats') || '[]') || []; } catch (e) {}
- try { wrong = JSON.parse(localStorage.getItem('ann_wrongbook') || '[]') || []; } catch (e) {}
- const payload = {
- account: account,
- loginAccount: loginAccount,
- exported: now(),
- tasks: (history() || []).length,
- history: history() || [],
- annStats: ann,
- wrongbook: wrong
- };
- const name = 'MTPE作业_' + String(account).replace(/[^\w-]/g, '') + '_' + new Date().toISOString().slice(0, 10) + '.json';
- download(name, JSON.stringify(payload, null, 1), 'application/json');
- toast('已导出作业：' + name + '　请交给老师汇总');
-}
-
-function exportCSV() {
- const rows = [['时间', '昵称', '任务', '语向', '领域', '模式', '得分', '修订率%', '完成段', '总段', '字数', '用时秒', '编辑率%', '有效编辑率%', '编辑倾向', '速度段每分', '后半程变化']];
- history().forEach(h => rows.push([h.date, h.nickname, h.taskName, h.pair, h.domain, h.mode, h.score, h.ter, h.segDone, h.total, h.words, h.timeUsed,
-  h.profile ? h.profile.editRate : '', h.profile ? h.profile.effRate : '', h.profile ? h.profile.quadrant : '',
-  h.profile ? h.profile.speed : '', h.profile ? h.profile.stability : '']));
- const csv = '\uFEFF' + rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n');
- download('MTPE实训明细.csv', csv, 'text/csv');
-}
-
-function download(name, content, type) {
- const a = document.createElement('a');
- a.href = URL.createObjectURL(new Blob([content], { type: type + ';charset=utf-8' }));
- a.download = name;
- a.click();
- setTimeout(() => URL.revokeObjectURL(a.href), 3000);
- toast('已导出：' + name);
-}
+/* ---------------- 我的统计 / 导出 ---------------- */
+/* 2026-10-12：整块搬到 stats.html + stats.js（我的统计独立成页），
+   结果页与报告导出搬到共用的 report.js。本页不再持有统计与导出逻辑。 */
 
 /* ---------------- 启动 ---------------- */
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 updateNickBadge();
 (function boot() {
- /* 支持 #stats / #import 直接落到对应视图（顶栏的「我的统计」就是跳到 #stats） */
+ /* #stats 已独立成 stats.html（老链接在这里做一次跳转）；#import 早已下线，回落到广场 */
  const h = (location.hash || '').replace(/^#/, '');
- if (h === 'stats' || h === 'plaza') go(h);
+ if (h === 'stats') { location.replace('stats.html'); return; }
+ if (h === 'plaza') go('plaza');
  else renderPlaza();
 })();

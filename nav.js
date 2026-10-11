@@ -26,7 +26,7 @@
  + '<span class="mtpe-tabs">' + tabs + '</span>'
  + '<span class="mtpe-spacer"></span>'
  + '<a class="mtpe-tab plain hidden" id="mtpe-install" href="#" onclick="mtpeInstall();return false" title="装成桌面应用，断网也能用">安装到桌面</a>'
- + '<a class="mtpe-tab plain" href="practice.html#stats" title="我的统计：练习得分 / 标注能力 / 仿真训练画像，并可导出作业">我的统计</a>'
+ + '<a class="mtpe-tab plain" href="stats.html" title="我的统计：练习得分 / 标注能力 / 仿真训练画像，并可导出作业">我的统计</a>'
  + '<a class="mtpe-tab plain" href="#" onclick="(window.mtpeHelp||function(){})();return false" title="帮助：流程说明 / 计分口径 / 数据来源 / 常见问题">?</a>'
  + (acc
    ? '<span class="mtpe-acc" title="已登录">' + acc + '</span><a class="mtpe-tab plain" href="#" onclick="mtpeLogout();return false">退出</a>'

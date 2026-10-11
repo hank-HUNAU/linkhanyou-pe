@@ -136,6 +136,15 @@ tr:last-child td{border-bottom:none}
     <tr><td>风格</td><td>语域/欧化/不地道</td><td><span class="sev-n">Minor</span></td></tr>
     <tr><td>格式标记</td><td>占位符/标签/排版</td><td><span class="sev-m">Major</span></td></tr>
   </table>
+<!-- 考点页的用法：看完定义直接开练——组卷页支持 ?dim= 参数直达 -->
+<div class="ok" style="line-height:2.1">练这一维度：
+  <a href="annotate.html?dim=%E5%87%86%E7%A1%AE%E6%80%A7&n=15&go=1">准确性 15 句</a>　｜　
+  <a href="annotate.html?dim=%E6%9C%AF%E8%AF%AD&n=15&go=1">术语 15 句</a>　｜　
+  <a href="annotate.html?dim=%E8%AF%AD%E8%A8%80%E8%A7%84%E8%8C%83&n=15&go=1">语言规范 15 句</a>　｜　
+  <a href="annotate.html?dim=%E9%A3%8E%E6%A0%BC&n=15&go=1">风格 15 句</a>　｜　
+  <a href="annotate.html?dim=%E6%A0%BC%E5%BC%8F&n=15&go=1">格式 15 句</a>
+  <div style="color:var(--mut);font-size:12.5px">点进去就是按该维度组好的卷，交卷立刻给出该维度的查准 / 查全 / F1。（格式维度目前语料覆盖为 0，点进去会自动放宽为不限维度。）</div>
+</div>
   <p style="font-size:12.5px;color:var(--mut);margin-top:8px">默认权重：Minor −1 ｜ Major −5 ｜ Critical −25（每千词），可按内容风险调整。</p>
 </div>
 <div class="vcard">

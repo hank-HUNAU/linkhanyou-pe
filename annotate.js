@@ -113,9 +113,12 @@ function renderSetup() {
  const wbN = wrongKeys().length;
  app.innerHTML = `
  <div class="wrap">
-  <h1>① 找 · 标注实训</h1>
+  <div class="plaza-head">
+  <h2>① 找 · 标注实训</h2>
+  <p>在机翻译文中<b>选中错误片段</b>并标注类别与严重度；交卷后与种子标注对比，计算查准率 / 查全率 / F1。
+  ｜ <a href="MQM错误类型参考手册.html">MQM 错误类型参考手册</a> ｜ <a href="#" onclick="mtpeHelp();return false">帮助</a></p>
+  </div>
  ${fromLink ? `<div class="page-s" style="margin-bottom:10px">已按练习建议预置筛选条件${pre.dim ? '：错误维度「' + esc(pre.dim) + '」' : ''}${pre.ed ? ' · 第' + esc(pre.ed) + '届' + esc(pre.stage || '') : ''}。</div>` : ''}
-  <div class="page-s">在机翻译文中<b>选中错误片段</b>并标注类别与严重度；交卷后与种子标注对比，计算查准率 / 查全率 / F1。标签集见 <a href="MQM错误类型参考手册.html">MQM 手册</a>。</div>
  <div class="card">
  <h3> 组卷筛选</h3>
  <div class="row">
@@ -259,6 +262,7 @@ function renderWork() {
   ${stepTag('① 找 · 作答中')}
   <div class="muted">第 ${A.idx + 1}/${A.paper.length} 条</div>
   <div class="top-acts">
+  <button class="btn btn-o" onclick="mqmQuickRef()">错误类型</button>
   <button class="btn btn-p" onclick="confirmSubmit()">交卷</button>
   <a class="muted" href="annotate.html" style="text-decoration:none" onclick="saveSession()">退出</a>
   </div>
