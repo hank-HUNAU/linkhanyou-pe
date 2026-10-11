@@ -30,7 +30,10 @@ body.answering{--mtpe-nav-h:0px}
 .remain.warn{color:var(--r)}
 
 /* ---- 我的考试页 ---- */
+/* 结果页用 1000（阅读列宽）；广场加 .wide 用 1180，与 ② 改 的 main 等宽，
+   这样 .task-grid 在两边都是每行 3 张（1000 宽只能排 2 张，两页对不上）。 */
 .wrap{max-width:1000px;margin:0 auto;padding:26px 18px 70px}
+.wrap.wide{max-width:1180px;padding-left:20px;padding-right:20px}
 .page-t{font-size:20px;font-weight:700;margin-bottom:4px}
 .page-s{color:var(--mut);font-size:13px;margin-bottom:18px}
 .tag{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600}

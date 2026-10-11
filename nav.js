@@ -1,15 +1,16 @@
 /* ============================================================
- * nav.js — 全站共享顶栏（首页 / ① 找 / ② 改 / ③ 测 + 账号 + 安装到桌面）
+ * nav.js — 全站共享顶栏（品牌 = 回首页 ｜ ① 找 / ② 改 / ③ 测 ｜ 我的统计 ? 账号 安装到桌面）
  * 登录 / 解密逻辑在 unlock.js（配 secure.js）；本文件只负责渲染顶栏。
- * 一级首页 index.html 与三个二级页共用；仿真训练 pe-exam.html 刻意不挂，
- * 那一页要贴近真实赛场的整页独占。教师登录按钮与相关代码已移除，教学端仅本地使用。
+ * 四个页面（首页 + 三个二级页）共用；作答态由各页给 body 加 .answering 把它隐藏，
+ * 让 ③ 测 保持整页独占。教师登录按钮与相关代码已移除，教学端仅本地使用。
  * 用法：页面放 <div id="mtpe-nav"></div> 并引入本脚本（在 pwa.js 旁边）
  * ============================================================ */
 (function () {
  const KEY = 'mtpe_account';
- /* 顺序与首页「找 → 改 → 测」一致 */
+ /* 只放三个流程页：品牌本身就是"回首页"（比一个小 tab 更好点，是通用约定），
+    所以不再单列「首页」——否则在首页上它是个死链接，在别处又与品牌重复。
+    顺序与全站「找 → 改 → 测」一致。 */
  const TABS = [
-   { href: 'index.html',    file: 'index.html',    label: '首页' },
    { href: 'annotate.html', file: 'annotate.html', label: '① 找' },
    { href: 'practice.html', file: 'practice.html', label: '② 改' },
    { href: 'pe-exam.html',  file: 'pe-exam.html',  label: '③ 测' }
@@ -21,7 +22,7 @@
  const acc = localStorage.getItem(KEY) || '';
  const tabs = TABS.map((t) => '<a class="mtpe-tab' + (t.file === cur ? ' on' : '') + '" href="' + t.href + '">' + t.label + '</a>').join('');
  host.innerHTML = '<div class="mtpe-nav">'
- + '<div class="mtpe-brand" onclick="location.href=\'index.html\'"><span class="logo">译</span><span class="mtpe-brand-t">译后编辑实训平台</span></div>'
+ + '<div class="mtpe-brand" onclick="location.href=\'index.html\'" title="回到首页"><span class="logo">译</span><span class="mtpe-brand-t">译后编辑实训平台</span></div>'
  + '<span class="mtpe-tabs">' + tabs + '</span>'
  + '<span class="mtpe-spacer"></span>'
  + '<a class="mtpe-tab plain hidden" id="mtpe-install" href="#" onclick="mtpeInstall();return false" title="装成桌面应用，断网也能用">安装到桌面</a>'
