@@ -25,7 +25,8 @@
 <div id="mtpe-nav"></div>
 <script src="nav.js"></script>
 <script src="pwa.js"></script>
-<!-- secure.js（语料密文）按需加载，见 unlock.js 的 sealReady() -->
+<!-- secure.js（密钥环 + meta 片，约 10KB）按需加载，见 unlock.js 的 sealReady()；
+     本页要用的 s-tasks.js 由 corpus.js 触发按需解密 -->
 <script src="unlock.js"></script>
 
 <main id="app"></main>
@@ -38,6 +39,7 @@
 
 <script src="data.js"></script>
 <script src="corpus.js"></script>
-<script src="app.js"></script>
+<!-- 等语料分片解密完再启动页面脚本 -->
+<script>window.mtpeBoot('app.js');</script>
 </body>
 </html>

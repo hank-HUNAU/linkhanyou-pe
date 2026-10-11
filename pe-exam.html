@@ -23,10 +23,11 @@
 <body>
 <div id="app"></div>
 <script src="pwa.js"></script>
-<!-- secure.js（语料密文）按需加载，见 unlock.js 的 sealReady() -->
+<!-- secure.js（密钥环 + meta 片，约 10KB）按需加载，见 unlock.js 的 sealReady()；
+     本页要用的 s-tasks.js 由 corpus.js 触发按需解密 -->
 <script src="unlock.js"></script>
 <script src="data.js"></script>
 <script src="corpus.js"></script>
-<script src="pe-exam.js"></script>
+<script>window.mtpeBoot('pe-exam.js');</script>
 </body>
 </html>

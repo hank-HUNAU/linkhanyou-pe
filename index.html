@@ -28,14 +28,16 @@
 <div id="mtpe-nav"></div>
 <script src="nav.js"></script>
 <script src="pwa.js"></script>
-<!-- secure.js（语料密文，约 1.2MB）不在这里加载：已登录时用不到它，
-     只有输入口令时 unlock.js 才按需拉取，页面空下来后会自动预取 -->
+<!-- secure.js（密钥环 + 元数据片，约 10KB）不在这里加载：已登录时用不到它，
+     只有输入口令时 unlock.js 才按需拉取，页面空下来后会自动预取。
+     语料分片（s-tasks.js / s-pairs.js）由二级页按需拉取。 -->
 <script src="unlock.js"></script>
 
 <main id="app"></main>
 
 <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
-<script src="home.js"></script>
+<!-- home.js 不依赖语料，但要等 unlock.js 判定完登录态（未登录就不渲染半空页面） -->
+<script>window.mtpeBoot('home.js');</script>
 </body>
 </html>

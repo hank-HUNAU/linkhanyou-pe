@@ -1,33 +1,36 @@
 /* ============================================================
- * unlock.js — 登录解锁（本地内置账号）
- * 流程：口令 → PBKDF2 派生 KEK → 解开内容密钥 → AES-GCM 解密语料明文
- *      → 明文放本机 localStorage → 重载页面供各页面脚本读取
- * 密文（secure.js）按需加载：首屏不加载它，已登录时完全不需要；
- *   只有要输入口令时才下载，并在页面空下来后悄悄预取，登录时通常已就绪。
+ * unlock.js — 登录解锁 + 语料分片按需解密
  *
- * 为什么放 localStorage：一级首页登录一次，随后在 找 / 改 / 考 三个二级页
- *   之间往返不必再次输入口令（sessionStorage 按标签页隔离，换标签就会再问一次）。
- * 两条护栏：
- *   ① 有效期 12 小时，超时自动失效，回到首页需重新登录；
- *   ② 点「退出」立即清空明文与账号，公共机房用完即走，不留可用的语料副本。
+ * 流程：口令 → PBKDF2 派生 KEK → 解开【内容密钥 CK】→ 把 CK 存本机
+ *      （不再把 1.2MB 明文整包塞进 localStorage）。
+ *      各二级页要哪片，再用 CK 现解哪片，明文只在内存里。
  *
- * 安全边界：语料明文不在站点里，只有钥匙才解得开。
- *   删掉本文件 = 没有钥匙 = corpus.js / annotate-data.js 注水桩取不到数据 = 页面无内容可用。
- *   因此"删掉校验就能绕过"在这里不成立（AES-GCM 同时保证密文被改就解不开）。
+ * 为什么要分片：整包加密时，打开首屏必须先下 476KB 密文（校园网十几秒）。
+ *   现在登录只下【密钥环 + 元数据片】（约 10KB），
+ *   「改 / 测」页用到才下 s-tasks.js，「找」页用到才下 s-pairs.js。
+ *
+ * 有效期 12 小时：过期即视为未登录，自动清掉本机 CK。
+ * 点「退出」立即清掉 CK 与账号，公共机房用完即走。
+ *
+ * 安全边界：语料明文不在站点里，只有口令才解得开内容密钥。
+ *   删掉本文件 / 删掉校验代码 = 没有 CK = 分片解不开 = 页面无内容。
+ *   AES-GCM 同时保证：密文或分片被改一下，就解不出来（不做静默降级）。
  * ============================================================ */
 (function () {
-  const KEY = 'mtpe_account';
-  const PAY = 'mtpe_payload';        // 明文载荷（本机共享，带时效）
-  const TS = 'mtpe_payload_ts';      // 解锁时刻
+  const KEY = 'mtpe_account';        // 当前账号
+  const CK = 'mtpe_ck';              // 内容密钥（base64），不是明文语料
+  const CKTS = 'mtpe_ck_ts';         // 解锁时刻
   const TTL = 12 * 60 * 60 * 1000;   // 有效期：12 小时
-  const SEAL_SRC = 'secure.js';      // 语料密文：只在"登录解锁"时需要，按需加载
+  const SEAL_SRC = 'secure.js';      // 密钥环 + meta 片：只在"登录解锁"时需要
+  const SHARD_SRC = (n) => 's-' + n + '.js';
+  const LEGACY = ['mtpe_payload', 'mtpe_payload_ts'];
   const NO_GATE = ['teacher.html', 'review.html'];
   const enc = new TextEncoder();
   const b64d = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
   const page = () => (location.pathname.split('/').pop() || 'index.html');
   const sealNow = () => window.__MTPE_SEAL__ || null;
 
-  /* ---- 密文按需加载（首屏关键路径上不再有 1.2MB 的 secure.js） ---- */
+  /* ---- 密钥环按需加载（首屏关键路径上没有它） ---- */
   let sealLoading = null;
   function sealReady() {
     if (sealNow()) return Promise.resolve(true);
@@ -41,18 +44,72 @@
       s.onerror = function () { resolve(false); };
       document.head.appendChild(s);
     });
+    sealLoading.catch(function () {});
     return sealLoading;
   }
   window.mtpeSealReady = sealReady;
 
-  /* 空闲时预取密文：已登录不下载；浏览器开了省流量模式也不下载 */
+  /* 空闲时预取密钥环：只有 10KB，让登录那一下不用等 */
   window.mtpePrefetchSeal = function () {
-    if (sealNow() || window.mtpePayload()) return;
+    if (sealNow() || window.mtpeLoggedIn()) return;
     try { if (navigator.connection && navigator.connection.saveData) return; } catch (e) {}
     sealReady();
   };
 
-  /* 解密后按需 gzip 解压（加封时先压缩，下载体积小 3 倍以上） */
+  /* ---- 内容密钥：只存 CK，不存明文 ---- */
+  let ckPromise = null;
+  window.mtpeKey = function () {
+    if (ckPromise) return ckPromise;
+    ckPromise = (async function () {
+      try {
+        /* 旧版把 1.2MB 明文放在 localStorage：升级后一律清掉，强制重登一次 */
+        LEGACY.forEach(function (k) { localStorage.removeItem(k); });
+        LEGACY.forEach(function (k) { try { sessionStorage.removeItem(k); } catch (e) {} });
+        const v = localStorage.getItem(CK);
+        const ts = parseInt(localStorage.getItem(CKTS) || '0', 10);
+        if (!v || !ts || Date.now() - ts > TTL || Date.now() < ts) {
+          localStorage.removeItem(CK); localStorage.removeItem(CKTS);
+          return null;
+        }
+        return await crypto.subtle.importKey('raw', b64d(v), 'AES-GCM', false, ['decrypt']);
+      } catch (e) { return null; }
+    })();
+    return ckPromise;
+  };
+
+  /* 是否已解锁（同步判断，供界面用；密钥还没解析完时也准） */
+  window.mtpeLoggedIn = function () {
+    try {
+      const v = localStorage.getItem(CK);
+      const ts = parseInt(localStorage.getItem(CKTS) || '0', 10);
+      return !!(v && ts && Date.now() - ts <= TTL && Date.now() >= ts);
+    } catch (e) { return false; }
+  };
+
+  /* 剩余有效期（毫秒），未解锁返回 0 */
+  window.mtpeKeyLeft = function () {
+    try {
+      const ts = parseInt(localStorage.getItem(CKTS) || '0', 10);
+      if (!ts || !localStorage.getItem(CK)) return 0;
+      return Math.max(0, TTL - (Date.now() - ts));
+    } catch (e) { return 0; }
+  };
+
+  window.mtpeLogout = function () {
+    try { localStorage.removeItem(CK); localStorage.removeItem(CKTS); } catch (e) {}
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    LEGACY.forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} });
+    location.reload();
+  };
+
+  /* 当前登录账号（导出作业带学号用） */
+  window.mtpeAccount = function () {
+    try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; }
+  };
+
+  /* ---- 解密后的分片（只在内存里，不落盘） ---- */
+  const sliceCache = {};
+
   async function unzipIfNeeded(buf) {
     const s = sealNow();
     if (!(s && s.zip)) return buf;
@@ -63,40 +120,75 @@
     return new Uint8Array(await new Response(stream).arrayBuffer());
   }
 
-  /* 语料明文读取口：corpus.js / annotate-data.js 注水桩都从这里取。
-     带过期判定，过期即视为未登录，并顺手清掉本机残留的明文。 */
-  window.mtpePayload = function () {
-    try {
-      const v = localStorage.getItem(PAY);
-      if (!v) return null;
-      const ts = parseInt(localStorage.getItem(TS) || '0', 10);
-      if (!ts || Date.now() - ts > TTL || Date.now() < ts) {
-        localStorage.removeItem(PAY); localStorage.removeItem(TS);
-        return null;
-      }
-      return v;
-    } catch (e) { return null; }
+  function loadShard(name, ver) {
+    return new Promise(function (resolve) {
+      const bag = window.__MTPE_SHARDS__;
+      if (bag && bag[name]) return resolve(bag[name]);
+      let s;
+      try { s = document.createElement('script'); } catch (e) { return resolve(null); }
+      /* 带版本指纹：部署后不会"新密钥配旧分片"。
+         只在 http/https 下加（file:// 直接双击打开时不带查询串，避免个别浏览器把它当成文件名）。 */
+      const useVer = ver && location.protocol !== 'file:';
+      s.src = SHARD_SRC(name) + (useVer ? '?v=' + ver : '');
+      s.async = true;
+      s.onload = function () { resolve((window.__MTPE_SHARDS__ || {})[name] || null); };
+      s.onerror = function () { resolve(null); };
+      document.head.appendChild(s);
+    });
+  }
+
+  /* 取一片（'tasks' / 'pairs' / 'meta'）——同一次会话里只解一次 */
+  window.mtpeEnsureSlice = function (name) {
+    if (sliceCache[name]) return sliceCache[name];
+    const p = (async function () {
+      const ok = await sealReady();
+      const seal = sealNow();
+      /* 取不到就明确报错：注水桩会置 __MTPE_SLICE_FAIL__，页面给出提示，
+         而不是静悄悄地渲染一个空页面（学生分不清"这卷没内容"和"没加载出来"）。 */
+      if (!ok || !seal) throw new Error('密钥环没能加载（' + SEAL_SRC + '）');
+      const ck = await window.mtpeKey();
+      if (!ck) throw new Error('本机没有内容密钥：请重新登录');
+      const open = async function (nonce, data) {
+        const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64d(nonce) }, ck, b64d(data));
+        const bytes = await unzipIfNeeded(plain);
+        return JSON.parse(new TextDecoder().decode(bytes));
+      };
+      if (name === 'meta') return open(seal.nonce, seal.data);   // meta 片就在密钥环文件里
+      const info = (seal.shards || {})[name];
+      if (!info) throw new Error('这份密钥里没有' + name + '片的清单');
+      const ct = await loadShard(name, seal.ver);
+      if (!ct) throw new Error('分片下载失败（' + SHARD_SRC(name) + '）');
+      return open(info.nonce, ct);
+    })();
+    sliceCache[name] = p;
+    p.catch(function () { delete sliceCache[name]; });
+    return p;
   };
 
-  /* 剩余有效期（毫秒），供界面提示用；没有明文时返回 0 */
-  window.mtpePayloadLeft = function () {
-    try {
-      const ts = parseInt(localStorage.getItem(TS) || '0', 10);
-      if (!ts || !localStorage.getItem(PAY)) return 0;
-      return Math.max(0, TTL - (Date.now() - ts));
-    } catch (e) { return 0; }
+  /* 页面脚本等语料就绪后再执行（corpus.js / annotate-data.js 会先挂 __MTPE_READY__） */
+  window.mtpeBoot = function (src) {
+    const ready = window.__MTPE_READY__ || Promise.resolve();
+    ready.then(function () { return window.mtpeKey(); }).then(function (ck) {
+      if (!ck) { window.mtpeShowLogin(); return; }    // 没解锁：登录框已经盖在上面，不必渲染半空的页面
+      if (window.__MTPE_SLICE_FAIL__) { window.mtpeBootFallback(); return; }
+      const s = document.createElement('script');
+      s.src = src;
+      s.async = false;
+      document.head.appendChild(s);
+    }).catch(function (e) {
+      if (window.console) console.error('页面启动失败：', e);
+    });
   };
 
-  window.mtpeLogout = function () {
-    try { sessionStorage.removeItem(PAY); } catch (e) {}
-    try { localStorage.removeItem(PAY); localStorage.removeItem(TS); } catch (e) {}
-    try { localStorage.removeItem(KEY); } catch (e) {}
-    location.reload();
-  };
-
-  /* 当前登录账号（供"导出作业"带上学号/账号信息；此前调用处一直取不到，见 audit_release） */
-  window.mtpeAccount = function () {
-    try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; }
+  /* 打不开时的兜底提示（语料解不开、密钥过期都不至于白屏） */
+  window.mtpeBootFallback = function (msg) {
+    const app = document.getElementById('app');
+    if (app && !app.innerHTML.trim()) {
+      app.innerHTML = '<div style="max-width:560px;margin:80px auto;padding:24px;font:15px/1.8 -apple-system,BlinkMacSystemFont,\'PingFang SC\',\'Microsoft YaHei\',sans-serif;color:#6e6e73">'
+        + '<h2 style="color:#1d1d1f;font-size:19px;margin:0 0 8px">语料没有加载出来</h2>'
+        + (msg || '请检查网络后刷新页面；若提示登录，请重新输入账号口令。')
+        + '<div style="margin-top:16px"><a href="index.html" style="color:#0071e3">返回首页</a>　<a href="#" onclick="mtpeLogout();return false" style="color:#0071e3">重新登录</a></div></div>';
+    }
   };
 
   async function kekOf(pwd, salt) {
@@ -120,7 +212,7 @@
     const seal = sealNow();
     if (!okSeal || !seal) {
       if (btn) { btn.disabled = false; btn.textContent = '登录'; }
-      return fail('语料密文没能加载：请检查网络后重试');
+      return fail('密钥文件没能加载：请检查网络后重试');
     }
     const k = seal.keys ? seal.keys.filter((x) => x.id === id)[0] : null;
     if (!k) {
@@ -133,14 +225,17 @@
       let rawKey;
       try { rawKey = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64d(k.iv) }, kek, b64d(k.wrap)); }
       catch (e) { throw new Error('密码不正确'); }
+      /* 真解锁一次 meta 片：既验证口令，也确认密钥真的能开本站的语料
+         （口令对但分片对不上时，宁可现在报错，也不要进去看到空页面） */
       const ck = await crypto.subtle.importKey('raw', rawKey, 'AES-GCM', false, ['decrypt']);
       const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64d(seal.nonce) }, ck, b64d(seal.data));
-      const bytes = await unzipIfNeeded(plain);
-      localStorage.setItem(PAY, new TextDecoder().decode(bytes));
-      localStorage.setItem(TS, String(Date.now()));
-      try { sessionStorage.removeItem(PAY); } catch (e) {}    // 清掉旧版残留
+      await unzipIfNeeded(plain);      // 顺带验证 gzip 头
+      const raw64 = btoa(String.fromCharCode.apply(null, new Uint8Array(rawKey)));
+      localStorage.setItem(CK, raw64);
+      localStorage.setItem(CKTS, String(Date.now()));
       localStorage.setItem(KEY, id);
       localStorage.setItem('mtpe_nickname', JSON.stringify(id));
+      LEGACY.forEach(function (x) { try { localStorage.removeItem(x); } catch (e) {} });
       location.reload();
     } catch (e) {
       fail(String(e.message || e));
@@ -189,20 +284,10 @@
   }
 
   if (NO_GATE.indexOf(page()) < 0) {
-    /* 旧版把明文放在本标签页 sessionStorage 里：遇到就迁移过来，
-       免得升级后正在练的同学被迫重登一次。 */
-    try {
-      const legacy = sessionStorage.getItem(PAY);
-      if (legacy && !localStorage.getItem(PAY)) {
-        localStorage.setItem(PAY, legacy);
-        localStorage.setItem(TS, String(Date.now()));
-        sessionStorage.removeItem(PAY);
-      }
-    } catch (e) {}
-    if (!window.mtpePayload()) gate();
+    window.mtpeKey().then(function (ck) { if (!ck) gate(); });
   }
 
-  /* 首屏渲染完、页面空下来后再悄悄预取密文（不阻塞打开页面） */
+  /* 首屏渲染完、页面空下来后再悄悄预取密钥环（10KB，不阻塞打开页面） */
   function schedulePrefetch() {
     const fire = () => setTimeout(() => window.mtpePrefetchSeal(), 800);
     if (document.readyState === 'complete') fire();
