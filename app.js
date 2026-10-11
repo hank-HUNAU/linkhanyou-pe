@@ -115,6 +115,16 @@ const hasNick = () => !!store.get('nickname_set', 0);
 const allTasks = () => TASKS;
 const history = () => store.get('history', []);
 
+/* ---- 历史记录里两类"交卷"的口径 ---- 
+   ②改 的限时练习与 ③测 的仿真训练过去共用 mode='competition'，导致"我的统计"
+   把它们混在一个平均分里（首页与统计页因此会给出两个数）。
+   2026-10-12 起 ③测 写 mode='exam'；旧记录用 profile 字段反推（②改 的记录不带 profile）。 */
+function isExamRecord(h) { return !!h && (h.mode === 'exam' || h.profile !== undefined); }
+function modeLabel(h) {
+  if (isExamRecord(h)) return '仿真训练';
+  return { competition: '限时练习', practice: '自由练习', demo: '教学演示' }[h.mode] || h.mode;
+}
+
 /* 作答态：隐藏全站顶栏，作答页自己那条就是顶部栏（见 style.css 的 body.answering） */
 function setAnswering(on) {
  try { document.body.classList.toggle('answering', !!on); } catch (e) {}
@@ -618,7 +628,7 @@ function renderResult(r) {
  setAnswering(false);
  app.innerHTML = `
  <div class="page-title">
- <h2> ${r.mode === 'competition' ? '限时练习成绩' : r.mode === 'demo' ? '演示结果' : '练习结果'} · ${esc(r.taskName)}</h2>
+  <h2> ${isExamRecord(r) ? '仿真训练成绩' : r.mode === 'competition' ? '限时练习成绩' : r.mode === 'demo' ? '演示结果' : '练习结果'} · ${esc(r.taskName)}</h2>
  <div style="display:flex;gap:8px">
  <button class="btn btn-outline" onclick="exportReport('${r.id}')"> 导出成绩报告</button>
  <button class="btn btn-primary" onclick="go('plaza')">返回译后编辑实训</button>
@@ -654,6 +664,11 @@ function renderResult(r) {
 }
 
 /* ---------------- 我的统计 ---------------- */
+/* 表格视图状态：默认最近 10 条，可展开全部 / 按来源筛选 */
+let statsRows = 10, statsMode = 'all';
+function statsShown(n) { statsRows = n; renderStats(); }
+function statsFilter(m) { statsMode = m; statsRows = 10; renderStats(); }
+
 function renderStats() {
  setAnswering(false);
  const hs = history();
@@ -664,48 +679,62 @@ function renderStats() {
  <div class="empty-tip">还没有作答记录，去<a href="practice.html">译后编辑练习</a>开始第一次练习，或去<a href="annotate.html">标注实训</a>完成一卷错误标注。</div>`;
  return;
  }
- const totalWords = hs.reduce((s, h) => s + h.words, 0);
- const avgScore = hs.length ? Math.round(hs.reduce((s, h) => s + h.score, 0) / hs.length * 10) / 10 : '—';
- const avgTer = hs.length ? Math.round(hs.reduce((s, h) => s + h.ter, 0) / hs.length * 10) / 10 : '—';
- const recent = hs.slice(0, 6).reverse();
+ /* 口径分离：②改 的练习（限时 + 自由）与 ③测 的仿真训练不是一个尺子，分开算。
+    此前首页排除了 competition、本页却全算，同一个"平均得分"给出两个数。 */
+ const practice = hs.filter((h) => !isExamRecord(h));
+ const exams = hs.filter(isExamRecord);
+ const sum = (a, k) => a.reduce((s, h) => s + (Number(h[k]) || 0), 0);
+ const avgOn = (a, k) => (a.length ? Math.round(sum(a, k) / a.length * 10) / 10 : '—');
+ /* 走势图一次只画一类：优先练习；只有仿真训练时自动切成 TER 口径并改标题 */
+ const usePractice = practice.length > 0;
+ const trend = (usePractice ? practice : exams).slice(0, 6).reverse();
+ const trendCaliber = (usePractice ? '② 改 · 最近 ' : '③ 测 · 最近 ') + trend.length
+  + ' 次得分走势（' + (usePractice ? '词级重合度' : 'TER') + ' 口径）';
+ const rows = hs.filter((h) => (statsMode === 'all' ? true : statsMode === 'exam' ? isExamRecord(h) : !isExamRecord(h)));
+ const shown = rows.slice(0, statsRows);
+ const fbtn = (k, t) => `<button class="btn ${statsMode === k ? 'btn-primary' : 'btn-ghost'}" style="padding:5px 12px" onclick="statsFilter('${k}')">${t}</button>`;
 
  app.innerHTML = `
  <div class="page-title">
  <h2>我的统计</h2>
- <button class="btn btn-outline" onclick="exportCSV()"> 导出全部明细 (CSV)</button>
- <button class="btn btn-outline" onclick="exportHomework()"> 导出作业 JSON（交给老师汇总）</button>
+ <button class="btn btn-primary" onclick="exportHomework()"> 导出作业 JSON（交给老师汇总）</button>
+ <button class="btn btn-ghost" onclick="exportCSV()">导出明细 CSV</button>
  </div>
  <div class="score-hero">
- <div class="stat-box"><div class="v">${hs.length}</div><div class="l">完成次数</div></div>
- <div class="stat-box"><div class="v">${totalWords}</div><div class="l">累计实训字数</div></div>
- <div class="stat-box"><div class="v green">${avgScore}</div><div class="l">平均得分</div></div>
- <div class="stat-box"><div class="v amber">${avgTer}%</div><div class="l">平均修订率</div></div>
+ <div class="stat-box"><div class="v">${practice.length}</div><div class="l">「改」完成次数</div></div>
+ <div class="stat-box"><div class="v">${sum(practice, 'words')}</div><div class="l">累计实训字数</div></div>
+ <div class="stat-box"><div class="v green">${avgOn(practice, 'score')}</div><div class="l">「改」平均得分</div></div>
+ <div class="stat-box"><div class="v amber">${avgOn(practice, 'ter')}${practice.length ? '%' : ''}</div><div class="l">「改」平均修订率</div></div>
  </div>
+ <div class="board-note" style="margin-bottom:18px">以上仅统计 <b>② 改</b> 的练习（限时与自由），<b>不含 ③ 测 的仿真训练</b>——两者口径不同，不能混算、也不能横向比。仿真训练见下方画像，逐次明细在 <a href="pe-exam.html">③ 测</a>。</div>
  ${annStatsHTML()}
  ${examProfileHTML(hs)}
- <div class="board"><h3> 最近 ${recent.length} 次得分走势</h3>
+ <div class="board"><h3> ${trendCaliber}</h3>
  <div class="chart">
- ${recent.map(h => `
+ ${trend.map(h => `
  <div class="bar-wrap">
  <span class="bar-v">${h.score}</span>
  <div class="bar" style="height:${Math.max(4, h.score)}%"></div>
  <span class="bar-l" title="${esc(h.taskName)}">${esc(h.taskName.slice(0, 6))}</span>
  </div>`).join('')}
  </div>
+ <div class="board-note">一次只画一类：同一张图里的分数来自同一套口径，可以直接比高低。</div>
  </div>
- <div class="board"><h3> 作答记录</h3>
+ <div class="board"><h3> 作答记录（${rows.length} 条）</h3>
+ <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">${fbtn('all', '全部')}${fbtn('practice', '② 改 · 练习')}${fbtn('exam', '③ 测 · 仿真训练')}</div>
  <table>
  <tr><th>时间</th><th>任务</th><th>模式</th><th>得分</th><th>修订率</th><th>完成</th><th>用时</th><th></th></tr>
- ${hs.map(h => `
+ ${shown.map(h => `
  <tr>
  <td class="muted">${esc(h.date)}</td>
  <td>${esc(h.taskName)}</td>
- <td>${{ competition: '竞赛', practice: '练习', demo: '演示' }[h.mode] || h.mode}</td>
+ <td>${modeLabel(h)}</td>
  <td><b>${h.score}</b></td><td>${h.ter}%</td>
  <td>${h.segDone}/${h.total}</td><td>${fmtTime(h.timeUsed)}</td>
  <td><button class="btn btn-ghost" style="padding:4px 10px" onclick="viewRecord('${h.id}')">查看</button></td>
  </tr>`).join('')}
  </table>
+ ${rows.length > shown.length ? `<div style="margin-top:12px"><button class="btn btn-ghost" onclick="statsShown(${rows.length})">展开全部（共 ${rows.length} 条）</button></div>` : ''}
  </div>`;
 }
 

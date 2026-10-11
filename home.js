@@ -18,6 +18,11 @@
   const num = (v) => (v == null || v === '' ? '—' : v);
   const pct = (v) => (v == null ? '—' : v + '%');
 
+  /* 历史记录里两类"交卷"的口径：②改 的练习（限时 / 自由 / 演示）与 ③测 的仿真训练。
+     2026-10-12 起 ③测 写 mode='exam'；旧记录用 profile 字段反推（②改 的记录不带 profile）。
+     这样「改」的统计包含限时练习（此前被 mode='competition' 误排除了），也不会把测评分混进来。 */
+  const isExamRecord = (h) => !!h && (h.mode === 'exam' || h.profile !== undefined);
+
   /* 未完成的练习草稿（键名 mtpe_draft_<taskId>） */
   function drafts() {
     const out = [];
@@ -34,8 +39,8 @@
   function summary() {
     const hs = get('history', []) || [];
     const ann = get('ann_stats', []) || [];
-    const practice = hs.filter((h) => h.mode !== 'competition');
-    const exams = hs.filter((h) => h.mode === 'competition');
+    const practice = hs.filter((h) => !isExamRecord(h));
+    const exams = hs.filter(isExamRecord);
     const avg = (arr, k) => arr.length
       ? Math.round(arr.reduce((s, x) => s + (x[k] || 0), 0) / arr.length * 10) / 10
       : null;
@@ -55,7 +60,7 @@
      只读既有数据，不新增采集；与测评结果页的推荐练习同一口径。 */
   const DIMS = ['准确性', '术语', '语言规范', '风格', '格式'];
   function weakestDim() {
-    const exams = (get('history', []) || []).filter((h) => h.mode === 'competition' && h.profile && h.profile.dims);
+    const exams = (get('history', []) || []).filter((h) => isExamRecord(h) && h.profile && h.profile.dims);
     if (!exams.length) return null;
     const dims = exams[0].profile.dims;
     let best = null;
@@ -124,8 +129,7 @@
       </div>
       <div class="hn-tip" id="hn-tip"></div>` : `
       <div class="hn-why">${esc(nx.why)}</div>
-      <div class="hn-act"><a class="btn btn-primary" href="${nx.href}">${esc(nx.cta)}</a>
-      <a class="btn btn-ghost" href="practice.html#stats">看我的统计</a></div>`}
+      <div class="hn-act"><a class="btn btn-primary" href="${nx.href}">${esc(nx.cta)}</a></div>`}
     </div>
   </div>
 
@@ -149,6 +153,8 @@
 
   <div class="board home-progress">
     <h3>我的进度</h3>
+    ${(s.practiceN + s.annN + s.examN) === 0 ? `
+    <div class="empty-tip" style="padding:14px 0">还没有记录。做完第一次练习、标注或仿真训练，这里会显示你的进度。</div>` : `
     <div class="score-hero">
       <div class="stat-box"><div class="v">${s.practiceN}</div><div class="l">「改」完成次数</div></div>
       <div class="stat-box"><div class="v green">${num(s.practiceAvg)}</div><div class="l">「改」平均得分</div></div>
@@ -156,7 +162,7 @@
       <div class="stat-box"><div class="v green">${pct(s.annF1)}</div><div class="l">「找」平均 F1</div></div>
       <div class="stat-box"><div class="v">${s.examN}</div><div class="l">「测」交卷次数</div></div>
       <div class="stat-box"><div class="v amber">${num(s.examBest)}</div><div class="l">「测」最高分</div></div>
-    </div>
+    </div>`}
     ${lastBits.length ? `<div class="home-last">${lastBits.join(' ｜ ')}</div>` : ''}
     <div class="home-actions">
       <a class="btn btn-primary" href="annotate.html">开始练「找」</a>

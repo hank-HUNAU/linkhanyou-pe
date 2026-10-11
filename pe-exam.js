@@ -446,7 +446,9 @@ function syncToMainHistory(r){
  try{
  const rec={
  id:'r'+Date.now(), taskId:r.task.id, taskName:r.task.name,
- pair:r.task.pair, domain:r.task.domain, mode:'competition',
+  /* mode 用 'exam' 而不是 'competition'：②改 的限时练习也写 competition，
+     两者混在一起会让「我的统计」把练习分与测评分算进同一个平均分（2026-10-12 修）。 */
+  pair:r.task.pair, domain:r.task.domain, mode:'exam',
  nickname:(JSON.parse(localStorage.getItem('mtpe_nickname')||'"匿名"')),
  date:new Date().toLocaleString('zh-CN',{hour12:false}),
  timeUsed:r.timeUsed, score:r.score, ter:Math.round(r.avgTer*1000)/10,
