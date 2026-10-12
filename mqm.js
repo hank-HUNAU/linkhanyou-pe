@@ -7,11 +7,11 @@
  * 口径与 build_corpus.mjs 的 SCHEME / M_DIM 一致，改这里要同步改那边。
  * ============================================================ */
 window.MQM_ITEMS = [
-  { code: 'M1', name: '误译',     sev: 'Major',    dim: '准确性',   def: '词义选错、假朋友、逻辑关系译反（含大模型幻觉：无中生有）' },
+  { code: 'M1', name: '误译',     sev: 'Major',    dim: '准确性',   def: '词义选错、假朋友、逻辑关系译反、数字/数量级译错（含大模型幻觉：无中生有）' },
   { code: 'M2', name: '漏译',     sev: 'Major',    dim: '准确性',   def: '原文信息缺失——该译的没译出来' },
   { code: 'M3', name: '增译',     sev: 'Minor',    dim: '准确性',   def: '原文里没有的内容被加了进去' },
   { code: 'M4', name: '术语',     sev: 'Major',    dim: '术语',     def: '术语 / 专名错译，或全篇前后不一致' },
-  { code: 'M5', name: '数字单位', sev: 'Critical', dim: '语言规范', def: '数量级、单位换算、日期与货币格式' },
+  { code: 'M5', name: '单位格式', sev: 'Critical', dim: '区域规范', def: '日期、货币、度量单位等本地化格式不符合目标地区习惯（数量级/数字译错归 M1）' },
   { code: 'M6', name: '语法搭配', sev: 'Minor',    dim: '语言规范', def: '主谓一致、时态、介词、冠词、搭配不当' },
   { code: 'M7', name: '拼写标点', sev: 'Minor',    dim: '语言规范', def: '大小写、引号、机械性低错' },
   { code: 'M8', name: '风格语域', sev: 'Minor',    dim: '风格',     def: '口语 vs 书面、欧化长句、不地道表达' },

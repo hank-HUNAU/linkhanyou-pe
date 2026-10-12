@@ -30,7 +30,7 @@ function simT(a, b) { const A = tokenize(a), B = tokenize(b); if (!A.length && !
 const TAG_LABEL = Object.fromEntries(SCHEME.map(([id, label]) => [id, label]));
 const SEV_COLOR = { Critical: 'var(--r)', Major: 'var(--a)', Minor: 'var(--b)' };
 /* ---------------- 优化B：错误维度组卷 / 错题本 ---------------- */
-const DIM_LIST = ['准确性', '术语', '语言规范', '风格', '格式'];
+const DIM_LIST = ['准确性', '术语', '语言规范', '风格', '区域规范', '格式'];
 function qs() { try { return new URLSearchParams(location.search); } catch (e) { return new URLSearchParams(''); } }
 function wrongbook() { return store.get('wrongbook', []) || []; }
 function saveWrongbook(list) { store.set('wrongbook', list.slice(0, 300)); }

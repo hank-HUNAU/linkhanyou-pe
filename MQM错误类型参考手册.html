@@ -101,16 +101,16 @@ tr:last-child td{border-bottom:none}
 <div class="vcard">
   <h3><span class="badge a">版本 A</span> 八类速查（中文授课口径）</h3>
   <ul>
-    <li><b>① 误译</b>——词义选错、假朋友、逻辑关系译反（含大模型<b>幻觉</b>：无中生有）</li>
+    <li><b>① 误译</b>——词义选错、假朋友、逻辑关系译反、数字/数量级译错（含大模型<b>幻觉</b>：无中生有）</li>
     <li><b>② 漏译 / 增译</b>——信息缺一半、无中生有加戏（Accuracy 的两头）</li>
     <li><b>③ 术语问题</b>——错译 + 前后不一致，两项合并记忆</li>
-    <li><b>④ 数字与单位</b>——数量级、单位换算、日期货币格式</li>
+    <li><b>④ 单位格式</b>——日期、货币、度量单位格式（数量级译错归①）</li>
     <li><b>⑤ 语法与搭配</b>——主谓一致、时态、介词、冠词</li>
     <li><b>⑥ 拼写与标点</b>——大小写、双引号、机械性低错</li>
     <li><b>⑦ 风格与语域</b>——口语 vs 书面、欧化长句、不地道表达</li>
     <li><b>⑧ 格式与标记</b>——占位符、标签、排版（本地化场景）</li>
   </ul>
-  <p style="font-size:12.5px;color:var(--mut);margin-top:8px">对应关系：①②→Accuracy，③→Terminology，④→Locale convention，⑤⑥→Fluency，⑦→Style，⑧→Design&amp;markup；受众适宜性并入①⑦在课堂上口头延伸。</p>
+  <p style="font-size:12.5px;color:var(--mut);margin-top:8px">对应关系：①②→Accuracy，③→Terminology，④→Locale convention（区域规范），⑤⑥→Fluency，⑦→Style，⑧→Design&amp;markup；受众适宜性并入①⑦在课堂上口头延伸。</p>
 </div>
 <div class="vcard">
   <h3><span class="badge a">版本 A</span> 使用方法</h3>
@@ -129,9 +129,9 @@ tr:last-child td{border-bottom:none}
   <h3><span class="badge b">版本 B</span> 错误分级与扣分权重</h3>
   <table>
     <tr><th>维度</th><th>典型错误</th><th>常见级别</th></tr>
-    <tr><td>准确性</td><td>误译/漏译/增译/幻觉</td><td><span class="sev-c">Critical</span>~<span class="sev-m">Major</span></td></tr>
+    <tr><td>准确性</td><td>误译/漏译/增译/数字数量级/幻觉</td><td><span class="sev-c">Critical</span>~<span class="sev-m">Major</span></td></tr>
     <tr><td>术语</td><td>错译/不一致</td><td><span class="sev-m">Major</span></td></tr>
-    <tr><td>数字单位</td><td>数量级/单位/日期</td><td><span class="sev-c">Critical</span></td></tr>
+    <tr><td>单位格式（区域规范）</td><td>日期/货币/单位格式</td><td><span class="sev-c">Critical</span></td></tr>
     <tr><td>语言规范</td><td>语法/拼写/标点</td><td><span class="sev-n">Minor</span>~<span class="sev-m">Major</span></td></tr>
     <tr><td>风格</td><td>语域/欧化/不地道</td><td><span class="sev-n">Minor</span></td></tr>
     <tr><td>格式标记</td><td>占位符/标签/排版</td><td><span class="sev-m">Major</span></td></tr>
@@ -142,8 +142,9 @@ tr:last-child td{border-bottom:none}
   <a href="annotate.html?dim=%E6%9C%AF%E8%AF%AD&n=15&go=1">术语 15 句</a>　｜　
   <a href="annotate.html?dim=%E8%AF%AD%E8%A8%80%E8%A7%84%E8%8C%83&n=15&go=1">语言规范 15 句</a>　｜　
   <a href="annotate.html?dim=%E9%A3%8E%E6%A0%BC&n=15&go=1">风格 15 句</a>　｜　
+  <a href="annotate.html?dim=%E5%8C%BA%E5%9F%9F%E8%A7%84%E8%8C%83&n=15&go=1">区域规范 15 句</a>　｜　
   <a href="annotate.html?dim=%E6%A0%BC%E5%BC%8F&n=15&go=1">格式 15 句</a>
-  <div style="color:var(--mut);font-size:12.5px">点进去就是按该维度组好的卷，交卷立刻给出该维度的查准 / 查全 / F1。（格式维度目前语料覆盖为 0，点进去会自动放宽为不限维度。）</div>
+  <div style="color:var(--mut);font-size:12.5px">点进去就是按该维度组好的卷，交卷立刻给出该维度的查准 / 查全 / F1。（覆盖为 0 的维度点进去会自动放宽为不限维度。）</div>
 </div>
   <p style="font-size:12.5px;color:var(--mut);margin-top:8px">默认权重：Minor −1 ｜ Major −5 ｜ Critical −25（每千词），可按内容风险调整。</p>
 </div>

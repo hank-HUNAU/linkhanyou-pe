@@ -58,7 +58,7 @@
 
   /* 最弱错误维度：取自"最近一次测评交卷"的画像（dims = 你的译文里各维度还剩多少处没改对）。
      只读既有数据，不新增采集；与测评结果页的推荐练习同一口径。 */
-  const DIMS = ['准确性', '术语', '语言规范', '风格', '格式'];
+  const DIMS = ['准确性', '术语', '语言规范', '风格', '区域规范', '格式'];
   function weakestDim() {
     const exams = (get('history', []) || []).filter((h) => isExamRecord(h) && h.profile && h.profile.dims);
     if (!exams.length) return null;
