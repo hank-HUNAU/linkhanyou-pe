@@ -177,6 +177,7 @@
   <div class="board">
     <h3>学习资源</h3>
     <p class="muted" style="line-height:2">
+      · <a href="champion.html">对标亚军</a>：以亚军选手的能力画像为基准，判断你的译后编辑强弱项　｜　
       · <a href="MQM错误类型参考手册.html">MQM 错误类型参考手册</a>：M1–M9 / M0 的定义与严重度判据　｜　导出成绩（作业 JSON / CSV）在顶栏「我的统计」
     </p>
   </div>`;

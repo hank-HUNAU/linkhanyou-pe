@@ -1,0 +1,109 @@
+/* ============================================================
+ * champion.css — 对标亚军页面专属样式
+ * 设计底座（颜色/圆角/字号/间距/按钮）全部来自 ui.css，本文件只写版式。
+ * ============================================================ */
+
+.wrap{max-width:980px;margin:0 auto;padding:28px 20px 60px}
+.wrap.wide{max-width:1180px}
+
+/* ---------- 广场 ---------- */
+.c-hero{margin-bottom:var(--sp-5)}
+.c-hero h1{font-size:var(--fs-xl);margin-bottom:var(--sp-1)}
+.c-hero-sub{color:var(--text-2);font-size:14px;max-width:720px}
+.c-sec{font-size:var(--fs-lg);margin:var(--sp-6) 0 var(--sp-3)}
+.c-foot{color:var(--muted);font-size:var(--fs-xs);margin-top:var(--sp-5)}
+
+/* 亚军画像卡 */
+.c-profile{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px 22px;box-shadow:var(--shadow)}
+.c-profile h2{font-size:16px;margin-bottom:var(--sp-4)}
+.c-profile-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:var(--sp-4)}
+.c-pitem{border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px;background:var(--bg)}
+.c-phead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.c-pdim{font-weight:600;font-size:14px}
+.c-pscore{font-size:var(--fs-lg);color:var(--primary)}
+.c-pbar{height:6px;border-radius:var(--r-pill);background:var(--sk);overflow:hidden}
+.c-pbar i{display:block;height:100%;background:var(--primary);border-radius:var(--r-pill)}
+.c-pnote{font-size:var(--fs-xs);color:var(--text-2);margin-top:8px;line-height:1.6}
+
+/* 任务卡 */
+.c-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:var(--sp-4)}
+.c-card{
+  display:flex;flex-direction:column;gap:var(--sp-2);text-decoration:none;color:inherit;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);
+  padding:18px 20px;box-shadow:var(--shadow);transition:transform .12s ease,box-shadow .12s ease;
+}
+.c-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.c-card-top{display:flex;justify-content:space-between;align-items:center}
+.c-dir{font-size:var(--fs-xs);color:var(--muted)}
+.c-card h3{font-size:16px}
+.c-sub{font-size:var(--fs-sm);color:var(--text-2)}
+.c-desc{font-size:var(--fs-xs);color:var(--muted);line-height:1.6}
+.c-go{font-size:var(--fs-sm);color:var(--primary);font-weight:500;margin-top:4px}
+
+/* ---------- 作答 ---------- */
+.c-answerbar{
+  position:sticky;top:var(--mtpe-nav-h,0);z-index:50;display:flex;align-items:center;gap:var(--sp-3);
+  background:var(--card);border-bottom:1px solid var(--border);padding:12px 22px;flex-wrap:wrap;
+}
+.c-ans-name{font-weight:600;font-size:14px}
+.c-ans-count{font-size:var(--fs-xs);color:var(--muted)}
+.c-answerbar .btn{margin-left:auto}
+.c-answer{padding-top:var(--sp-5)}
+.c-seg{border:1px solid var(--border);border-radius:var(--r-lg);background:var(--card);padding:16px 18px;margin-bottom:var(--sp-4)}
+.c-seg-src{font-weight:600;margin-bottom:var(--sp-2);color:var(--text)}
+.c-seg-mt{font-size:var(--fs-sm);color:var(--muted);background:var(--bg);border-radius:var(--r-sm);padding:8px 10px;margin-bottom:var(--sp-2)}
+.c-edit{
+  width:100%;box-sizing:border-box;resize:vertical;min-height:58px;
+  border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;
+  font-size:var(--fs-md);line-height:1.6;background:#fff;color:var(--text);
+}
+.c-edit:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-light)}
+
+/* ---------- 结果 ---------- */
+.c-result{padding-top:var(--sp-5)}
+.c-result-top{margin-bottom:var(--sp-4)}
+.c-result-top h1{font-size:var(--fs-xl)}
+.c-result-sub{color:var(--muted);font-size:var(--fs-sm);margin-top:2px}
+.c-result-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:var(--sp-5);align-items:start}
+.c-radar{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px;box-shadow:var(--shadow)}
+.c-verdict h2{font-size:15px;margin:0 0 var(--sp-2)}
+.c-verdict h2 + h2{margin-top:var(--sp-4)}
+.c-dim-row{display:flex;justify-content:space-between;align-items:center;border-radius:var(--r-sm);padding:8px 12px;margin-bottom:6px;font-size:var(--fs-sm)}
+.c-dim-row.weak{background:var(--red-bg)}
+.c-dim-row.weak .c-dim-name{color:var(--red)}
+.c-dim-row.strong{background:var(--green-bg)}
+.c-dim-row.strong .c-dim-name{color:var(--green)}
+.c-dim-name{font-weight:600}
+.c-dim-delta{color:var(--text-2);font-size:var(--fs-xs)}
+.c-none{color:var(--muted);font-size:var(--fs-sm)}
+
+/* 画像外推预估 */
+.c-forecast{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 20px;box-shadow:var(--shadow)}
+.c-frow{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:var(--fs-sm)}
+.c-frow:last-of-type{border-bottom:none}
+.c-fdim{font-weight:600}
+.c-fnum{color:var(--text-2);font-size:var(--fs-xs)}
+.c-fnote{color:var(--muted);font-size:var(--fs-xs);margin-top:var(--sp-2)}
+
+/* 逐段对照 */
+.c-compare{margin-bottom:var(--sp-5)}
+.c-cmp-row{border:1px solid var(--border);border-radius:var(--r-lg);background:var(--card);padding:16px 18px;margin-bottom:var(--sp-4)}
+.c-cmp-src{font-weight:600;margin-bottom:var(--sp-3);line-height:1.6}
+.c-cmp-col{margin-bottom:var(--sp-3)}
+.c-cmp-col b{display:block;font-size:var(--fs-xs);color:var(--muted);margin-bottom:4px}
+.c-cmp-txt{font-size:var(--fs-sm);line-height:1.7;background:var(--bg);border-radius:var(--r-sm);padding:9px 12px;white-space:pre-wrap}
+.c-cmp-tag{display:inline-block;font-size:var(--fs-xs);font-weight:600;border-radius:var(--r-pill);padding:2px 10px;margin:0 6px 6px 0}
+.c-cmp-tag.ok{background:var(--green-bg);color:var(--green)}
+.c-cmp-tag.bad{background:var(--red-bg);color:var(--red)}
+.c-cmp-comment{font-size:var(--fs-xs);color:var(--text-2);line-height:1.7;margin-top:var(--sp-2);background:var(--primary-light);border-radius:var(--r-sm);padding:9px 12px}
+.c-actions{display:flex;gap:var(--sp-2);margin-top:var(--sp-4);flex-wrap:wrap}
+
+/* ---------- 断点 ---------- */
+@media (max-width:860px){
+  .c-result-grid{grid-template-columns:1fr}
+}
+@media (max-width:620px){
+  .wrap{padding:20px 14px 48px}
+  .c-cards{grid-template-columns:1fr}
+  .c-answerbar{position:static}
+}
