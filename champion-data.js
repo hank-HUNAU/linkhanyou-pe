@@ -103,3 +103,33 @@ window.CHAMPION = {
     }
   ]
 };
+
+/* ============================================================
+ * 另外两位参赛选手的点状作答（各仅 1 段，作横向参照 + 避坑教学）
+ * 来源：参考资料/译后编辑真题对照表.csv
+ *   · educability（第七届初赛·英→汉）→ 字面直译反面教材
+ *   · 何园（第七届决赛·汉→英）→ 脱离语境反面教材
+ * 数据量各 1 段，不足支撑画像外推，仅做单句/标题级对照。
+ * ============================================================ */
+window.RIVALS = {
+  educability: {
+    style: '字面直译',
+    verdict: '典型陷阱：死扣单词原意、跳不出字面。cross-pollination 在此不是「授粉」，而是「知识跨界贯通」。',
+    seg: {
+      src: 'It makes you wonder what other cross-pollinations have occurred.',
+      mt: '这让你不禁想知道还有哪些其他的交叉授粉发生过。',
+      pe: '这会让人好奇还有哪些其他的「跨领域授粉」曾经发生过。',
+      comment: '选手模糊捕捉到 cross 意指「结合不同领域」，但未能跳出单词原意「授粉」的限制。结合前文语境，此处 cross-pollination 并非字面意义上的异花授粉，语义为「知识在脑子里相互调用、贯通的现象」。整句宜改为「这让人不禁想知道还有哪些关联贯通的现象发生过。」'
+    }
+  },
+  heyuan: {
+    style: '脱离语境',
+    verdict: '典型陷阱：理解到位但表达过度抽象、脱离园林步道的具体语境。',
+    seg: {
+      src: '立体交通，居游两宜',
+      mt: 'Three-dimensional transportation, suitable for both living and traveling',
+      pe: 'Three-Dimensional Connectivity for Residence and Recreation',
+      comment: '选手理解了「交通」的真正含义，但表达较为抽象。结合后文「满足居住者在园内的日常行走需要」，此处「立体交通」并非车水马龙的公共街道，而是供人行走、立体交错的园林步道（如回廊、鹅卵石路等）。小标题宜改为「The three-dimensional walking system providing spaces for both living and sightseeing」。'
+    }
+  }
+};

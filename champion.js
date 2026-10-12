@@ -84,13 +84,14 @@
     return cnt;
   }
 
-  /* 修订率：编辑量 / 机翻长度（衡量"改了多少"） */
+  /* 修订率：编辑量 / 机翻长度（衡量"改了多少"，clamp 到 [0,1]） */
   function revisionRate(mt, pe) {
     const A = tokenize(mt), B = tokenize(pe);
     if (!A.length && !B.length) return 0;
     const ops = diffTokens(A, B);
     const edits = ops.filter((o) => o.op !== 'same').length;
-    return A.length ? edits / A.length : 1;
+    if (!A.length) return 1;
+    return Math.min(1, edits / A.length);
   }
 
   /* ---------------- 学生画像（修正率 × 100） ---------------- */
@@ -115,6 +116,7 @@
   }
 
   /* ---------------- 亚军画像 ---------------- */
+  if (!window.CHAMPION) { if (app) app.innerHTML = '<div class="c-none">冠军数据未加载</div>'; return; }
   const championMap = {};
   (window.CHAMPION.profile || []).forEach((p) => { championMap[p.dim] = p.score; });
   const championVals = () => DIMS.map((d) => championMap[d] != null ? championMap[d] : 0);
@@ -131,6 +133,9 @@
     return { weak, strong, even };
   }
 
+  /* 另外两位参赛选手的点状作答（各 1 段），作横向参照 + 避坑教学 */
+  function rivalOf(key) { return (window.RIVALS && window.RIVALS[key]) || null; }
+
   /* ---------------- 任务定义 ---------------- */
   function buildTasks() {
     const TSK = (typeof TASKS !== 'undefined' ? TASKS : []);
@@ -141,18 +146,21 @@
       id: 'e2_7', name: '第七届初赛 · 英译汉', sub: '“可教育性”论说文（GPT-4o 底稿）',
       dir: '英→汉', targetKey: 'ref', mode: 'forecast',
       desc: '学生在机翻底稿上译后编辑，与亚军画像外推对比，判断强弱项。',
+      rival: rivalOf('educability'),
       segs: (t2.segs || []).map((g) => ({ src: g.src, mt: g.mt, ref: g.ref }))
     });
     if (t4) list.push({
       id: 'e4_7', name: '第七届决赛 · 汉译英', sub: '扬州何园（GPT-4o 底稿）',
       dir: '汉→英', targetKey: 'ref', mode: 'forecast',
       desc: '学生在机翻底稿上译后编辑，与亚军画像外推对比，判断强弱项。',
+      rival: rivalOf('heyuan'),
       segs: (t4.segs || []).map((g) => ({ src: g.src, mt: g.mt, ref: g.ref }))
     });
     list.push({
       id: 'zhenhu', name: '外研社·国才杯 · 汉译英', sub: '镇湖刺绣（亚军真实作答）',
       dir: '汉→英', targetKey: 'pe', mode: 'real',
       desc: '学生作答后与亚军 9 段真实作答逐段对照，附专家评析。',
+      rival: null,
       segs: (window.CHAMPION.segs || []).map((g) => ({
         src: g.src, mt: g.mt, pe: g.pe, comment: g.comment, fix: g.fix, flaw: g.flaw
       }))
@@ -295,6 +303,21 @@
         + '<p class="c-fnote">按亚军各维度能力分外推，仅作教学参照。</p></div>';
     }
 
+    /* 另一位真实选手的作答对照（点状，横向参照 + 避坑） */
+    let rivalHtml = '';
+    if (t.rival) {
+      rivalHtml = '<h2 class="c-sec">另一位真实选手 · ' + esc(t.rival.style) + '（同一处）</h2>'
+        + '<div class="c-compare">'
+        + '<div class="c-cmp-row">'
+        + '<div class="c-cmp-src">' + esc(t.rival.seg.src) + '</div>'
+        + '<div class="c-cmp-col"><b>机翻底稿</b><div class="c-cmp-txt">' + esc(t.rival.seg.mt) + '</div></div>'
+        + '<div class="c-cmp-col"><b>选手作答</b><div class="c-cmp-txt">' + esc(t.rival.seg.pe) + '</div></div>'
+        + (t.rival.seg.comment ? '<div class="c-cmp-comment">专家评析：' + esc(t.rival.seg.comment) + '</div>' : '')
+        + '</div>'
+        + '</div>'
+        + '<div class="warn-box">' + esc(t.rival.verdict) + '</div>';
+    }
+
     /* 逐段对照 */
     const diffRows = [];
     t.segs.forEach((seg, i) => {
@@ -329,6 +352,7 @@
       + '</div>'
       + '</div>'
       + forecastHtml
+      + rivalHtml
       + '<h2 class="c-sec">' + (t.mode === 'real' ? '逐段对照（你 vs 亚军）' : '需留意的段落（你 vs 参考译文）') + '</h2>'
       + '<div class="c-compare">' + rowsHtml + rowsEmpty + '</div>'
       + '<div class="c-actions"><a class="btn btn-ghost" href="#" id="c-again">再练一篇</a>'
@@ -360,7 +384,6 @@
   }
 
   /* ---------------- 启动 ---------------- */
-  if (!window.CHAMPION) { app.innerHTML = '<div class="c-none">冠军数据未加载</div>'; return; }
   if (!TASKS_C.length) { app.innerHTML = '<div class="c-none">没有可用真题（请先登录解锁语料）</div>'; return; }
   renderPlaza();
 })();
