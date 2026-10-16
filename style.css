@@ -16,7 +16,9 @@
 }
 .brand h1 { font-size: 17px; font-weight: 700; }
 .brand .sub { font-size: 12px; color: var(--muted); }
-nav { display: flex; align-items: center; gap: 6px; }
+/* （2026-10-17 修复）原 `nav { display:flex }` 元素选择器会误伤工作台侧栏
+   <nav class="wb-nav">，导致 7 个导航项横排挤压、文字竖排。顶栏现用
+   div.mtpe-nav（nav.js 内联自带样式），此规则已无服务对象，删除。 */
 .nav-link {
   padding: 8px 14px; border-radius: 8px; cursor: pointer; color: var(--text-2);
   font-size: 14px; user-select: none;
