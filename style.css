@@ -230,9 +230,9 @@ textarea.big:focus { outline: none; border-color: var(--primary); }
 .wb-nav a.on { background: linear-gradient(90deg, #4f46e5, #7c3aed); color: #fff; box-shadow: 0 4px 14px rgba(79, 70, 229, .4); font-weight: 500; }
 .wb-nav .tag { margin-left: auto; background: #2f9e44; color: #fff; font-size: 10.5px; padding: 1px 7px; border-radius: 99px; }
 .wb-foot { padding: 14px 20px 0; border-top: 1px solid rgba(255, 255, 255, .08); font-size: 12px; color: #8b94a7; }
-.wb-main { flex: 1; padding: 28px 32px; min-width: 0; }
+.wb-main { flex: 1; padding: 32px 40px 48px; min-width: 0; }
 /* —— 聚焦横幅（hero）—— */
-.wb-focus { background: linear-gradient(120deg, #4338ca 0%, #6d28d9 55%, #a21caf 100%); color: #fff; border-radius: 22px; padding: 26px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(67, 56, 202, .35); }
+.wb-focus { background: linear-gradient(120deg, #4338ca 0%, #6d28d9 55%, #a21caf 100%); color: #fff; border-radius: 22px; padding: 32px 36px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(67, 56, 202, .35); }
 .wb-focus::before { content: ''; position: absolute; left: -40px; bottom: -90px; width: 180px; height: 180px; border-radius: 50%; background: rgba(255, 255, 255, .07); }
 .wb-focus > * { position: relative; }
 .wb-focus .hn-tag { font-size: 12px; font-weight: 600; opacity: .85; letter-spacing: .04em; }
@@ -243,17 +243,17 @@ textarea.big:focus { outline: none; border-color: var(--primary); }
 .wb-hero-input input { flex: 1; min-width: 220px; padding: 10px 14px; border: none; border-radius: 10px; font-size: 14px; font-family: inherit; }
 .wb-hero-btn { display: inline-block; margin-top: 16px; background: #fff; color: #4338ca; border: none; border-radius: var(--r-pill, 999px); padding: 10px 22px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; transition: transform .15s ease, box-shadow .15s ease; }
 .wb-hero-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0, 0, 0, .18); }
-.wb-hero-stats { display: flex; gap: 30px; margin-top: 18px; flex-wrap: wrap; }
+.wb-hero-stats { display: flex; gap: 56px; margin-top: 22px; flex-wrap: wrap; }
 .wb-hero-stats .n { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .wb-hero-stats .l { font-size: 12px; opacity: .85; margin-top: 2px; }
 .wb-theory { margin-top: 16px; font-size: 12.5px; color: rgba(255,255,255,.75); }
 .wb-theory span { opacity: .65; margin-left: 6px; font-size: 11.5px; }
 /* —— 主区卡片 —— */
-.wb-card { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px rgba(16, 24, 40, .08); margin-top: 18px; }
+.wb-card { background: #fff; border-radius: 16px; padding: 24px 26px; box-shadow: 0 1px 3px rgba(16, 24, 40, .08); margin-top: 26px; }
 .wb-card h3 { font-size: 15px; margin-bottom: 10px; color: var(--text, #1d1d1f); }
 .wb-last { font-size: 13.5px; color: var(--text-2, #6e6e73); line-height: 2; }
-.wb-grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-.wb-mini { background: #fff; border-radius: 16px; padding: 18px; box-shadow: 0 1px 3px rgba(16, 24, 40, .08); margin-top: 18px; }
+.wb-grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; }
+.wb-mini { background: #fff; border-radius: 16px; padding: 22px 24px; box-shadow: 0 1px 3px rgba(16, 24, 40, .08); margin-top: 26px; }
 .wb-mini .mt { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 600; color: #fff; padding: 3px 10px; border-radius: 99px; }
 .wb-mini .m1 { background: var(--s1, #0aa574); }
 .wb-mini .m2 { background: var(--primary, #0071e3); }
