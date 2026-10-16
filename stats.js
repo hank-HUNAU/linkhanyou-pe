@@ -22,6 +22,16 @@
   };
   const getNick = () => store.get('nickname', '');
   const hasNick = () => !!store.get('nickname_set', 0);
+  /* 机房串号修复（2026-10-17）：标注统计/错题本按当前昵称过滤，只算"本人"的。
+     当前昵称取不到（测试桩/异常环境）时不过滤，保持旧行为。 */
+  const curNick = () => { try { return JSON.parse(localStorage.getItem('mtpe_nickname') || '""') || ''; } catch (e) { return ''; } };
+  const mineNick = (n) => { const c = curNick(); return !c || n === c; };
+  const myAnnStats = (k) => {
+    try { return (JSON.parse(localStorage.getItem(k) || '[]') || []).filter((x) => x && mineNick(x.nick)); } catch (e) { return []; }
+  };
+  const myWrongbook = () => {
+    try { return (JSON.parse(localStorage.getItem('ann_wrongbook') || '[]') || []).filter((w) => w && mineNick(w.nick)); } catch (e) { return []; }
+  };
   const now = () => new Date().toLocaleString('zh-CN', { hour12: false });
   function toast(msg) {
     let t = document.getElementById('toast');
@@ -47,6 +57,8 @@
         const v = (document.getElementById('nick-ask-input').value || '').trim();
         if (!v) { toast('请填写姓名或学号后再保存'); return; }
         store.set('nickname', v); store.set('nickname_set', 1);
+        /* 认领：把登录后带账号名戳的记录改标成刚填的姓名，否则按昵称过滤后看不见 */
+        if (window.mtpeClaimRecords) window.mtpeClaimRecords(v);
         m.style.display = 'none';
         if (typeof cb === 'function') cb();
       };
@@ -63,7 +75,7 @@
     const app = document.getElementById('app');
     const hs = history();
     let hasAnn = false;
-    try { hasAnn = (JSON.parse(localStorage.getItem('mtpe_ann_stats') || '[]')).length > 0; } catch (e) {}
+    try { hasAnn = myAnnStats('mtpe_ann_stats').length > 0; } catch (e) {}
     if (!hs.length && !hasAnn) {
       app.innerHTML = `<div class="page-title"><h2>我的统计</h2></div>
  <div class="empty-tip">还没有作答记录，去<a href="practice.html">译后编辑练习</a>开始第一次练习，或去<a href="annotate.html">标注实训</a>完成一卷错误标注。</div>`;
@@ -86,6 +98,7 @@
  <div class="page-title">
  <h2>我的统计</h2>
  <button class="btn btn-primary" onclick="exportHomework()"> 导出作业 JSON（交给老师汇总）</button>
+ <button class="btn btn-ghost" onclick="importHomework()"> 导入作业 JSON（恢复本机记录）</button>
  <button class="btn btn-ghost" onclick="exportCSV()">导出明细 CSV</button>
  </div>
  <div class="score-hero">
@@ -94,7 +107,7 @@
  <div class="stat-box"><div class="v green">${avgOn(practice, 'score')}</div><div class="l">「改」平均得分</div></div>
  <div class="stat-box"><div class="v amber">${avgOn(practice, 'ter')}${practice.length ? '%' : ''}</div><div class="l">「改」平均修订率</div></div>
  </div>
- <div class="board-note" style="margin-bottom:18px">以上仅统计 <b>② 改</b> 的练习（限时与自由），<b>不含 ③ 测 的仿真训练</b>——两者口径不同，不能混算、也不能横向比。仿真训练见下方画像，逐次明细在 <a href="pe-exam.html">③ 测</a>。</div>
+ <div class="board-note" style="margin-bottom:18px">以上仅统计 <b>② 改</b> 的练习（限时与自由），<b>不含 ③ 测 的仿真训练</b>——两者口径不同，不能混算、也不能横向比。仿真训练见下方画像，逐次明细在 <a href="pe-exam.html">③ 测</a>。　记录按「姓名/学号」归属：换电脑或清缓存后，可用之前导出的作业文件「导入作业 JSON」恢复。</div>
  ${annStatsHTML()}
  ${examProfileHTML(hs)}
  <div class="board"><h3> ${trendCaliber}</h3>
@@ -160,8 +173,7 @@
   }
 
   function annStatsHTML() {
-    let st = [];
-    try { st = JSON.parse(localStorage.getItem('mtpe_ann_stats') || '[]'); } catch (e) {}
+    let st = myAnnStats('mtpe_ann_stats');
     if (!st.length) {
       return `<div class="board"><h3> 标注实训能力</h3>
  <div class="empty-tip" style="padding:16px 0">暂无标注记录。去 <a href="annotate.html">标注实训</a> 完成一卷错误标注（与种子标注对比），这里会展示你的查准率 / 查全率 / F1 走势。</div></div>`;
@@ -191,9 +203,8 @@
     if (!hasNick()) { askNick(window.exportHomework); return; }
     const loginAccount = (window.mtpeAccount && window.mtpeAccount()) || '';
     const account = getNick();
-    let ann = [], wrong = [];
-    try { ann = JSON.parse(localStorage.getItem('mtpe_ann_stats') || '[]') || []; } catch (e) {}
-    try { wrong = JSON.parse(localStorage.getItem('ann_wrongbook') || '[]') || []; } catch (e) {}
+    const ann = myAnnStats('mtpe_ann_stats');
+    const wrong = myWrongbook();
     const payload = {
       account: account, loginAccount: loginAccount, exported: now(),
       tasks: (history() || []).length, history: history() || [], annStats: ann, wrongbook: wrong
@@ -202,6 +213,79 @@
     window.mtpeDownload(name, JSON.stringify(payload, null, 1), 'application/json');
     toast('已导出作业：' + name + '　请交给老师汇总');
   };
+
+  /* 导入作业 JSON（P0-2，2026-10-17）：学生清缓存 / 换电脑后，用导出的作业文件
+     恢复本机记录。只合并"文件里有而本机没有"的记录（按 id / 键去重），导入的
+     记录一律改标成当前昵称（谁导入就归谁）。 */
+  window.importHomework = function () {
+    let inp = document.getElementById('hw-import');
+    if (!inp) {
+      inp = document.createElement('input');
+      inp.type = 'file'; inp.accept = '.json,application/json'; inp.id = 'hw-import';
+      inp.style.display = 'none';
+      inp.addEventListener('change', function () {
+        const f = inp.files && inp.files[0];
+        inp.value = '';
+        if (!f) return;
+        const rd = new FileReader();
+        rd.onload = function () {
+          try { mergeHomework(JSON.parse(String(rd.result))); }
+          catch (e) { toast('导入失败：不是有效的作业 JSON 文件'); }
+        };
+        rd.onerror = function () { toast('导入失败：文件读取错误'); };
+        rd.readAsText(f, 'utf-8');
+      });
+      document.body.appendChild(inp);
+    }
+    inp.click();
+  };
+
+  function mergeHomework(p) {
+    if (!p || !Array.isArray(p.history)) { toast('导入失败：文件缺少 history 字段（请用「导出作业 JSON」生成的文件）'); return; }
+    const nick = getNick() || curNick() || '导入';
+    let addH = 0, addA = 0, addW = 0;
+    /* ① 作答记录：按 id 去重，改标当前昵称后并回（上限 200，与作答页口径一致） */
+    try {
+      const raw = JSON.parse(localStorage.getItem('mtpe_history') || '[]') || [];
+      const ids = new Set(raw.map((h) => h && h.id));
+      const inc = p.history.filter((h) => h && h.id && !ids.has(h.id))
+        .map((h) => Object.assign({}, h, { nickname: nick }));
+      if (inc.length) {
+        const merged = inc.concat(raw).slice(0, 200);
+        localStorage.setItem('mtpe_history', JSON.stringify(merged));
+        addH = inc.length;
+      }
+    } catch (e) {}
+    /* ② 标注统计：按 日期+卷名+三率 去重 */
+    if (Array.isArray(p.annStats) && p.annStats.length) {
+      try {
+        const raw = JSON.parse(localStorage.getItem('mtpe_ann_stats') || '[]') || [];
+        const keyOf = (x) => [x.date, x.paper, x.precision, x.recall, x.f1].join('|');
+        const have = new Set(raw.filter((x) => x && mineNick(x.nick)).map(keyOf));
+        const inc = p.annStats.filter((x) => x && !have.has(keyOf(x))).map((x) => Object.assign({}, x, { nick: nick }));
+        if (inc.length) {
+          localStorage.setItem('mtpe_ann_stats', JSON.stringify(inc.concat(raw).slice(0, 200)));
+          addA = inc.length;
+        }
+      } catch (e) {}
+    }
+    /* ③ 错题本：按 句对+片段+标签+类型 去重 */
+    if (Array.isArray(p.wrongbook) && p.wrongbook.length) {
+      try {
+        const raw = JSON.parse(localStorage.getItem('ann_wrongbook') || '[]') || [];
+        const keyOf = (w) => [w.k, w.span, w.tag, w.kind].join('|');
+        const have = new Set(raw.filter((w) => w && mineNick(w.nick)).map(keyOf));
+        const inc = p.wrongbook.filter((w) => w && !have.has(keyOf(w))).map((w) => Object.assign({}, w, { nick: nick }));
+        if (inc.length) {
+          localStorage.setItem('ann_wrongbook', JSON.stringify(inc.concat(raw).slice(0, 300)));
+          addW = inc.length;
+        }
+      } catch (e) {}
+    }
+    if (!addH && !addA && !addW) { toast('导入完成：文件里的记录本机都已存在，没有新增'); }
+    else { toast('导入完成：成绩 ' + addH + ' 条 ｜ 标注 ' + addA + ' 条 ｜ 错题 ' + addW + ' 条'); }
+    renderStats();
+  }
 
   window.exportCSV = function () {
     const rows = [['时间', '昵称', '任务', '语向', '领域', '模式', '得分', '修订率%', '完成段', '总段', '字数', '用时秒', '编辑率%', '有效编辑率%', '编辑倾向', '速度段每分', '后半程变化']];

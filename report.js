@@ -13,7 +13,19 @@ const rpFmtTime = (sec) => {
   const m = Math.floor(sec / 60), s = sec % 60;
   return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
 };
-const rpHistory = () => { try { return JSON.parse(localStorage.getItem('mtpe_history') || '[]') || []; } catch (e) { return []; } };
+/* 历史记录按当前昵称过滤（机房串号修复 2026-10-17）：
+   共享账号的公共机房里，记录带保存时的昵称戳，只回给"本人"。
+   当前昵称取不到（测试桩/异常环境）时不过滤，保持旧行为。 */
+const rpNick = () => {
+  try { return JSON.parse(localStorage.getItem('mtpe_nickname') || '""') || ''; } catch (e) { return ''; }
+};
+const rpHistory = () => {
+  try {
+    const all = JSON.parse(localStorage.getItem('mtpe_history') || '[]') || [];
+    const n = rpNick();
+    return n ? all.filter((h) => h && h.nickname === n) : all;
+  } catch (e) { return []; }
+};
 const rpIsExam = (h) => !!h && (h.mode === 'exam' || h.profile !== undefined);
 const rpTokenize = (s) => (s.match(/[\u4e00-\u9fff]|[A-Za-z]+(?:'[a-z]+)?|\d+(?:\.\d+)?%?|[^\s]/g) || []);
 function rpDiffOps(a, b) {

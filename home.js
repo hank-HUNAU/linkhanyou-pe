@@ -23,22 +23,31 @@
      这样「改」的统计包含限时练习（此前被 mode='competition' 误排除了），也不会把测评分混进来。 */
   const isExamRecord = (h) => !!h && (h.mode === 'exam' || h.profile !== undefined);
 
-  /* 未完成的练习草稿（键名 mtpe_draft_<taskId>） */
+  /* 未完成的练习草稿（键名 mtpe_draft_<taskId>）
+     机房串号修复（2026-10-17）：草稿带保存时的昵称戳（nick），只列"本人"的。 */
+  const curNick = () => { try { return JSON.parse(localStorage.getItem('mtpe_nickname') || '""') || ''; } catch (e) { return ''; } };
+  const mineNick = (n) => { const c = curNick(); return !c || n === c; };
   function drafts() {
     const out = [];
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
-        if (k && k.indexOf('mtpe_draft_') === 0) out.push(k.slice('mtpe_draft_'.length));
+        if (k && k.indexOf('mtpe_draft_') === 0) {
+          const d = JSON.parse(localStorage.getItem(k) || 'null');
+          if (d && mineNick(d.nick)) out.push(k.slice('mtpe_draft_'.length));
+        }
       }
     } catch (e) {}
     return out;
   }
 
-  /* 进度汇总：只读 localStorage（练习/测评记录 + 标注交卷摘要） */
+  /* 进度汇总：只读 localStorage（练习/测评记录 + 标注交卷摘要）——只算"本人"的记录 */
   function summary() {
-    const hs = get('history', []) || [];
-    const ann = get('ann_stats', []) || [];
+    const n = curNick();
+    const mineH = (x) => !n || (!!x && x.nickname === n);
+    const mineA = (x) => !n || (!!x && x.nick === n);
+    const hs = ((get('history', []) || [])).filter(mineH);
+    const ann = ((get('ann_stats', []) || [])).filter(mineA);
     const practice = hs.filter((h) => !isExamRecord(h));
     const exams = hs.filter(isExamRecord);
     const avg = (arr, k) => arr.length
@@ -199,6 +208,8 @@
     try {
       localStorage.setItem('mtpe_nickname', JSON.stringify(v));
       localStorage.setItem('mtpe_nickname_set', '1');
+      /* 认领：把登录后带账号名戳的记录改标成刚填的姓名，否则按昵称过滤后看不见 */
+      if (window.mtpeClaimRecords) window.mtpeClaimRecords(v);
     } catch (e) { if (tip) tip.textContent = '保存失败：本机存储不可用。'; return; }
     render();
   };

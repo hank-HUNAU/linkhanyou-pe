@@ -98,8 +98,44 @@
   window.mtpeLogout = function () {
     try { localStorage.removeItem(CK); localStorage.removeItem(CKTS); } catch (e) {}
     try { localStorage.removeItem(KEY); } catch (e) {}
+    /* 机房串号修复（2026-10-17）：昵称一并清掉 → 下一个登录者不会看到上一人的
+       记录（各页按昵称过滤读取）。草稿等带 nick 戳的数据留在本机，本人下次
+       登录报同一姓名后仍能看到；没有 nick 戳的旧数据不会被任何新用户看到。 */
+    try { localStorage.removeItem('mtpe_nickname'); localStorage.removeItem('mtpe_nickname_set'); } catch (e) {}
     LEGACY.forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} });
     location.reload();
+  };
+
+  /* 首次填真实姓名时的"认领"：登录时昵称被预置成账号名（如 hunau-pe-01），
+     这段时间里产生的记录都带着账号名戳。学生报上姓名后，把这些记录改标成
+     姓名——否则按昵称过滤后它们会被当成"别人的"而看不见。 */
+  window.mtpeClaimRecords = function (name) {
+    try {
+      const acc = localStorage.getItem('mtpe_account') || '';
+      if (!acc || !name) return;
+      /* ②改/③测 成绩（mtpe_history 的 nickname 字段；账号名戳与"匿名"都认领） */
+      const h = JSON.parse(localStorage.getItem('mtpe_history') || '[]');
+      if (Array.isArray(h)) {
+        let ch = false;
+        h.forEach(function (r) { if (r && (r.nickname === acc || r.nickname === '匿名')) { r.nickname = name; ch = true; } });
+        if (ch) localStorage.setItem('mtpe_history', JSON.stringify(h));
+      }
+      /* ②改 草稿（mtpe_draft_* 的 nick 字段） */
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k || k.indexOf('mtpe_draft_') !== 0) continue;
+        const d = JSON.parse(localStorage.getItem(k) || 'null');
+        if (d && d.nick === acc) { d.nick = name; localStorage.setItem(k, JSON.stringify(d)); }
+      }
+      /* ①找 的标注统计与错题本（nick 字段） */
+      ['ann_wrongbook', 'mtpe_ann_stats', 'mtpe_ann_term_stats'].forEach(function (k) {
+        const a = JSON.parse(localStorage.getItem(k) || '[]');
+        if (!Array.isArray(a)) return;
+        let ch = false;
+        a.forEach(function (x) { if (x && x.nick === acc) { x.nick = name; ch = true; } });
+        if (ch) localStorage.setItem(k, JSON.stringify(a));
+      });
+    } catch (e) {}
   };
 
   /* 当前登录账号（导出作业带学号用） */
@@ -236,6 +272,10 @@
       localStorage.setItem(CKTS, String(Date.now()));
       localStorage.setItem(KEY, id);
       localStorage.setItem('mtpe_nickname', JSON.stringify(id));
+      /* 机房串号修复：新登录者先回到"未报到"状态——首页会再问一次姓名/学号。
+         不清的话，上一位学生的 nickname_set=1 残留，新学生的记录会带着账号名戳
+         混进上一人的统计口径。 */
+      localStorage.removeItem('mtpe_nickname_set');
       LEGACY.forEach(function (x) { try { localStorage.removeItem(x); } catch (e) {} });
       location.reload();
     } catch (e) {

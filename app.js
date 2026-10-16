@@ -106,7 +106,20 @@ const getNick = () => store.get('nickname', '');
    班级汇总按这个身份归档，所以导出作业前必须先填。 */
 const hasNick = () => !!store.get('nickname_set', 0);
 const allTasks = () => TASKS;
-const history = () => store.get('history', []);
+/* 机房串号修复（2026-10-17）：记录按当前昵称过滤，只看"本人"的。
+   昵称取不到（测试桩/异常环境）时不过滤，保持旧行为。
+   historyRaw 供写回用（合并时不能把别人的记录冲掉）。 */
+const curNick = () => { try { return JSON.parse(localStorage.getItem('mtpe_nickname') || '""') || ''; } catch (e) { return ''; } };
+const mineRec = (r) => { const n = curNick(); return !n || (!!r && r.nickname === n); };
+const historyRaw = () => store.get('history', []);
+const history = () => historyRaw().filter(mineRec);
+/* 草稿只认自己的：草稿带保存时的昵称戳，别人的草稿一律当作不存在 */
+const myDraft = (id) => {
+  const d = store.get('draft_' + id, null);
+  if (!d) return null;
+  const n = curNick();
+  return (!n || d.nick === n) ? d : null;
+};
 
 /* 两类"交卷"的口径判断（isExamRecord）与统计页一起搬到了 report.js / stats.js；
    本页只在结果页标题里用到它，改由 window.mtpeIsExamRecord 提供。 */
@@ -159,6 +172,8 @@ function saveNickname() {
  if (!v) { toast('昵称不能为空'); return; }
  store.set('nickname', v);
  store.set('nickname_set', 1);
+ /* 认领：把登录后带账号名戳的记录改标成刚填的姓名，否则按昵称过滤后看不见 */
+ if (window.mtpeClaimRecords) window.mtpeClaimRecords(v);
  updateNickBadge();
  closeModal();
  if (window._nickCb) { const cb = window._nickCb; window._nickCb = null; cb(); }
@@ -187,7 +202,7 @@ function renderPlaza() {
  <div class="task-grid">
  ${tasks.filter(t => t.group !== 'history').map(t => {
  const wc = t.segs.reduce((s, g) => s + wordCount(g.src), 0);
- const draft = store.get('draft_' + t.id, null);
+ const draft = myDraft(t.id);
  return `
  <div class="task-card">
  <div class="t-head">
@@ -219,7 +234,7 @@ function renderPlaza() {
  <div class="task-grid" style="margin-top:12px">
  ${hist.map((t) => {
  const wc = t.segs.reduce((s, g) => s + wordCount(g.src), 0);
- const draft = store.get('draft_' + t.id, null);
+ const draft = myDraft(t.id);
  return `
  <div class="task-card">
  <div class="t-head">
@@ -250,10 +265,11 @@ function openSetup(taskId, mode) {
 
  if (!getNick() && mode === 'competition') { askNickname(() => openSetup(taskId, mode)); return; }
 
- if (mode === 'practice' && store.get('draft_' + taskId, null)) {
+ const myPrev = myDraft(taskId);
+ if (mode === 'practice' && myPrev) {
  openModal(`
  <h3>检测到练习草稿</h3>
- <div class="info-box">上次练习已编辑 ${store.get('draft_' + taskId).done} 段，可继续或重新开始。</div>
+ <div class="info-box">上次练习已编辑 ${myPrev.done} 段，可继续或重新开始。</div>
  <div class="m-actions">
  <button class="btn btn-ghost" onclick="closeModal();startSession('${taskId}','practice',true)">重新开始</button>
  <button class="btn btn-primary" onclick="closeModal();startSession('${taskId}','practice')">继续上次草稿</button>
@@ -269,7 +285,7 @@ function openSetup(taskId, mode) {
 
  if (mode === 'competition') {
  /* 有过没做完的限时练习 → 先问"继续还是重开"，继续时接着剩余时间计时 */
- const d = store.get('draft_' + taskId, null);
+ const d = myDraft(taskId);
  if (d && d.mode === 'competition' && (d.remain || 0) > 30) {
  openModal(`<h3>继续上次限时练习？</h3>
  <div class="info-box">上次还剩 <b>${fmtTime(Math.floor(d.remain))}</b>，已编辑 ${d.done || 0}/${task.segs.length} 段。<br>继续会接着剩余时间计时（不会因为刷新而多出时间）。</div>
@@ -312,7 +328,7 @@ function startSession(taskId, mode, fresh, remainSec) {
  let resumed = false;
  let dur = mode === 'competition' ? (window._dur || task.minutes) * 60 : 0;
  if (mode !== 'demo' && !fresh) {
- const draft = store.get('draft_' + taskId, null);
+ const draft = myDraft(taskId);
  if (draft && Array.isArray(draft.answers) && draft.answers.length) {
  answers = draft.answers; resumed = true;
  /* 限时练习：接着剩余时间计时（不是重新计时） */
@@ -391,7 +407,7 @@ function onAnswerInput(i, val) {
  clearTimeout(S.draftSaveTm);
  S.draftSaveTm = setTimeout(() => {
  const done = S.answers.filter((a, k) => a && a.trim() && a.trim() !== (S.task.segs[k].mt || '').trim()).length;
- const rec = { answers: S.answers, done, savedAt: now(), mode: S.mode };
+ const rec = { answers: S.answers, done, savedAt: now(), mode: S.mode, nick: getNick() || '匿名' };
  if (S.mode === 'competition') {
  rec.dur = S.duration;
  rec.remain = Math.max(0, S.duration - Math.floor((Date.now() - S.startTs) / 1000));
@@ -601,7 +617,7 @@ function submitSession() {
  };
 
  stopSession(true);
- if (saveHistory([record].concat(history()).slice(0, 200))) {
+ if (saveHistory([record].concat(historyRaw()).slice(0, 200))) {
  toast('本机存储接近上限：已自动精简较早记录的逐段明细（分数、日期与画像保留）');
  }
  renderResult(record);

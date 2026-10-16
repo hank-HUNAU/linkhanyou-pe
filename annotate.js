@@ -32,8 +32,17 @@ const SEV_COLOR = { Critical: 'var(--r)', Major: 'var(--a)', Minor: 'var(--b)' }
 /* ---------------- 优化B：错误维度组卷 / 错题本 ---------------- */
 const DIM_LIST = ['准确性', '术语', '语言规范', '风格', '区域规范', '格式'];
 function qs() { try { return new URLSearchParams(location.search); } catch (e) { return new URLSearchParams(''); } }
-function wrongbook() { return store.get('wrongbook', []) || []; }
-function saveWrongbook(list) { store.set('wrongbook', list.slice(0, 300)); }
+/* 机房串号修复（2026-10-17）：标注数据带保存时的昵称戳（nick），读取只认"本人"。
+   当前昵称取不到（测试桩/异常环境）时不过滤，保持旧行为。 */
+function curNick() { try { return JSON.parse(localStorage.getItem('mtpe_nickname') || '""') || ''; } catch (e) { return ''; } }
+function mineBy(a) { const n = curNick(); return !n || (!!a && a.nick === n); }
+
+function wrongbook() { return (store.get('wrongbook', []) || []).filter(mineBy); }
+/* 写回时保留"别人的"条目：只合并本人的新旧条目，不冲掉其他用户留在本机的错题 */
+function saveWrongbook(mineList) {
+ const others = (store.get('wrongbook', []) || []).filter((w) => w && w.nick && w.nick !== curNick());
+ store.set('wrongbook', mineList.concat(others).slice(0, 300));
+}
 function clearWrong() { store.del('wrongbook'); renderSetup(); toast('错题本已清空'); }
 function wrongKeys() { return [...new Set(wrongbook().map(w => w.k))]; }
 
@@ -439,22 +448,27 @@ function submitAnn() {
  const seen = new Set(oldWB.map(w => w.k + '|' + w.span + '|' + w.tag + '|' + w.kind));
  const stamp = new Date().toLocaleString('zh-CN', { hour12: false });
  const wrongAdded = wrongNew.filter(w => !seen.has(w.k + '|' + w.span + '|' + w.tag + '|' + w.kind))
- .map(w => ({ ...w, date: stamp }));
+ .map(w => ({ ...w, date: stamp, nick: curNick() }));
  if (wrongAdded.length) saveWrongbook(wrongAdded.concat(oldWB));
  const wrongTotal = wrongKeys().length;
  const precision = (TP + FP) ? Math.round(TP / (TP + FP) * 1000) / 10 : 0;
  const recall = (TP + FN) ? Math.round(TP / (TP + FN) * 1000) / 10 : 0;
  const f1 = (precision + recall) ? Math.round(2 * precision * recall / (precision + recall) * 10) / 10 : 0;
 
- const result = { date: new Date().toLocaleString('zh-CN', { hour12: false }), TP, FP, FN, tagWrong, sevWrong, precision, recall, f1, perPair, pairsN: A.paper.length, tagged: Object.values(A.anns).reduce((s, a) => s + a.length, 0), wrongAdded: wrongAdded.length, wrongTotal };
- const rs = store.get('results', []); rs.unshift(result); store.set('results', rs.slice(0, 50));
+ const result = { date: new Date().toLocaleString('zh-CN', { hour12: false }), TP, FP, FN, tagWrong, sevWrong, precision, recall, f1, perPair, pairsN: A.paper.length, tagged: Object.values(A.anns).reduce((s, a) => s + a.length, 0), wrongAdded: wrongAdded.length, wrongTotal, nick: curNick() };
+ /* 结果与统计都只合并"本人的"再写回，其他用户留在本机的条目原样保留 */
+ const myResults = (store.get('results', []) || []).filter(mineBy);
+ myResults.unshift(result); store.set('results', myResults.slice(0, 50));
  /* 同步到主平台「我的统计」：
     专项卷单独存 mtpe_ann_term_stats —— 它的题目围绕同一术语聚集，混进常规 F1 会稀释诊断力。 */
  result.special = A.special ? A.special.name : '';
  try {
- const st = JSON.parse(localStorage.getItem(result.special ? 'mtpe_ann_term_stats' : 'mtpe_ann_stats') || '[]');
- st.unshift({ date: result.date, paper: result.special || '', precision, recall, f1, TP, FP, FN, tagWrong, sevWrong, pairsN: result.pairsN, tagged: result.tagged });
- localStorage.setItem(result.special ? 'mtpe_ann_term_stats' : 'mtpe_ann_stats', JSON.stringify(st.slice(0, 50)));
+ const key = result.special ? 'mtpe_ann_term_stats' : 'mtpe_ann_stats';
+ const raw = JSON.parse(localStorage.getItem(key) || '[]') || [];
+ const others = raw.filter((x) => x && x.nick && x.nick !== curNick());
+ const mine = raw.filter(mineBy);
+ mine.unshift({ date: result.date, paper: result.special || '', precision, recall, f1, TP, FP, FN, tagWrong, sevWrong, pairsN: result.pairsN, tagged: result.tagged, nick: curNick() });
+ localStorage.setItem(key, JSON.stringify(mine.slice(0, 50).concat(others.slice(0, 150))));
  } catch (e) {}
  store.del('paper');
  renderResult(result);
@@ -511,7 +525,7 @@ function renderResult(r) {
 }
 /* ---- 导出标注 JSON（字段与 pair_annotations.csv 对齐，可并回 mtpe.db） ---- */
 function exportAnnJSON() {
- const rs = store.get('results', []);
+ const rs = (store.get('results', []) || []).filter(mineBy);
  const r = rs[0];
  if (!r) { toast('没有可导出的标注'); return; }
  const payload = {

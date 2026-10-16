@@ -18,6 +18,10 @@ const store = {
 };
 function toast(m){ const t=$('#toast'); if(!t)return; t.textContent=m; t.style.opacity='1'; clearTimeout(t._m); t._m=setTimeout(()=>t.style.opacity='0',2000); }
 function fmt(s){ const m=Math.floor(s/60),x=s%60; return String(m).padStart(2,'0')+':'+String(x).padStart(2,'0'); }
+/* 机房串号修复（2026-10-17）：数据按当前昵称归属。当前昵称取不到（测试桩/异常环境）时不过滤。 */
+function curNick(){ try{ return JSON.parse(localStorage.getItem('mtpe_nickname')||'"匿名"')||''; }catch(e){ return ''; } }
+function mineNick(n){ const c=curNick(); return !c || n===c; }
+function myExamDraft(id){ const d=store.get('draft_'+id,null); return (d && mineNick(d.nick)) ? d : null; }
 
 /* ---- 词级 diff / TER（与主平台一致） ---- */
 function tokenize(s){ return (s.match(/[\u4e00-\u9fff]|[A-Za-z]+(?:'[a-z]+)?|\d+(?:\.\d+)?%?|[^\s]/g)||[]); }
@@ -72,7 +76,7 @@ function renderExams(){
  document.body.className='';
  /* 卡片模板抽成函数：最新届次与历史卷（第 1-6 届，14 套整卷）共用 */
  const card = (t) => {
-   const draft=store.get('draft_'+t.id,null);
+   const draft=myExamDraft(t.id);
    const enters=store.get('enters_'+t.id,0);
    const real = ![8,15,30].includes(t.minutes);
    const wc = t.segs.reduce((s,g)=>s+wordCountSrc(g.src),0);
@@ -128,7 +132,7 @@ function enterExam(id){
  if(enters>=3){ openModal(`<h3>无法进入测评</h3><div class="warn-box">该测评进入答题页面的次数已达 3 次上限（对齐真实赛制），无法再次作答。换一套试卷练习即可。</div>
  <div class="m-actions"><button class="btn btn-g" onclick="closeModal()">知道了</button></div>`); return; }
  store.set('enters_'+id, enters+1);
- const draft=store.get('draft_'+id,null);
+ const draft=myExamDraft(id);
  let answers=task.segs.map(g=>g.mt||''), resumed=false;
  let duration=minutes*60;
  if(draft){
@@ -418,7 +422,7 @@ function forceSubmit(msg){ if(S&&S.over)return; openModal(`<h3>强制交卷</h3>
 function saveExit(){
  const done=S.answers.filter((a,k)=>a&&a!==S.task.segs[k].mt).length;
  /* 连同"剩余秒数"一起存：再次进入时接着剩余时间计时，避免靠退出/刷新换回满时长 */
- store.set('draft_'+S.task.id,{answers:S.answers,done,savedAt:Date.now(),mode:'competition',
+ store.set('draft_'+S.task.id,{answers:S.answers,done,savedAt:Date.now(),mode:'competition',nick:curNick(),
    dur:S.duration,remain:Math.max(0,S.duration-Math.floor((Date.now()-S.startTs)/1000))});
  endExam(); renderExams(); toast('答题记录已保存，可从「进入训练」继续（剩余时间保留）');
 }
@@ -598,7 +602,7 @@ function buildProfile(r){
 function historyBest(taskId){
   try{
     const h = JSON.parse(localStorage.getItem('mtpe_history') || '[]') || [];
-    const s = h.filter(x => x && x.taskId === taskId).map(x => Number(x.score) || 0).filter(v => v > 0);
+    const s = h.filter(x => x && x.taskId === taskId && mineNick(x.nickname)).map(x => Number(x.score) || 0).filter(v => v > 0);
     return s.length ? Math.max(...s) : null;
   }catch(e){ return null; }
 }
@@ -732,7 +736,7 @@ function profileHTML(r){
 function wrongPairsCount(){
   try{
     const wb = JSON.parse(localStorage.getItem('ann_wrongbook') || '[]') || [];
-    return [...new Set(wb.map(w => w.k))].length;
+    return [...new Set(wb.filter(w => mineNick(w.nick)).map(w => w.k))].length;
   }catch(e){ return 0; }
 }
 function recommendHTML(r){
