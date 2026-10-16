@@ -1,5 +1,5 @@
 /* ============================================================
- * champion.js — 对标亚军（学生作答 vs 亚军画像）
+ * champion.js — 能力对标（学生作答 vs 亚军画像，2026-10-17 由「对标亚军」更名）
  *
  * 流程：广场（3 篇真题）→ 逐段译后编辑 → 结果页
  *   · educability（英→汉）/ 何园（汉→英）：以参考译文为基准，算学生画像，
@@ -219,7 +219,7 @@
     app.innerHTML =
       '<div class="wrap wide">'
       + '<div class="c-hero">'
-      + '<h1>对标亚军</h1>'
+      + '<h1>能力对标</h1>'
       + '<p class="c-hero-sub">以 ' + esc(window.CHAMPION.event) + ' ' + esc(window.CHAMPION.task) + ' 的亚军选手为基准，'
       + '从她的真实作答提炼能力画像，判断你的强弱项。</p>'
       + '</div>'
@@ -255,7 +255,7 @@
       + '<textarea class="c-edit" data-i="' + i + '" rows="' + Math.max(3, Math.ceil((seg.mt || '').length / 55) + 1) + '" placeholder="在机翻底稿上修改…">' + esc(seg.mt) + '</textarea>'
       + '</div>').join('');
     app.innerHTML =
-      '<div class="c-answerbar"><span class="step-tag s3">对标亚军 · 作答中</span>'
+      '<div class="c-answerbar"><span class="step-tag s3">能力对标 · 作答中</span>'
       + '<span class="c-ans-name">' + esc(t.name) + '</span>'
       + '<span class="c-ans-count">' + t.segs.length + ' 段</span>'
       + '<button class="btn btn-primary" onclick="window.__champSubmit()">交卷对比</button></div>'

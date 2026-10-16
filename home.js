@@ -86,10 +86,10 @@
     /* 平台账号是课上统一发放的共享账号 → 先让本人报上姓名/学号，成绩才认得出是谁 */
     if (!get('nickname_set', 0)) return { setupName: true };
     if (dr.length) {
-      return { href: 'practice.html', cta: '继续上次练习', why: '有 ' + dr.length + ' 份没做完的练习草稿，接着改比重新开一套划算。' };
+      return { href: 'practice.html', cta: '继续上次练习', why: '有 ' + dr.length + ' 份草稿没做完，接着改最划算。' };
     }
     if (!s.annN && !s.practiceN && !s.examN) {
-      return { href: 'annotate.html', cta: '开始第一练 · 标注 10 句', why: '先练「找」：判断哪里该改是译后编辑的第一步，10 句约 10 分钟，交卷立即有查准率 / 查全率 / F1。' };
+      return { href: 'annotate.html', cta: '开始第一练 · 标注 10 句', why: '从「找」开始：10 句约 10 分钟，交卷立即出 F1。' };
     }
     /* 有测评画像时优先给"针对最弱维度"的建议 —— 这是全站最有信息量的一条线索 */
     const wd = weakestDim();
@@ -97,98 +97,94 @@
       return {
         href: 'annotate.html?dim=' + encodeURIComponent(wd.dim) + '&n=15&go=1',
         cta: '加练「' + wd.dim + '」15 句',
-        why: '上次测评里「' + wd.dim + '」还剩 ' + wd.n + ' 处没改对（五个维度中最多）。点进去已按该维度组好 15 句——这类句对多数没有种子标注，交卷不计分，练的是手感。'
+        why: '上次测评「' + wd.dim + '」还剩 ' + wd.n + ' 处没改对（最多）。已按该维度组好 15 句，交卷不计分。'
       };
     }
     if (s.annN && s.annF1 != null && s.annF1 < 70) {
-      return { href: 'annotate.html', cta: '加练「找」10 句', why: '「找」的平均 F1 是 ' + s.annF1 + '%——漏检或多余标注还偏多，这是当前最短的一块板。' };
+      return { href: 'annotate.html', cta: '加练「找」10 句', why: '「找」平均 F1 只有 ' + s.annF1 + '%，当前最短的一块板。' };
     }
     if (!s.practiceN) {
-      return { href: 'practice.html', cta: '开始练「改」', why: '还没做过整篇改写：在机翻底稿上动手改一遍，才知道"该改的地方"改到什么程度算够。' };
+      return { href: 'practice.html', cta: '开始练「改」', why: '还没改过整篇机翻底稿，动手改一遍。' };
     }
     if (!s.examN) {
-      return { href: 'pe-exam.html', cta: '去「测」估一次分', why: '还没交过卷。练习分不是测评口径，先摸清自己在测评口径下的位置。' };
+      return { href: 'pe-exam.html', cta: '去「测」估一次分', why: '还没交过卷——练习分不是测评口径，先摸一次底。' };
     }
-    return { href: 'pe-exam.html', cta: '再测一次', why: '测评最好成绩 ' + num(s.examBest) + ' 分。换一套没做过的卷子，检验这段时间的进步。' };
+    return { href: 'pe-exam.html', cta: '再测一次', why: '测评最高 ' + num(s.examBest) + ' 分。换套新卷，检验进步。' };
   }
 
   function render() {
     const s = summary();
     const dr = drafts();
     const nx = nextStep(s, dr);
-    /* 2026-10-12：首页按状态分两个版本——
-       新账号只看到"下一步建议 + 三步入口卡"（那三张卡本身就是入口，不必再摆一排 0 与按钮）；
-       有记录后把三步卡收掉、让"我的进度"顶上来。 */
-    const empty = (s.practiceN + s.annN + s.examN) === 0;
     const lastBits = [];
     if (s.lastPractice) lastBits.push('上次练习《' + esc(s.lastPractice.taskName) + '》得分 ' + s.lastPractice.score);
     if (s.lastExam) lastBits.push('上次仿真训练《' + esc(s.lastExam.taskName) + '》得分 ' + s.lastExam.score
       + (s.lastExam.profile && s.lastExam.profile.quadrant ? '（' + esc(s.lastExam.profile.quadrant) + '）' : ''));
 
+    /* 2026-10-17 工作台 v2（反向自《四六级工作台》）：左＝深靛紫侧边栏导航
+       （首页 + 6 模块），右＝聚焦主区（渐变 hero：下一步建议 + 核心数字，
+       下方最近成绩与三步说明卡）。数据逻辑不变。 */
+    const wk = '日一二三四五六'[new Date().getDay()];
+    const today = new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' }) + ' 星期' + wk;
+
     app.innerHTML = `
-  <section class="home-hero">
-    <h1>译后编辑实训平台</h1>
-    <p>按「<b>找 → 改 → 测</b>」三步练译后编辑。</p>
-  </section>
+  <div class="wb-app">
+    <aside class="wb-side">
+      <div class="wb-logo"><h1>译后编辑实训平台</h1><p id="wb-date">${esc(today)}</p></div>
+      <nav class="wb-nav">
+        <a class="on" href="index.html">🏠 聚焦首页</a>
+        <a href="stats.html">📊 我的统计</a>
+        <a href="settings.html">⚙️ 我的设置</a>
+        <a href="annotate.html">🔍 标注实训 <span class="tag">① 找</span></a>
+        <a href="practice.html">✏️ 改译实训 <span class="tag">② 改</span></a>
+        <a href="pe-exam.html">⏱️ 仿真训练 <span class="tag">③ 测</span></a>
+        <a href="champion.html">🎯 能力对标</a>
+      </nav>
+      <div class="wb-foot">语料加密封存 · 离线可用</div>
+    </aside>
+    <main class="wb-main">
+      <section class="wb-focus">
+        <div class="hn-tag">聚焦 · 下一步</div>
+        ${nx.setupName ? `
+        <div class="wb-hero-big">先报上姓名／学号</div>
+        <div class="hn-why">共享账号按姓名认人：作业导出与班级汇总都用它。</div>
+        <div class="wb-hero-input">
+          <input id="hn-name" maxlength="20" placeholder="例如：2024级翻译2班 张三">
+          <button class="wb-hero-btn" onclick="mtpeSaveName()">保存</button>
+        </div>
+        <div class="hn-tip" id="hn-tip"></div>` : `
+        <div class="wb-hero-big">${esc(nx.cta)}</div>
+        <div class="hn-why">${esc(nx.why)}</div>
+        <a class="wb-hero-btn" href="${nx.href}">现在开始</a>`}
+        <div class="wb-hero-stats">
+          <div class="stat"><div class="n">${s.practiceN}</div><div class="l">改译次数</div></div>
+          <div class="stat"><div class="n">${pct(s.annF1)}</div><div class="l">标注 F1</div></div>
+          <div class="stat"><div class="n">${num(s.examBest)}</div><div class="l">仿真最高</div></div>
+          <div class="stat"><div class="n">${dr.length}</div><div class="l">未完成草稿</div></div>
+        </div>
+        <div class="wb-theory">刻意练习：目标明确 · 反馈即时 · 重复针对 <span>— Shreve, 2006（转用 Ericsson et al., 1993）</span></div>
+      </section>
 
-  <div class="home-next">
-    <div class="hn-tag">下一步</div>
-    <div class="hn-body">
-      ${nx.setupName ? `
-      <div class="hn-why">先填一下你的<b>姓名</b>（或"学号+姓名"）：导出作业、老师汇总班级成绩都要靠它认人——平台账号是课上统一发放的共享账号，不填就会把全班成绩并到一起。</div>
-      <div class="hn-act">
-        <input id="hn-name" maxlength="20" placeholder="例如：2024级翻译2班 张三" style="flex:1;min-width:220px;padding:9px 12px;border:1px solid rgba(0,0,0,.15);border-radius:10px;font-size:14px">
-        <button class="btn btn-primary" onclick="mtpeSaveName()">保存</button>
+      <div class="wb-card">
+        <h3>最近成绩</h3>
+        ${lastBits.length ? `<div class="wb-last">${lastBits.join('<br>')}</div>`
+          : '<div class="wb-last">还没有记录，先去「标注实训」练一卷。</div>'}
       </div>
-      <div class="hn-tip" id="hn-tip"></div>` : `
-      <div class="hn-why">${esc(nx.why)}</div>
-      <div class="hn-act"><a class="btn btn-primary" href="${nx.href}">${esc(nx.cta)}</a></div>`}
-    </div>
-  </div>
 
-  ${empty ? `<div class="step-strip home-steps">
-    <a class="step-card" href="annotate.html">
-      <b>① 找 · 标注实训</b>
-      <span>在机器译文上划出错误片段并定性。交卷与种子标注比对，给出查准率 / 查全率 / F1。</span>
-      <em>练眼力：漏检和过度标注都算错</em>
-    </a>
-    <a class="step-card" href="practice.html">
-      <b>② 改 · 译后编辑练习</b>
-      <span>在机器译文底稿上动手改。限时或自由练习，交卷看修订率与逐段对照。</span>
-      <em>练手法：练习分不是测评口径</em>
-    </a>
-    <a class="step-card" href="pe-exam.html">
-      <b>③ 测 · 仿真训练</b>
-      <span>限时交卷：整页独占、切屏计数、禁复制粘贴、倒计时。交卷给出评分与四项画像。</span>
-      <em>练状态：赛前用它估分、找短板</em>
-    </a>
-  </div>` : ''}
+      <div class="wb-grid3">
+        <div class="wb-mini"><span class="mt m1">① 找 · 标注实训</span>
+          <div class="mp">划错定性 · 对照种子 · 查准率 / 查全率 / F1</div>
+          <a href="annotate.html">进入标注实训 →</a></div>
+        <div class="wb-mini"><span class="mt m2">② 改 · 改译实训</span>
+          <div class="mp">机翻逐段润色 · 限时 / 自由 · 修订率与逐段点评</div>
+          <a href="practice.html">进入改译实训 →</a></div>
+        <div class="wb-mini"><span class="mt m3">③ 测 · 仿真训练</span>
+          <div class="mp">赛场还原 · 限时交卷 · 评分与四项画像</div>
+          <a href="pe-exam.html">进入仿真训练 →</a></div>
+      </div>
 
-  ${empty ? '' : `<div class="board home-progress">
-    <h3>我的进度</h3>
-    <div class="score-hero">
-      <div class="stat-box"><div class="v">${s.practiceN}</div><div class="l">「改」完成次数</div></div>
-      <div class="stat-box"><div class="v green">${num(s.practiceAvg)}</div><div class="l">「改」平均得分</div></div>
-      <div class="stat-box"><div class="v">${s.annN}</div><div class="l">「找」标注卷数</div></div>
-      <div class="stat-box"><div class="v green">${pct(s.annF1)}</div><div class="l">「找」平均 F1</div></div>
-      <div class="stat-box"><div class="v">${s.examN}</div><div class="l">「测」交卷次数</div></div>
-      <div class="stat-box"><div class="v amber">${num(s.examBest)}</div><div class="l">「测」最高分</div></div>
-    </div>
-    ${lastBits.length ? `<div class="home-last">${lastBits.join(' ｜ ')}</div>` : ''}
-    <div class="home-actions">
-      <a class="btn btn-primary" href="annotate.html">开始练「找」</a>
-      <a class="btn btn-primary" href="practice.html">开始练「改」</a>
-    <a class="btn btn-outline" href="pe-exam.html">进入仿真训练</a>
-      <button id="mtpe-install-btn" class="btn btn-ghost hidden" onclick="mtpeInstall()">安装到桌面</button>
-    </div>
-  </div>`}
-
-  <div class="board">
-    <h3>学习资源</h3>
-    <p class="muted" style="line-height:2">
-      · <a href="champion.html">对标亚军</a>：以亚军选手的能力画像为基准，判断你的译后编辑强弱项　｜　
-      · <a href="MQM错误类型参考手册.html">MQM 错误类型参考手册</a>：M1–M9 / M0 的定义与严重度判据　｜　导出成绩（作业 JSON / CSV）在顶栏「我的统计」
-    </p>
+      <button id="mtpe-install-btn" class="btn btn-ghost hidden" style="margin-top:18px" onclick="mtpeInstall()">安装到桌面</button>
+    </main>
   </div>`;
 
     syncInstall();
