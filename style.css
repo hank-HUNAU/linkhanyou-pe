@@ -31,6 +31,8 @@
 }
 
 main { max-width: 1180px; margin: 0 auto; padding: 26px 20px 60px; }
+/* 工作台首页铺满全屏：home.js 渲染时给 body 加 wb-home，豁免上面的元素级 main 限宽 */
+body.wb-home main { max-width: none; margin: 0; padding: 0; }
 
 /* 广场页头、卡片、标签、按钮、提示块：见 ui.css（三页共用一份） */
 
