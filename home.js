@@ -128,7 +128,7 @@
     const today = new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' }) + ' 星期' + wk;
 
     /* 工作台铺满全屏：豁免元素级 main 限宽（style.css 的 main{max-width:1180px}） */
-    document.body.classList.add('wb-home');
+    try { document.body.classList.add('wb-home'); } catch (e) {}
     app.innerHTML = `
   <div class="wb-app">
     <aside class="wb-side">
