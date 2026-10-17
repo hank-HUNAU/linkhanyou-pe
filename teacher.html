@@ -3,20 +3,280 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>教学端 · 本地部署专用</title>
+<title>教师看板 · MTPE 实训平台</title>
+<link rel="stylesheet" href="ui.css">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="mtpe-nav"></div>
 <script src="nav.js"></script>
+<script src="supabase.js"></script>
 <main id="app">
-<div style="max-width:760px;margin:8vh auto;padding:0 22px">
-  <h1 style="font-size:22px;margin-bottom:12px">教学端仅在本地 / 私有部署提供</h1>
-  <p style="color:var(--text-2);line-height:1.9">
-    公开部署只发布学生端（译后编辑实训 + 模拟参赛）。教学端含内部基线、讲评编排与班级数据，为防外泄已从公开站点移除。<br/>教师请在本机打开项目目录中的 <code>teacher.html</code>，本地副本内容完整，登录口令不变。
-  </p>
-  <p style="margin-top:20px"><a class="btn btn-primary" href="index.html" style="text-decoration:none">← 返回实训端</a> ｜ <a class="btn btn-ghost" href="annotate.html" style="text-decoration:none">进入标注实训</a></p>
+<style>
+  .dash-wrap { max-width: 1280px; margin: 0 auto; padding: 26px 22px 60px; }
+  .dash-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+  .dash-head h1 { font-size: 21px; margin: 0; }
+  .dash-state { font-size: 12.5px; padding: 4px 12px; border-radius: 99px; background: var(--primary-light, #eef4ff); color: var(--primary-dark, #1c3f94); }
+  .dash-state.err { background: #fdecec; color: #b3261e; }
+  .dash-state.ok { background: #e8f5ee; color: #1c7c4c; }
+  .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; }
+  .dash-card { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px rgba(16,24,40,.08); }
+  .dash-card h2 { font-size: 15.5px; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
+  .dash-card h2 .pill { font-size: 10.5px; font-weight: 600; color: #fff; padding: 2px 9px; border-radius: 99px; }
+  .dash-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .dash-table th { text-align: left; color: var(--text-2, #6e6e73); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid rgba(0,0,0,.08); white-space: nowrap; }
+  .dash-table td { padding: 7px 8px; border-bottom: 1px solid rgba(0,0,0,.05); }
+  .dash-table tr:last-child td { border-bottom: none; }
+  .dash-table .num { font-variant-numeric: tabular-nums; }
+  .sum-row { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 18px; }
+  .sum-row .stat { background: #fff; border-radius: 14px; padding: 14px 22px; box-shadow: 0 1px 3px rgba(16,24,40,.08); }
+  .sum-row .stat .n { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .sum-row .stat .l { font-size: 12px; color: var(--text-2, #6e6e73); margin-top: 2px; }
+  .bar-cell { display: flex; align-items: center; gap: 8px; }
+  .bar-cell .bar { height: 8px; border-radius: 4px; background: linear-gradient(90deg, #4f46e5, #7c3aed); min-width: 2px; }
+  .muted { color: var(--text-2, #6e6e73); }
+  .key-panel { background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 1px 3px rgba(16,24,40,.08); max-width: 640px; margin: 10vh auto; }
+  .key-panel input { width: 100%; padding: 10px 14px; border: 1px solid rgba(0,0,0,.15); border-radius: 10px; font: 13px/1.4 monospace; }
+  .tag-pill { display: inline-block; background: var(--primary-light, #eef4ff); color: var(--primary-dark, #1c3f94); font-size: 11.5px; padding: 2px 10px; border-radius: 99px; margin: 2px 4px 2px 0; }
+</style>
+<div class="dash-wrap">
+  <div class="dash-head">
+    <h1>教师看板</h1>
+    <span id="dash-state" class="dash-state">未连接</span>
+    <span style="flex:1"></span>
+    <button class="btn btn-ghost" onclick="loadAll(true)">刷新</button>
+    <button class="btn btn-ghost" onclick="exportClassCSV()">导出 CSV</button>
+    <button class="btn btn-ghost" onclick="resetKey()">换密钥</button>
+  </div>
+  <div id="dash-body"><div class="key-panel">
+    <h2 style="margin:0 0 10px">教师口令登录</h2>
+    <p class="muted" style="font-size:13.5px;line-height:1.8">
+      输入<b>教师口令</b>查看全班数据。口令只存在<b>本机浏览器</b>（localStorage），不进代码、不进公开仓库。<br>
+      数据隔离由 Supabase RLS 保证：口令正确才可读全班，无口令/错口令只能看到空表。
+    </p>
+    <input id="srk" type="password" placeholder="输入教师口令（KR_…）" style="margin:14px 0">
+    <p id="srk-tip" class="muted" style="font-size:12px;margin:0 0 10px"></p>
+    <button class="btn btn-primary" onclick="saveKey()">进入看板</button>
+    <p class="muted" style="font-size:12px;margin-top:14px">换机 / 换浏览器需重新输入一次；口令可由教师随时在后端轮换。</p>
+  </div></div>
 </div>
+
+<script>
+(function () {
+  'use strict';
+  var URL = 'https://fdvypkybxhkdpvfepskf.supabase.co';
+  var PKEY = 'sb_publishable_5T_3drNAt7fzqIXrxFc5ww_8yotMUfd';
+  var KKEY = 'mtpe_teacher_gate';
+  var client = null, CACHE = null;
+
+  function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function num(v, dash) { return (v == null || v === '' || isNaN(Number(v))) ? (dash || '—') : Number(v); }
+  function setState(txt, cls) { var el = document.getElementById('dash-state'); if (el) { el.textContent = txt; el.className = 'dash-state ' + (cls || ''); } }
+
+  function getKey() { try { return localStorage.getItem(KKEY) || ''; } catch (e) { return ''; } }
+  window.saveKey = function () {
+    /* Dashboard 复制的内容常带换行/空格——fetch 头里出现换行会直接 TypeError: Failed to fetch */
+    var v = (document.getElementById('srk').value || '').replace(/\s+/g, '');
+    var tip = document.getElementById('srk-tip');
+    if (!v) return;
+    if (/^eyJ|^sb_secret_/.test(v)) {
+      /* 用户误把 service_role 密钥当口令——拒绝并提示，避免服务端密钥流入前端 */
+      if (tip) { tip.textContent = '这是 service_role 服务端密钥，不能填这里。请输入教师口令（KR_…）。'; tip.style.color = '#b3261e'; }
+      return;
+    }
+    if (v.length < 12) {
+      if (tip) { tip.textContent = '口令长度不对，请核对后重输。'; tip.style.color = '#b3261e'; }
+      return;
+    }
+    if (tip) { tip.textContent = ''; tip.style.color = ''; }
+    try { localStorage.setItem(KKEY, v); } catch (e) {}
+    boot();
+  };
+  window.resetKey = function () { try { localStorage.removeItem(KKEY); } catch (e) {} location.reload(); };
+
+  function boot() {
+    var key = getKey().replace(/\s+/g, '');
+    if (key) { try { localStorage.setItem(KKEY, key); } catch (e) {} }   // 清洗历史输入里混入的换行
+    if (!key) return;   // 停留在口令面板
+    if (typeof supabase === 'undefined' || !supabase.createClient) { setState('库未加载（需联网首次打开）', 'err'); return; }
+    setState('验证口令…');
+    client = supabase.createClient(URL, PKEY, { global: { headers: { 'x-teacher-key': key } } });
+    /* 口令探测：teacher_gate 行仅在头内口令与库中密钥一致时可见 */
+    client.from('teacher_gate').select('key').limit(1).then(function (r) {
+      if (r.error) {
+        setState('口令验证失败', 'err');
+        showPanel('口令验证出错', '<p style="font-size:13px;color:#b3261e">' + esc(String(r.error.message || r.error).slice(0, 120)) + '</p><p class="muted" style="font-size:13px">常见原因：网络不通 / 项目暂停。请重试。</p>');
+        return;
+      }
+      if (!r.data || !r.data.length) {
+        setState('口令不对', 'err');
+        showPanel('口令不正确', '<p style="font-size:13px;color:#b3261e">输入的口令未通过验证。请核对教师口令（区分大小写、无多余空格）后重试。</p>');
+        try { localStorage.removeItem(KKEY); } catch (e) {}
+        return;
+      }
+      loadAll(false);
+    });
+  }
+
+  /* 口令面板（含错误提示位）——首次进入与验证失败共用，失败后可直接重输，不必刷新 */
+  function showPanel(errHtml) {
+    document.getElementById('dash-body').innerHTML = '<div class="key-panel"><h2 style="margin:0 0 10px">教师口令登录</h2>'
+      + errHtml
+      + '<input id="srk" type="password" placeholder="输入教师口令（KR_…）" style="margin:14px 0">'
+      + '<p id="srk-tip" class="muted" style="font-size:12px;margin:0 0 10px"></p>'
+      + '<button class="btn btn-primary" onclick="saveKey()">进入看板</button>'
+      + '<p class="muted" style="font-size:12px;margin-top:14px">口令只存在本机浏览器；数据隔离由 Supabase RLS 保证，口令正确才可读全班。</p></div>';
+  }
+
+  window.loadAll = function (manual) {
+    if (!client) { boot(); return; }
+    if (manual) setState('加载中…');
+    Promise.all([
+      client.from('students').select('id,account,nickname,last_seen_at'),
+      client.from('attempts').select('user_id,client_id,task_id,task_name,mode,score,ter,seg_done,total,words,time_used,created_at,profile'),
+      client.from('annotation_sessions').select('user_id,paper,special,precision_pct,recall_pct,f1,tp,fp,fn,tag_wrong,sev_wrong,pairs_n,created_at'),
+      client.from('wrongbook').select('user_id,pair_key,span,tag,sev,kind,created_at')
+    ]).then(function (rs) {
+      var err = null;
+      rs.forEach(function (r) { if (r.error) err = r.error; });
+      if (err) throw err;
+      CACHE = { students: rs[0].data || [], attempts: rs[1].data || [], anns: rs[2].data || [], wrong: rs[3].data || [] };
+      setState('已连接 · 数据截至 ' + new Date().toLocaleTimeString('zh-CN', { hour12: false }), 'ok');
+      render();
+    }).catch(function (e) {
+      var msg = String(e.message || e);
+      if (/Failed to fetch|NetworkError|Load failed/i.test(msg)) {
+        setState('网络不通', 'err');
+        document.getElementById('dash-body').innerHTML = '<div class="key-panel"><h2 style="margin:0 0 10px">无法连接 supabase.co</h2>'
+          + '<p style="font-size:13.5px;line-height:1.9;color:var(--text-2)">fetch 被浏览器拒或网络不可达。按顺序排查：<br>'
+          + '① 浏览器另开 <code>https://fdvypkybxhkdpvfepskf.supabase.co/rest/v1/</code> —— 能看到 <code>{"code":401…}</code> 说明网络通，是密钥问题（重新粘贴，注意整段无换行）；<br>'
+          + '② 打不开 → 本机到 supabase.co 的网络不通（校园网拦截 / 代理未开 / VPN 需要开）——学生端上云走的同一网络，学生也不通时要先解决；<br>'
+          + '③ 换浏览器试（个别扩展会拦跨域请求）。</p>'
+          + '<button class="btn btn-ghost" onclick="resetKey()">重新输入口令</button></div>';
+        return;
+      }
+      setState('读取失败：' + msg.slice(0, 60), 'err');
+      document.getElementById('dash-body').innerHTML = '<div class="key-panel"><p>读取失败：' + esc(msg) + '</p><p class="muted" style="font-size:13px">常见原因：网络不通 / 项目暂停 / 口令已轮换。请重新输入口令。</p></div>';
+    });
+  };
+
+  function byUser(list) {
+    var m = {};
+    list.forEach(function (x) { (m[x.user_id] = m[x.user_id] || []).push(x); });
+    return m;
+  }
+  function avg(a) { return a.length ? Math.round(a.reduce(function (s, v) { return s + v; }, 0) / a.length * 10) / 10 : null; }
+
+  function render() {
+    var stu = CACHE.students, att = CACHE.attempts, anns = CACHE.anns, wrong = CACHE.wrong;
+    var attBy = byUser(att), annBy = byUser(anns), wrongBy = byUser(wrong);
+    var nameOf = {};
+    stu.forEach(function (s) { nameOf[s.id] = s.nickname || s.account || s.id.slice(0, 8); });
+
+    /* 汇总 */
+    var examScores = att.filter(function (a) { return a.mode === 'exam' && a.score != null; }).map(function (a) { return Number(a.score); });
+    var html = '<div class="sum-row">'
+      + '<div class="stat"><div class="n">' + stu.length + '</div><div class="l">已报到学生</div></div>'
+      + '<div class="stat"><div class="n">' + att.length + '</div><div class="l">改 / 测 作答</div></div>'
+      + '<div class="stat"><div class="n">' + anns.length + '</div><div class="l">标注场次</div></div>'
+      + '<div class="stat"><div class="n">' + (examScores.length ? avg(examScores) : '—') + '</div><div class="l">仿真平均分</div></div>'
+      + '<div class="stat"><div class="n">' + wrong.length + '</div><div class="l">错题入库</div></div>'
+      + '</div>';
+
+    /* ① 找 */
+    var rowsA = stu.map(function (s) {
+      var mine = annBy[s.id] || [];
+      var f1s = mine.map(function (x) { return Number(x.f1); }).filter(function (v) { return !isNaN(v); });
+      return { n: nameOf[s.id], c: mine.length, best: f1s.length ? Math.max.apply(null, f1s) : null, avg: avg(f1s) };
+    }).sort(function (a, b) { return (b.avg || -1) - (a.avg || -1); });
+    html += '<div class="dash-grid">'
+      + card('① 找 · 标注实训（F1）', '#0aa574', tableA(rowsA));
+
+    /* ② 改 */
+    var rowsB = stu.map(function (s) {
+      var mine = (attBy[s.id] || []).filter(function (a) { return a.mode === 'practice' || a.mode === 'competition'; });
+      var sc = mine.map(function (x) { return Number(x.score); }).filter(function (v) { return !isNaN(v); });
+      var ters = mine.map(function (x) { return Number(x.ter); }).filter(function (v) { return !isNaN(v); });
+      return { n: nameOf[s.id], c: mine.length, best: sc.length ? Math.max.apply(null, sc) : null, avgS: avg(sc), avgT: avg(ters) };
+    }).sort(function (a, b) { return (b.avgS || -1) - (a.avgS || -1); });
+    html += card('② 改 · 改译实训（分数 / TER）', '#0071e3', tableB(rowsB));
+
+    /* ③ 测 */
+    var rowsC = stu.map(function (s) {
+      var mine = (attBy[s.id] || []).filter(function (a) { return a.mode === 'exam'; });
+      var sc = mine.map(function (x) { return Number(x.score); }).filter(function (v) { return !isNaN(v); });
+      var t = mine.map(function (x) { return Number(x.time_used); }).filter(function (v) { return !isNaN(v); });
+      return { n: nameOf[s.id], c: mine.length, best: sc.length ? Math.max.apply(null, sc) : null, avgS: avg(sc), avgT: t.length ? Math.round(avg(t) / 60 * 10) / 10 + ' 分' : '—' };
+    }).sort(function (a, b) { return (b.best || -1) - (a.best || -1); });
+    html += card('③ 测 · 仿真训练（最高分）', '#4f46e5', tableC(rowsC));
+    html += '</div>';
+
+    /* 错题维度聚合 */
+    var tagCount = {};
+    wrong.forEach(function (w) { var t = w.tag || '未定性'; tagCount[t] = (tagCount[t] || 0) + 1; });
+    var tags = Object.keys(tagCount).map(function (t) { return { t: t, n: tagCount[t] }; }).sort(function (a, b) { return b.n - a.n; });
+    var maxN = tags.length ? tags[0].n : 1;
+    html += '<div class="dash-card" style="margin-top:18px"><h2>错题高发维度（MQM 定性分布）</h2>';
+    if (!tags.length) html += '<p class="muted" style="font-size:13.5px">暂无错题入库。学生完成①找交卷后，未识别到的机翻错误会自动进这里。</p>';
+    else html += '<div>' + tags.map(function (x) {
+      return '<div style="display:flex;align-items:center;gap:10px;margin:7px 0"><span class="tag-pill" style="min-width:64px;text-align:center">' + esc(x.t) + '</span>'
+        + '<span class="bar-cell" style="flex:1"><span class="bar" style="width:' + Math.round(x.n / maxN * 100) + '%"></span>'
+        + '<span class="num" style="font-size:12.5px;color:var(--text-2)">' + x.n + '</span></span></div>';
+    }).join('') + '</div>';
+    html += '</div>';
+
+    document.getElementById('dash-body').innerHTML = html;
+
+    function card(title, color, body) {
+      return '<div class="dash-card"><h2>' + title + ' <span class="pill" style="background:' + color + '">' + stu.length + ' 人</span></h2>' + body + '</div>';
+    }
+  }
+
+  function tableA(rows) {
+    if (!rows.length) return '<p class="muted" style="font-size:13.5px">暂无学生报到。</p>';
+    return '<table class="dash-table"><tr><th>学生</th><th>场次</th><th>平均 F1</th><th>最高</th><th></th></tr>'
+      + rows.map(function (r) {
+        var bar = r.avg != null ? '<span class="bar-cell"><span class="bar" style="width:' + Math.round(r.avg) + '%"></span></span>' : '';
+        return '<tr><td>' + esc(r.n) + '</td><td class="num">' + r.c + '</td><td class="num">' + (r.avg != null ? r.avg + '%' : '—') + '</td><td class="num">' + (r.best != null ? r.best + '%' : '—') + '</td><td>' + bar + '</td></tr>';
+      }).join('') + '</table>';
+  }
+  function tableB(rows) {
+    if (!rows.length) return '<p class="muted" style="font-size:13.5px">暂无改译作答。</p>';
+    return '<table class="dash-table"><tr><th>学生</th><th>次数</th><th>平均分</th><th>最高</th><th>平均 TER</th></tr>'
+      + rows.map(function (r) {
+        return '<tr><td>' + esc(r.n) + '</td><td class="num">' + r.c + '</td><td class="num">' + (r.avgS != null ? r.avgS : '—') + '</td><td class="num">' + (r.best != null ? r.best : '—') + '</td><td class="num">' + (r.avgT != null ? r.avgT + '%' : '—') + '</td></tr>';
+      }).join('') + '</table>';
+  }
+  function tableC(rows) {
+    if (!rows.length) return '<p class="muted" style="font-size:13.5px">暂无仿真作答。</p>';
+    return '<table class="dash-table"><tr><th>学生</th><th>次数</th><th>最高分</th><th>平均分</th><th>平均用时</th></tr>'
+      + rows.map(function (r) {
+        return '<tr><td>' + esc(r.n) + '</td><td class="num">' + r.c + '</td><td class="num">' + (r.best != null ? r.best : '—') + '</td><td class="num">' + (r.avgS != null ? r.avgS : '—') + '</td><td class="num">' + r.avgT + '</td></tr>';
+      }).join('') + '</table>';
+  }
+
+  window.exportClassCSV = function () {
+    if (!CACHE) return;
+    var stu = CACHE.students, attBy = byUser(CACHE.attempts), annBy = byUser(CACHE.anns);
+    var lines = ['姓名/学号,账号,标注场次,平均F1,改测次数,改测平均分,仿真最高分'];
+    stu.forEach(function (s) {
+      var mine = annBy[s.id] || [];
+      var f1s = mine.map(function (x) { return Number(x.f1); }).filter(function (v) { return !isNaN(v); });
+      var att = attBy[s.id] || [];
+      var sc = att.map(function (x) { return Number(x.score); }).filter(function (v) { return !isNaN(v); });
+      var exam = att.filter(function (x) { return x.mode === 'exam'; }).map(function (x) { return Number(x.score); });
+      lines.push(['"' + (s.nickname || s.account || '').replace(/"/g, '""') + '"', s.account || '', mine.length, f1s.length ? avg(f1s) : '', att.length, sc.length ? avg(sc) : '', exam.length ? Math.max.apply(null, exam) : ''].join(','));
+    });
+    var blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '班级汇总_' + new Date().toISOString().slice(0, 10) + '.csv';
+    a.click();
+  };
+
+  boot();
+})();
+</script>
 </main>
 </body>
 </html>
