@@ -208,6 +208,7 @@
       localStorage.setItem('mtpe_nickname_set', '1');
       /* 认领：把登录后带账号名戳的记录改标成刚填的姓名，否则按昵称过滤后看不见 */
       if (window.mtpeClaimRecords) window.mtpeClaimRecords(v);
+      if (window.mtpeCloudIdentity) window.mtpeCloudIdentity(localStorage.getItem('mtpe_account') || '', v);   // 云端身份登记
     } catch (e) { if (tip) tip.textContent = '保存失败：本机存储不可用。'; return; }
     render();
   };

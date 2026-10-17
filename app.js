@@ -174,6 +174,7 @@ function saveNickname() {
  store.set('nickname_set', 1);
  /* 认领：把登录后带账号名戳的记录改标成刚填的姓名，否则按昵称过滤后看不见 */
  if (window.mtpeClaimRecords) window.mtpeClaimRecords(v);
+ if (window.mtpeCloudIdentity) window.mtpeCloudIdentity(localStorage.getItem('mtpe_account') || '', v);  // 云端身份登记
  updateNickBadge();
  closeModal();
  if (window._nickCb) { const cb = window._nickCb; window._nickCb = null; cb(); }
@@ -617,6 +618,7 @@ function submitSession() {
  };
 
  stopSession(true);
+ if (window.mtpeCloudAttempt) window.mtpeCloudAttempt(record);   // 云同步（失败静默入队，不影响本地）
  if (saveHistory([record].concat(historyRaw()).slice(0, 200))) {
  toast('本机存储接近上限：已自动精简较早记录的逐段明细（分数、日期与画像保留）');
  }
