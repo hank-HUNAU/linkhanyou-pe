@@ -244,6 +244,18 @@ node verify_live.mjs             # 线上文件端到端：登录 → 分片按�
 
 **P0 —— 已解决（2026-10-17，提交 c8dc15f1）**
 
+0. **Supabase 前端接入 —— 已投产（2026-10-17 20:25 端到端验证通过）**：
+   - `supabase.js`（UMD 本地化 218KB，进 SW 预缓存）+ `supabase-sync.js`：匿名登录 →
+     students 身份登记；①找 → annotation_sessions + wrongbook；②改/③测 → attempts；
+     client_id 查重防重传；失败入队 `mtpe_cloud_queue`（重试 ≤5 次后丢弃）。
+   - 项目 `mtpe-trainer`（fdvypkybxhkdpvfepskf），5 表 RLS 全开。**匿名登录已开启
+     （2026-10-17 20:25），端到端验证通过**：浏览器登录 → students 落行（account/
+     nickname/uid 吻合）。学生作答自动上云，无需任何额外操作。
+   - 未开启/断网/报错一律静默降级纯本地（`window.mtpeCloudState()` 可查状态）。
+   - index.html 引用带 `?v=17a` cache-busting；改 supabase-sync.js 后需递增。
+
+**P0 —— 已解决（2026-10-17，提交 c8dc15f1）**
+
 1. ~~**机房串号**~~ **已修复——按昵称分区**：所有用户数据带保存时的昵称戳（history 用已有
    `nickname` 字段；标注统计/错题本/草稿新增 `nick` 字段），各页读取按当前昵称过滤
    （`mtpe_nickname`，取不到时不过滤以兼容测试桩）。登录时昵称预置成账号名并清

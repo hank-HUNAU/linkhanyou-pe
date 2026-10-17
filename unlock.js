@@ -276,7 +276,6 @@
          不清的话，上一位学生的 nickname_set=1 残留，新学生的记录会带着账号名戳
          混进上一人的统计口径。 */
       localStorage.removeItem('mtpe_nickname_set');
-      if (window.mtpeCloudIdentity) window.mtpeCloudIdentity(id, id);   // 云端身份登记（报姓名后会被更新）
       LEGACY.forEach(function (x) { try { localStorage.removeItem(x); } catch (e) {} });
       location.reload();
     } catch (e) {

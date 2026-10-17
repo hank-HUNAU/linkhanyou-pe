@@ -473,7 +473,6 @@ function syncToMainHistory(r){
    dims:r.profile.out}:null,
  details:r.details.map(d=>({i:d.i,src:d.mt?'':'',mt:d.mt,ref:d.ref,pe:d.pe,ter:d.ter,sim:d.sim,empty:!d.edited,notes:[]}))
  };
- if (window.mtpeCloudAttempt) window.mtpeCloudAttempt(rec);   // 云同步（失败静默入队，不影响本地）
  // 主平台结果页需要 d.src 渲染原文列：从 data.js 反查
  const t=(typeof TASKS!=='undefined'?TASKS:[]).find(x=>x.id===r.task.id);
  if(t) rec.details.forEach(d=>{ d.src=t.segs[d.i].src; d.notes=t.segs[d.i].notes||[]; });
