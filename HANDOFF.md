@@ -254,6 +254,45 @@ node verify_live.mjs             # 线上文件端到端：登录 → 分片按�
    - 未开启/断网/报错一律静默降级纯本地（`window.mtpeCloudState()` 可查状态）。
    - index.html 引用带 `?v=17a` cache-busting；改 supabase-sync.js 后需递增。
 
+0b. **在线教师看板（RLS 教师口令门）—— 已投产（2026-10-17，提交 55e0aa95）**：
+   - `teacher.html` 改为「教师口令」登录并**正式上线**（此前线上是占位页）：
+     publishable key + `global.headers: {'x-teacher-key': 口令}`，页面本身不含任何服务端密钥。
+   - Supabase 侧：`teacher_gate` 私密表（RLS enable+**force**）存教师口令
+     `KR_0ySK7CFi4w30TPu57mS7Vd71FScPx`；自引用探测策略（头内口令=库中密钥 → 可见该行）；
+     四张数据表各挂教师头 SELECT 策略。curl 三态实测：对口令见全班 / 错口令与无头只见空表。
+   - ⚠️ 教训：`teacher_gate` 建表时漏开 RLS，曾对持 publishable key 者裸奔可读——
+     已修复。**凡新表必查 `pg_class.relrowsecurity`**。
+   - 前端防呆：service_role 密钥误填会被拒绝；口令留存 localStorage（清洗换行/空格）；
+     错口令面板直接内嵌输入框可重输。E2E 12 项全过（`check_teacher_gate.cjs`）。
+   - review.html / class.html 仍是占位页；教师看板无账号只有口令（可随时轮换）。
+
+0c. **云端发号（教师看板创建学生账号）—— 已投产（2026-10-18，提交 1cad33d2）**：
+   - Supabase 新表 `student_keys`（RLS enable+**force**）：`{id,salt,iv,wrap}` 云端密钥环条目。
+     公开可读（与 secure.js 同暴露面，保密靠密码→PBKDF2(200000)→KEK 包裹，**不存明文密码**）；
+     INSERT/DELETE 仅限教师口令头。`teacher_gate` 加 `ck` 列存内容密钥（仅教师头可读）。
+   - teacher.html「学生账号发放」卡：账号 ID + 密码（可随机生成）→ 前端 webcrypto 包裹 CK 入库；
+     凭据只显示一次；可删除账号（学生历史成绩保留）。**盐必须是文本串**（unlock.js 对 salt
+     做字符串编码，与 secure.js 'hunau-pe-salt-01' 同构；随机字节 base64 会导致两侧
+     KEK 不一致——已踩坑已修）。
+   - unlock.js：本地密钥环查不到账号 → 拉 `student_keys` 合并重找（5s 超时，断网回落内置
+     账号）。云端账号**首次登录需联网**，解锁后与内置账号完全一致。SW 缓存 v12→v13。
+   - E2E 8 项全过（`.workbuddy/check_cloud_keys.cjs`）：发号→新账号解锁→错密码拒→
+     内置回归→清理。
+   - 内置账号：hunau-pe-01 / hunau-pe-02（密码在 seal_content.mjs ACCOUNTS，教师自持）。
+
+0d. **全局工作台外壳 —— 已投产（2026-10-18，提交 ad9e818a）**：
+   - 用户定案：首页工作台的左侧栏 = **全站唯一导航入口**。找/改/测/统计/设置/对标
+     六个学生页全部渲染与首页同一套 `wb-side` 侧栏（7 项导航，当前项高亮），
+     旧横向顶栏退役（与侧栏功能重复）。侧栏底部收纳：帮助 / 安装到桌面 / 账号 / 退出。
+   - nav.js 重写为 shell 渲染器（幂等）：把各页 `#app` 移入 `.wb-content`；
+     **侧栏样式内联自带**（annotate/pe-exam/champion 不加载 style.css 也能生效，
+     取值与 style.css 的 .wb-side 段同步——改样式要改两处）；`--mtpe-nav-h` 置 0。
+   - 沉浸式：作答态 `body.answering` 隐藏侧栏、主区占满全屏。
+     ⚠️ 关键修正：ui.css 旧规则 `body.answering #mtpe-nav{display:none}` 在 shell 化后
+     会把主内容一起藏掉（#app 已在 #mtpe-nav 内），已删除。
+   - 首页（home.js 自管侧栏，未登录只显示登录层）；教师页（teacher/review/class）
+     仍为横向顶栏「教师通道」。SW 缓存 v15。E2E 17 项全过。
+
 **P0 —— 已解决（2026-10-17，提交 c8dc15f1）**
 
 1. ~~**机房串号**~~ **已修复——按昵称分区**：所有用户数据带保存时的昵称戳（history 用已有

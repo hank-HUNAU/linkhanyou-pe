@@ -47,6 +47,14 @@
 
 /* ---------- 2. 基础 ---------- */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+/* 滚动条预留位：展开"更多届次"等内容高度变化导致滚动条出现/消失时，
+   视口宽度不再随之增减 ~15-17px，居中容器不再左右跳动（2026-10-19）。
+   实测（本机有头 Chromium，经典滚动条 15px）：
+   - scrollbar-gutter:stable 在根元素上不预留（Chromium 根元素怪癖，配 overflow-y:auto 也不行）；
+   - overflow-y:scroll 全程恒定（1280 视口下内容区稳定 1265），跳动 0px。
+   代价：短页面右侧常驻一条浅色滚动条轨道，换来全站零布局跳动。
+   移动端浏览器滚动条为 overlay 型，此规则无视觉影响。 */
+html{overflow-y:scroll}
 body{
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","PingFang SC","Helvetica Neue","Microsoft YaHei",sans-serif;
   background:var(--bg); color:var(--text); font-size:var(--fs-md); line-height:1.6;
