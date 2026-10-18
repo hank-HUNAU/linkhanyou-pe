@@ -135,10 +135,27 @@
    if (TEACHER.indexOf(cur) >= 0) { host.innerHTML = teacherBar(cur); syncInstall(); return; }
    /* 学生端：全局工作台侧栏 */
    host.innerHTML = shellStyle() + shellHtml(cur);
-   /* 把本页 #app 移入侧栏右侧主区（幂等：重复调用移回即可，不会出第二份侧栏） */
-   const app = document.getElementById('app');
+   /* 把本页内容移入侧栏右侧主区（幂等：重复调用移回即可，不会出第二份侧栏）。
+      ① 常规页：#app 整体移入；
+      ② 整页重绘模板（pe-exam 的广场/考场/结果三态）没有 #app——把 host 之后的
+         所有内容块移入（script 留在 body 尾）。此前缺这层兜底：侧栏与内容
+         没包成左右结构，内容全宽压在侧栏上，窄视口下广场三列溢出被切。 */
    const content = host.querySelector('.wb-content');
-   if (app && content) content.appendChild(app);
+   if (content) {
+     const app = document.getElementById('app');
+     if (app) {
+       content.appendChild(app);
+     } else {
+       const moved = [];
+       let n = host.nextElementSibling;
+       while (n) {
+         const next = n.nextElementSibling;
+         if (n.tagName !== 'SCRIPT' && n.tagName !== 'STYLE' && n.id !== 'mtpe-login') moved.push(n);
+         n = next;
+       }
+       moved.forEach((el) => content.appendChild(el));
+     }
+   }
    syncInstall();
  }
 
