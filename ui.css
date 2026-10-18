@@ -152,6 +152,11 @@ textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2p
    不能再隐藏整个 #mtpe-nav（会把主内容一起藏掉）——侧栏隐藏由
    nav.js 内联的 body.answering .wb-side{display:none} 承担。 */
 body.answering{--mtpe-nav-h:0px}
+/* ---------- 13b. 主栏两档（2026-10-19 定案） ----------
+   阅读档 1180px：统计/设置/广场（main 与各页 .wrap 已统一到 1180）；
+   作答档全宽：作答态解除限宽，作答界面占满整屏（每侧保底 24px 内距）。 */
+body.answering main { max-width: none; }
+body.answering .wrap { max-width: none; padding-left: 24px; padding-right: 24px; }
 
 /* ---------- 14. 启动骨架：语料分片解密期间不再是一片空白 ---------- */
 .boot-skeleton{max-width:1180px;margin:0 auto;padding:28px 20px}

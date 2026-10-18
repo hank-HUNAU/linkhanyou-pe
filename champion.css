@@ -3,7 +3,7 @@
  * 设计底座（颜色/圆角/字号/间距/按钮）全部来自 ui.css，本文件只写版式。
  * ============================================================ */
 
-.wrap{max-width:980px;margin:0 auto;padding:28px 20px 60px}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 60px}
 .wrap.wide{max-width:1180px}
 
 /* ---------- 广场 ---------- */

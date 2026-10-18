@@ -2,7 +2,7 @@
    设计变量、基础重置、按钮 / 标签 / 卡片 / 弹窗 / Toast / 空态 / 焦点态 /
    "作答态隐藏顶栏" 都已在共用的 ui.css 里（本页先加载 ui.css，再加载本文件）。
    本文件只留"找"这一页自己的版式：组卷表单、划选打标面板、结果页。 */
-.wrap{max-width:960px;margin:0 auto;padding:24px 18px 70px}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 18px 70px}
 .top{background:#fff;border-bottom:1px solid var(--bd);padding:12px 22px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:var(--mtpe-nav-h, 57px);z-index:40}
 /* 作答栏三页统一：左=步骤标签，中=进度，右=交卷/退出（与 ② 改 / ③ 测 同一版式） */
 .top-acts{display:flex;align-items:center;gap:10px}

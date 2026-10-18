@@ -21,7 +21,7 @@
 /* ---- 我的考试页 ---- */
 /* 结果页用 1000（阅读列宽）；广场加 .wide 用 1180，与 ② 改 的 main 等宽，
    这样 .task-grid 在两边都是每行 3 张（1000 宽只能排 2 张，两页对不上）。 */
-.wrap{max-width:1000px;margin:0 auto;padding:26px 18px 70px}
+.wrap{max-width:1180px;margin:0 auto;padding:26px 18px 70px}
 .wrap.wide{max-width:1180px;padding-left:20px;padding-right:20px}
 /* 广场页头、卡片、标签、按钮、提示块：见 ui.css（三页共用一份） */
 .dur{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--tx2)}
