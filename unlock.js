@@ -235,23 +235,6 @@
     return crypto.subtle.importKey('raw', bits, 'AES-GCM', false, ['decrypt']);
   }
 
-  /* 云端密钥环（教师看板发放的账号）：student_keys 公开可读（与 secure.js 同暴露面，
-     保密靠"密码 → PBKDF2 → KEK 包裹"，库里没有明文密码）。内置账号登录不走这里。 */
-  const SUPA_URL = 'https://fdvypkybxhkdpvfepskf.supabase.co';
-  const SUPA_KEY = 'sb_publishable_5T_3drNAt7fzqIXrxFc5ww_8yotMUfd';
-  async function cloudKeys() {
-    try {
-      const ctl = new AbortController();
-      const t = setTimeout(() => ctl.abort(), 5000);
-      const r = await fetch(SUPA_URL + '/rest/v1/student_keys?select=id,salt,iv,wrap',
-        { headers: { apikey: SUPA_KEY }, signal: ctl.signal });
-      clearTimeout(t);
-      if (!r.ok) return [];
-      const arr = await r.json();
-      return Array.isArray(arr) ? arr : [];
-    } catch (e) { return []; }   // 断网/超时：只用内置账号，行为与从前一致
-  }
-
   window.mtpeUnlock = async function () {
     const idEl = document.getElementById('mtpe-acc');
     const pwEl = document.getElementById('mtpe-pw');
@@ -268,29 +251,10 @@
       if (btn) { btn.disabled = false; btn.textContent = '登录'; }
       return fail('密钥文件没能加载：请检查网络后重试');
     }
-    const k0 = seal.keys ? seal.keys.filter((x) => x.id === id)[0] : null;
-    let k = k0;
-    let cloudOk = false;
-    if (!k) {
-      /* 本地密钥环没有 → 教师看板发放的云端账号：拉取合并后重找 */
-      if (btn) btn.textContent = '查找账号…';
-      const cloud = await cloudKeys();
-      cloudOk = cloud.length > 0;
-      if (cloud.length) {
-        const have = {};
-        (seal.keys || []).forEach((x) => { have[x.id] = 1; });
-        cloud.forEach((c) => {
-          if (c && c.id && c.salt && c.iv && c.wrap && !have[c.id]) {
-            seal.keys.push({ id: c.id, salt: c.salt, iv: c.iv, wrap: c.wrap });
-            have[c.id] = 1;
-          }
-        });
-        k = seal.keys.filter((x) => x.id === id)[0] || null;
-      }
-    }
+    const k = seal.keys ? seal.keys.filter((x) => x.id === id)[0] : null;
     if (!k) {
       if (btn) { btn.disabled = false; btn.textContent = '登录'; }
-      return fail(cloudOk || k0 ? '账号不存在' : '账号不存在（云端账号需联网登录）');
+      return fail('账号不存在');
     }
     if (btn) btn.textContent = '解锁中…';
     try {

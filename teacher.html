@@ -38,12 +38,6 @@
   .key-panel { background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 1px 3px rgba(16,24,40,.08); max-width: 640px; margin: 10vh auto; }
   .key-panel input { width: 100%; padding: 10px 14px; border: 1px solid rgba(0,0,0,.15); border-radius: 10px; font: 13px/1.4 monospace; }
   .tag-pill { display: inline-block; background: var(--primary-light, #eef4ff); color: var(--primary-dark, #1c3f94); font-size: 11.5px; padding: 2px 10px; border-radius: 99px; margin: 2px 4px 2px 0; }
-  .acc-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 12px 0 6px; }
-  .acc-form input { padding: 9px 12px; border: 1px solid rgba(0,0,0,.15); border-radius: 10px; font-size: 13.5px; }
-  .acc-form input#acc-id { width: 180px; } .acc-form input#acc-pw { width: 160px; }
-  .acc-out { font-size: 13px; line-height: 1.8; margin-top: 8px; }
-  .acc-out .newcred { background: #eefaf3; border: 1px solid #b7e4cc; border-radius: 10px; padding: 10px 14px; margin-top: 8px; font-family: ui-monospace, monospace; }
-  .acc-note { font-size: 12px; color: var(--text-2, #6e6e73); margin-top: 8px; }
 </style>
 <div class="dash-wrap">
   <div class="dash-head">
@@ -231,22 +225,7 @@
     }).join('') + '</div>';
     html += '</div>';
 
-    /* 学生账号管理（云端发放） */
-    html += '<div class="dash-card" style="margin-top:18px"><h2>学生账号发放（云端）</h2>'
-      + '<p class="muted" style="font-size:13px;margin:0 0 4px">内置账号 hunau-pe-01 / hunau-pe-02 之外，可在这里给学生发新账号。新账号首次登录需联网；之后与内置账号完全一样。</p>'
-      + '<div class="acc-form">'
-      + '<input id="acc-id" placeholder="账号 ID（如 hunau-pe-03）">'
-      + '<input id="acc-pw" placeholder="密码（至少 6 位）">'
-      + '<button class="btn btn-ghost" onclick="accGenPw()">随机生成</button>'
-      + '<button class="btn btn-primary" id="acc-btn" onclick="accCreate()">创建账号</button>'
-      + '</div>'
-      + '<div id="acc-out" class="acc-out"></div>'
-      + '<div id="acc-list" style="margin-top:10px;font-size:13px"></div>'
-      + '<p class="acc-note">安全口径：库里只存「用学生密码包裹的内容密钥」（与 secure.js 内置账号同构），不存明文密码；密码只在创建后显示这一次，请当场发给对应学生。</p>'
-      + '</div>';
-
     document.getElementById('dash-body').innerHTML = html;
-    refreshAccList();
 
     function card(title, color, body) {
       return '<div class="dash-card"><h2>' + title + ' <span class="pill" style="background:' + color + '">' + stu.length + ' 人</span></h2>' + body + '</div>';
@@ -293,95 +272,6 @@
     a.href = URL.createObjectURL(blob);
     a.download = '班级汇总_' + new Date().toISOString().slice(0, 10) + '.csv';
     a.click();
-  };
-
-  /* ================= 学生账号发放（云端密钥环） =================
-   * 新账号 = 用学生密码 PBKDF2 派生 KEK，包一层内容密钥（CK），存 student_keys。
-   * 与 secure.js 内置账号同构；unlock.js 登录时本地账号查不到会拉这份云端密钥环合并。
-   * ITER 必须与 seal_content.mjs / secure.js 的 iter 一致（200000）。 */
-  var ITER = 200000;
-  function b64(u8) { var s = ''; for (var i = 0; i < u8.length; i++) s += String.fromCharCode(u8[i]); return btoa(s); }
-
-  window.accGenPw = function () {
-    var abc = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
-    var v = ''; var rnd = crypto.getRandomValues(new Uint32Array(10));
-    for (var i = 0; i < 10; i++) v += abc[rnd[i] % abc.length];
-    document.getElementById('acc-pw').value = v;
-  };
-
-  function accMsg(html) { document.getElementById('acc-out').innerHTML = html; }
-
-  window.refreshAccList = function () {
-    if (!client) return;
-    client.from('student_keys').select('id,created_at').order('created_at', { ascending: false })
-      .then(function (r) {
-        var el = document.getElementById('acc-list');
-        if (!el) return;
-        if (r.error) { el.innerHTML = '<span style="color:#b3261e">云端账号读取失败：' + esc(String(r.error.message || r.error).slice(0, 80)) + '</span>'; return; }
-        var rows = r.data || [];
-        if (!rows.length) { el.innerHTML = '<span class="muted">暂无云端账号（内置账号见说明）。</span>'; return; }
-        el.innerHTML = '<b style="font-size:12.5px;color:var(--text-2)">已发放 ' + rows.length + ' 个：</b> '
-          + rows.map(function (x) {
-            var d = x.created_at ? new Date(x.created_at).toLocaleDateString('zh-CN') : '';
-            return '<span class="tag-pill">' + esc(x.id) + ' <a href="javascript:void(0)" onclick="accDel(\'' + esc(x.id) + '\')" style="color:#b3261e;text-decoration:none" title="删除该账号">×</a></span> <span class="muted" style="font-size:11px">' + d + '</span>';
-          }).join('');
-      });
-  };
-
-  window.accDel = function (id) {
-    if (!confirm('删除账号 ' + id + '？该学生将无法再登录（其历史成绩保留）。')) return;
-    client.from('student_keys').delete().eq('id', id).then(function (r) {
-      if (r.error) accMsg('<span style="color:#b3261e">删除失败：' + esc(String(r.error.message || r.error).slice(0, 80)) + '</span>');
-      else { accMsg('已删除 ' + esc(id) + '。'); refreshAccList(); }
-    });
-  };
-
-  window.accCreate = async function () {
-    if (!client) return;
-    var id = (document.getElementById('acc-id').value || '').trim().toLowerCase();
-    var pw = document.getElementById('acc-pw').value || '';
-    var btn = document.getElementById('acc-btn');
-    if (!/^[a-z0-9][a-z0-9-]{2,19}$/.test(id)) { accMsg('<span style="color:#b3261e">账号 ID 格式不对：3–20 位小写字母 / 数字 / 连字符，字母开头。</span>'); return; }
-    if (pw.length < 6) { accMsg('<span style="color:#b3261e">密码至少 6 位。</span>'); return; }
-    btn.disabled = true; btn.textContent = '创建中…'; accMsg('');
-    try {
-      /* 1) 取内容密钥（只有教师口令可读） */
-      var g = await client.from('teacher_gate').select('ck').limit(1);
-      if (g.error || !g.data || !g.data.length || !g.data[0].ck) throw new Error('内容密钥读取失败（口令失效？）');
-      var ckRaw = Uint8Array.from(atob(g.data[0].ck), function (c) { return c.charCodeAt(0); });
-      /* 2) 学生密码 → KEK → 包裹 CK（与 secure.js 同构） */
-      var enc = new TextEncoder();
-      var km = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveBits']);
-      /* 盐必须是【文本】（unlock.js 的 kekOf 对 salt 做 enc.encode(salt)——与
-         secure.js 内置账号的 'hunau-pe-salt-01' 同构；存随机字节的 base64 会在
-         解锁侧被当成"base64 字符串"再编码一次，两边 KEK 对不上） */
-      var abc = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-      var rnd = crypto.getRandomValues(new Uint32Array(24));
-      var saltStr = ''; for (var i = 0; i < 24; i++) saltStr += abc[rnd[i] % abc.length];
-      var bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: enc.encode(saltStr), iterations: ITER, hash: 'SHA-256' }, km, 256);
-      var kek = await crypto.subtle.importKey('raw', bits, 'AES-GCM', false, ['encrypt']);
-      var iv = crypto.getRandomValues(new Uint8Array(12));
-      var wrap = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, kek, ckRaw);
-      /* 3) 入库（重复 ID 会被主键拒绝） */
-      var ins = await client.from('student_keys').insert({ id: id, salt: saltStr, iv: b64(iv), wrap: b64(new Uint8Array(wrap)) });
-      if (ins.error) throw ins.error;
-      accMsg('<div class="newcred">✅ 账号已发放（只显示这一次，请立即发给该学生）<br>'
-        + '账号：<b>' + esc(id) + '</b>　密码：<b>' + esc(pw) + '</b><br>'
-        + '<button class="btn btn-ghost" style="margin-top:6px" onclick="accCopy(\'' + esc(id) + '\',\'' + esc(pw) + '\')">复制账号密码</button></div>');
-      document.getElementById('acc-pw').value = '';
-      refreshAccList();
-    } catch (e) {
-      var m = String((e && e.message) || e);
-      accMsg('<span style="color:#b3261e">创建失败：' + esc(m.slice(0, 100)) + (m.indexOf('duplicate') >= 0 ? '（账号 ID 已存在）' : '') + '</span>');
-    }
-    btn.disabled = false; btn.textContent = '创建账号';
-  };
-
-  window.accCopy = function (id, pw) {
-    var t = '译后编辑实训平台\n账号：' + id + '\n密码：' + pw;
-    (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () {
-      accMsg('<div class="newcred">✅ 账号已发放（已复制到剪贴板）<br>账号：<b>' + esc(id) + '</b>　密码：<b>' + esc(pw) + '</b></div>');
-    }).catch(function () {});
   };
 
   boot();

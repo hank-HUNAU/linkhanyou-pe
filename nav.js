@@ -22,19 +22,25 @@
  /* 2026-10-17 工作台 v2：首页改用侧边栏导航（wb-side），顶栏只服务二级页——
     首页上顶栏与侧边栏重复，整条撤掉（品牌回首页的职责由侧边栏 logo 承担）。 */
  if (cur === 'index.html') { host.innerHTML = ''; return; }
- const acc = localStorage.getItem(KEY) || '';
+ /* 2026-10-18 教师页顶栏：不读学生登录态（同源 localStorage 里的 mtpe_account 是
+    学生登录残留，显示在教师页顶栏会让人以为"教师账号=学生账号"），改显「教师通道」；
+    「我的统计 / 设置」是学生语义，一并隐藏。 */
+ const isTeacher = cur === 'teacher.html' || cur === 'review.html';
+ const acc = isTeacher ? '' : (localStorage.getItem(KEY) || '');
  const tabs = TABS.map((t) => '<a class="mtpe-tab' + (t.file === cur ? ' on' : '') + '" href="' + t.href + '">' + t.label + '</a>').join('');
  host.innerHTML = '<div class="mtpe-nav">'
  + '<div class="mtpe-brand" onclick="location.href=\'index.html\'" title="回到首页"><span class="logo">译</span><span class="mtpe-brand-t">译后编辑实训平台</span></div>'
  + '<span class="mtpe-tabs">' + tabs + '</span>'
  + '<span class="mtpe-spacer"></span>'
  + '<a class="mtpe-tab plain hidden" id="mtpe-install" href="#" onclick="mtpeInstall();return false" title="装成桌面应用，断网也能用">安装到桌面</a>'
- + '<a class="mtpe-tab plain" href="stats.html" title="我的统计：练习得分 / 标注能力 / 仿真训练画像，并可导出作业">我的统计</a>'
- + '<a class="mtpe-tab plain" href="settings.html" title="我的设置：账号信息 / 姓名 / 帮助">设置</a>'
+ + (isTeacher ? '' : '<a class="mtpe-tab plain" href="stats.html" title="我的统计：练习得分 / 标注能力 / 仿真训练画像，并可导出作业">我的统计</a>'
+ + '<a class="mtpe-tab plain" href="settings.html" title="我的设置：账号信息 / 姓名 / 帮助">设置</a>')
  + '<a class="mtpe-tab plain" href="#" onclick="(window.mtpeHelp||function(){})();return false" title="帮助：流程说明 / 计分口径 / 数据来源 / 常见问题">?</a>'
- + (acc
-   ? '<span class="mtpe-acc" title="已登录">' + acc + '</span><a class="mtpe-tab plain" href="#" onclick="mtpeLogout();return false">退出</a>'
-   : '<a class="mtpe-tab plain" href="#" onclick="(window.mtpeShowLogin||function(){location.reload();})();return false">登录</a>')
+ + (isTeacher
+   ? '<span class="mtpe-acc" style="color:#4f46e5;font-weight:600" title="教师通道：全班数据由 Supabase RLS 口令门隔离">教师通道</span>'
+   : (acc
+     ? '<span class="mtpe-acc" title="已登录">' + acc + '</span><a class="mtpe-tab plain" href="#" onclick="mtpeLogout();return false">退出</a>'
+     : '<a class="mtpe-tab plain" href="#" onclick="(window.mtpeShowLogin||function(){location.reload();})();return false">登录</a>'))
  + '</div>'
  + '<style>'
  + '#mtpe-nav{position:sticky;top:0;z-index:60}'
