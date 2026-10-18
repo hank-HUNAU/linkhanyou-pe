@@ -142,7 +142,17 @@
         <a href="pe-exam.html">⏱️ 仿真训练 <span class="tag">③ 测</span></a>
         <a href="champion.html">🎯 能力对标</a>
       </nav>
-      <div class="wb-foot">语料加密封存 · 离线可用</div>
+      <div class="wb-foot">
+        <div class="wb-foot-acts">
+          <a href="#" onclick="(window.mtpeHelp||function(){})( );return false" title="帮助：流程说明 / 计分口径 / 常见问题">? 帮助</a>
+          <a href="#" id="mtpe-install" class="hidden" onclick="mtpeInstall();return false" title="装成桌面应用，断网也能用">⬇ 安装到桌面</a>
+          ${nx.setupName
+            ? '<a href="settings.html" title="共享账号按姓名归属成绩，请先报到">未报到 · 去填写</a>'
+            : '<span class="wb-acc" title="按姓名归属成绩">' + esc(s.nickname || '') + '</span>'}
+          <a href="#" onclick="mtpeLogout();return false">退出</a>
+        </div>
+        语料加密封存 · 离线可用
+      </div>
     </aside>
     <main class="wb-main">
       <section class="wb-focus">
@@ -150,11 +160,7 @@
         ${nx.setupName ? `
         <div class="wb-hero-big">先报上姓名／学号</div>
         <div class="hn-why">共享账号按姓名认人：作业导出与班级汇总都用它。</div>
-        <div class="wb-hero-input">
-          <input id="hn-name" maxlength="20" placeholder="例如：2024级翻译2班 张三">
-          <button class="wb-hero-btn" onclick="mtpeSaveName()">保存</button>
-        </div>
-        <div class="hn-tip" id="hn-tip"></div>` : `
+        <a class="wb-hero-btn" href="settings.html">去「我的设置」报到 →</a>` : `
         <div class="wb-hero-big">${esc(nx.cta)}</div>
         <div class="hn-why">${esc(nx.why)}</div>
         <a class="wb-hero-btn" href="${nx.href}">现在开始</a>`}
@@ -184,37 +190,17 @@
           <div class="mp">赛场还原 · 限时交卷 · 评分与四项画像</div>
           <a href="pe-exam.html">进入仿真训练 →</a></div>
       </div>
-
-      <button id="mtpe-install-btn" class="btn btn-ghost hidden" style="margin-top:18px" onclick="mtpeInstall()">安装到桌面</button>
     </main>
   </div>`;
-
-    syncInstall();
   }
 
+  /* 侧栏「安装到桌面」显隐：仅在浏览器确认可安装时出现 */
   function syncInstall() {
-    const btn = document.getElementById('mtpe-install-btn');
-    if (btn) btn.classList.toggle('hidden', !(window.mtpeCanInstall && window.mtpeCanInstall()));
+    const b = document.getElementById('mtpe-install');
+    if (b) b.classList.toggle('hidden', !(window.mtpeCanInstall && window.mtpeCanInstall()));
   }
-
-  /* 首页内联保存姓名/学号（登录时昵称会被预置成账号名，所以要单独打个标） */
-  window.mtpeSaveName = function () {
-    const el = document.getElementById('hn-name');
-    const tip = document.getElementById('hn-tip');
-    const v = ((el && el.value) || '').trim();
-    if (!v) { if (tip) tip.textContent = '请填写姓名或学号后再保存。'; return; }
-    try {
-      localStorage.setItem('mtpe_nickname', JSON.stringify(v));
-      localStorage.setItem('mtpe_nickname_set', '1');
-      /* 认领：把登录后带账号名戳的记录改标成刚填的姓名，否则按昵称过滤后看不见 */
-      if (window.mtpeClaimRecords) window.mtpeClaimRecords(v);
-    } catch (e) { if (tip) tip.textContent = '保存失败：本机存储不可用。'; return; }
-    render();
-  };
-
   document.addEventListener('mtpe-install-changed', syncInstall);
   document.addEventListener('mtpe-installed', syncInstall);
-  document.addEventListener('mtpe-sw-ready', syncInstall);
 
   render();
 })();

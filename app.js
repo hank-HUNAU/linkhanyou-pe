@@ -196,7 +196,7 @@ function renderPlaza() {
  <div class="plaza-head">
   <h2>② 改 · 译后编辑练习</h2>
   <p>在机器译文底稿上动手改，交卷看修订率与逐段对照。
-  ｜ <a href="MQM错误类型参考手册.html">MQM 错误类型参考手册</a> ｜ <a href="#" onclick="mtpeHelp();return false">帮助</a></p>
+  ｜ <a href="MQM错误类型参考手册.html">MQM 错误类型参考手册</a></p>
  </div>
  <div class="page-s" style="margin:14px 0 18px">限时练习：8 / 15 / 30 分钟计时，离开页面计数 ｜ 自由练习：不限时、可存草稿</div>
  <div class="task-grid">

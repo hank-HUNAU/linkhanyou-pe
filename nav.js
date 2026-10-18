@@ -15,7 +15,6 @@
  *   重复调用时把 #app 重新移入 .wb-content，不会产生第二份侧栏。
  * ============================================================ */
 (function () {
- const KEY = 'mtpe_account';
  /* 学生端工作台侧栏：顺序 = 首页 → 统计/设置 → 找改测 → 对标（与首页 v2 一致） */
  const ITEMS = [
    { href: 'index.html',    label: '🏠 聚焦首页' },
@@ -67,15 +66,18 @@
 
  /* —— 学生端：全局工作台侧栏（视觉与首页 wb-side 完全同一套） —— */
  function shellHtml(cur) {
-   const acc = localStorage.getItem(KEY) || '';
    const wk = '日一二三四五六'[new Date().getDay()];
    const today = new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' }) + ' 星期' + wk;
    const items = ITEMS.map((t) =>
      '<a' + (t.href === cur ? ' class="on"' : '') + ' href="' + t.href + '">'
      + t.label + (t.tag ? ' <span class="tag">' + t.tag + '</span>' : '') + '</a>').join('');
-   const account = acc
-     ? '<span class="wb-acc" title="已登录">' + esc(acc) + '</span><a href="#" onclick="mtpeLogout();return false">退出</a>'
-     : '<a href="#" onclick="(window.mtpeShowLogin||function(){location.reload();})();return false">登录</a>';
+   /* 身份显示：共享账号体系下学生身份 = 姓名（昵称），账号名对学生无意义（只在设置页出现） */
+   let nick = '';
+   try { nick = JSON.parse(localStorage.getItem('mtpe_nickname') || '""'); } catch (e) {}
+   const reported = localStorage.getItem('mtpe_nickname_set') === '1' && nick;
+   const account = reported
+     ? '<span class="wb-acc" title="按姓名归属成绩">' + esc(nick) + '</span>'
+     : '<a href="settings.html" title="共享账号按姓名归属成绩，请先报到">未报到 · 去填写</a>';
    return '<div class="wb-app">'
    + '<aside class="wb-side">'
    +   '<div class="wb-logo"><h1>译后编辑实训平台</h1><p>' + esc(today) + '</p></div>'
@@ -85,6 +87,7 @@
    +       '<a href="#" onclick="' + helpOnclick() + '" title="帮助：流程说明 / 计分口径 / 数据来源 / 常见问题">? 帮助</a>'
    +       '<a href="#" id="mtpe-install" class="hidden" onclick="mtpeInstall();return false" title="装成桌面应用，断网也能用">⬇ 安装到桌面</a>'
    +       account
+   +       '<a href="#" onclick="mtpeLogout();return false" title="机房共用电脑用完即退，防止记录串号">退出</a>'
    +     '</div>'
    +     '语料加密封存 · 离线可用'
    +   '</div>'

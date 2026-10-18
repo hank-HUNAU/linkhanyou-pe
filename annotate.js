@@ -125,7 +125,7 @@ function renderSetup() {
   <div class="plaza-head">
   <h2>① 找 · 标注实训</h2>
   <p>在机翻译文中<b>选中错误片段</b>并标注类别与严重度；交卷后与种子标注对比，计算查准率 / 查全率 / F1。
-  ｜ <a href="MQM错误类型参考手册.html">MQM 错误类型参考手册</a> ｜ <a href="#" onclick="mtpeHelp();return false">帮助</a></p>
+  ｜ <a href="MQM错误类型参考手册.html">MQM 错误类型参考手册</a></p>
   </div>
  ${fromLink ? `<div class="page-s" style="margin-bottom:10px">已按练习建议预置筛选条件${pre.dim ? '：错误维度「' + esc(pre.dim) + '」' : ''}${pre.ed ? ' · 第' + esc(pre.ed) + '届' + esc(pre.stage || '') : ''}。</div>` : ''}
  <div class="card">

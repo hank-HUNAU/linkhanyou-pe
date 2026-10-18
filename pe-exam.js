@@ -108,8 +108,7 @@ function renderExams(){
   <div class="wrap wide">
   <div class="plaza-head">
   <h2>③ 测 · 仿真训练</h2>
-  <p>限时交卷，给出综合评分与错误维度、编辑倾向、速度稳定性、参照系四项画像。
-  ｜ <a href="#" onclick="mtpeHelp();return false">帮助</a></p>
+  <p>限时交卷，给出综合评分与错误维度、编辑倾向、速度稳定性、参照系四项画像。</p>
   </div>
   <div class="page-s" style="margin:14px 0 18px">教学仿真工具，题目内容与正式测评无关 ｜ 每卷最多进入 3 次（对齐真实赛制）</div>
   <div class="task-grid">${main.map(card).join('')}</div>
