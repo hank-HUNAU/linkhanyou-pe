@@ -43,6 +43,7 @@
   <div class="dash-head">
     <h1>教师看板</h1>
     <span id="dash-state" class="dash-state">未连接</span>
+    <span id="live-badge" class="dash-state hidden" style="background:#e8f5ee;color:#1c7c4c">● 实时</span>
     <span style="flex:1"></span>
     <button class="btn btn-ghost" onclick="loadAll(true)">刷新</button>
     <button class="btn btn-ghost" onclick="exportClassCSV()">导出 CSV</button>
@@ -119,8 +120,34 @@
   }
 
   /* 口令面板（含错误提示位）——首次进入与验证失败共用，失败后可直接重输，不必刷新 */
-  function showPanel(errHtml) {
-    document.getElementById('dash-body').innerHTML = '<div class="key-panel"><h2 style="margin:0 0 10px">教师口令登录</h2>'
+  /* ---------- Realtime：学生交卷信号 → 自动刷新 ----------
+   * 订阅 mtpe-live 通道（broadcast，不经表策略；学生端写库成功即发信号）。
+   * 防抖 1.2s 合并连发；每次收到动态自动 loadAll 并点亮「● 实时」徽章。 */
+  var liveSubscribed = false, liveTimer = null, liveN = 0;
+  function subscribeLive() {
+    if (liveSubscribed || !client) return;
+    liveSubscribed = true;
+    try {
+      client.channel('mtpe-live')
+        .on('broadcast', { event: 'activity' }, function (msg) {
+          liveN++;
+          var b = document.getElementById('live-badge');
+          if (b) { b.classList.remove('hidden'); b.textContent = '● 实时 · ' + liveN + ' 条新动态'; }
+          clearTimeout(liveTimer);
+          liveTimer = setTimeout(function () { loadAll(false); }, 1200);
+        })
+        .subscribe(function (st) {
+          if (st === 'SUBSCRIBED') {
+            var b = document.getElementById('live-badge');
+            if (b) { b.classList.remove('hidden'); b.textContent = '● 实时'; }
+          }
+        });
+    } catch (e) { liveSubscribed = false; }
+  }
+  /* E2E 观测口 */
+  window.__mtpeLiveN = function () { return liveN; };
+
+  function showPanel(errHtml) {    document.getElementById('dash-body').innerHTML = '<div class="key-panel"><h2 style="margin:0 0 10px">教师口令登录</h2>'
       + errHtml
       + '<input id="srk" type="password" placeholder="输入教师口令（KR_…）" style="margin:14px 0">'
       + '<p id="srk-tip" class="muted" style="font-size:12px;margin:0 0 10px"></p>'
@@ -143,6 +170,7 @@
       CACHE = { students: rs[0].data || [], attempts: rs[1].data || [], anns: rs[2].data || [], wrong: rs[3].data || [] };
       setState('已连接 · 数据截至 ' + new Date().toLocaleTimeString('zh-CN', { hour12: false }), 'ok');
       render();
+      subscribeLive();
     }).catch(function (e) {
       var msg = String(e.message || e);
       if (/Failed to fetch|NetworkError|Load failed/i.test(msg)) {

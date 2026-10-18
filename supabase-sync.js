@@ -18,6 +18,8 @@
   var client = null;
   var uid = null;
   var disabled = false;        // 匿名登录被禁用等永久性失败：本会话不再尝试
+  var liveCh = null;           // Realtime broadcast 通道：写库成功后通知教师看板
+  var liveOn = false;
 
   function q() {
     try { return JSON.parse(localStorage.getItem(QKEY) || '[]') || []; }
@@ -51,6 +53,7 @@
       if (!user) throw new Error('no user');
       uid = user.id;
       state = 'ready';
+      ensureLive();
       flush();
     }).catch(function (e) {
       /* anonymous_provider_disabled 等：本会话降级为纯本地，不再重试 */
@@ -83,6 +86,22 @@
     return Promise.resolve(true);
   }
 
+  /* ---------- Realtime：交卷信号（broadcast，不经表、不受 RLS 表策略约束） ----------
+   * 学生端每次写库成功发一条「有新动态」信号；教师看板订阅同一通道自动刷新。
+   * 只发 kind（哪张表）与时间，不发任何作答内容——隐私口径与数据层一致。 */
+  function ensureLive() {
+    if (liveCh || !client) return;
+    try {
+      liveCh = client.channel('mtpe-live');
+      liveCh.subscribe(function (st) { liveOn = (st === 'SUBSCRIBED'); });
+    } catch (e) { liveCh = null; }
+  }
+  function ping(kind) {
+    try {
+      if (liveOn && liveCh) liveCh.send({ type: 'broadcast', event: 'activity', payload: { kind: kind, at: Date.now() } });
+    } catch (e) {}
+  }
+
   /* client_id 查重后插入（表未建唯一索引也能防重） */
   function upsertByClient(table, row, cid) {
     if (!uid || !cid) return Promise.resolve(true);
@@ -91,19 +110,19 @@
         if (res.error) throw res.error;
         if (res.data && res.data.length) return true;      // 已上传过
         row.user_id = uid;
-        return client.from(table).insert(row).then(function (r2) { if (r2.error) throw r2.error; return true; });
+        return client.from(table).insert(row).then(function (r2) { if (r2.error) throw r2.error; ping(table); return true; });
       });
   }
   function insertOnce(table, row) {
     if (!uid) return Promise.resolve(true);
     row.user_id = uid;
-    return client.from(table).insert(row).then(function (r) { if (r.error) throw r.error; return true; });
+    return client.from(table).insert(row).then(function (r) { if (r.error) throw r.error; ping(table); return true; });
   }
   function upsertStudent(row) {
     if (!uid) return Promise.resolve(true);
     row.id = uid;
     return client.from('students').upsert(row, { onConflict: 'id' })
-      .then(function (r) { if (r.error) throw r.error; return true; });
+      .then(function (r) { if (r.error) throw r.error; return true; });   // 报到不打扰教师
   }
 
   function accountNow() {
@@ -181,7 +200,7 @@
   };
 
   /* 状态查询（设置页可显示连接徽标） */
-  window.mtpeCloudState = function () { return { state: state, uid: uid }; };
+  window.mtpeCloudState = function () { return { state: state, uid: uid, live: liveOn }; };
 
   /* 库脚本晚到也能初始化：DOMContentLoaded + 轮询一次 */
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
