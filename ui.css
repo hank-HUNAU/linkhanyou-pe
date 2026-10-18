@@ -147,8 +147,10 @@ textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2p
 .tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .tbl-scroll table{min-width:600px}
 
-/* ---------- 13. 作答态：隐藏全站顶栏（三页同一条规则） ---------- */
-body.answering #mtpe-nav{display:none!important}
+/* ---------- 13. 作答态：沉浸（三页同一条规则） ----------
+   2026-10-18 工作台外壳化：#app 已移入 #mtpe-nav 内（shell 结构），
+   不能再隐藏整个 #mtpe-nav（会把主内容一起藏掉）——侧栏隐藏由
+   nav.js 内联的 body.answering .wb-side{display:none} 承担。 */
 body.answering{--mtpe-nav-h:0px}
 
 /* ---------- 14. 启动骨架：语料分片解密期间不再是一片空白 ---------- */
