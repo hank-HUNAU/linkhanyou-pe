@@ -48,7 +48,7 @@ select,input[type=number]{border:1px solid var(--bd);border-radius:8px;padding:7
    与 ③测 页「工具栏 always sticky」同一模式。 */
 .nav-row{
   position:fixed;left:0;right:0;bottom:0;z-index:90;
-  display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+  display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;
   margin:0;padding:10px 24px calc(10px + env(safe-area-inset-bottom, 0px));
   background:rgba(255,255,255,.92);
   -webkit-backdrop-filter:saturate(1.8) blur(12px);backdrop-filter:saturate(1.8) blur(12px);
@@ -59,8 +59,12 @@ select,input[type=number]{border:1px solid var(--bd);border-radius:8px;padding:7
 /* 卡片限宽居中：全宽 1080px 下译文一行 60+ 字远超中文最佳行宽（35–45 字），
    960px 内一行 ~45 字，划选扫视距离减半。①找非考场页，不受 ③测 全宽定案约束 */
 .ans-wrap .card{max-width:960px;margin-left:auto;margin-right:auto}
+/* 中栏：上一条 / 下一条 / 快捷键提示 整体居中（用户要求）；
+   grid 1fr auto 1fr 保证中栏真居中，交卷固定靠右 —— 必须显式指定列位，
+   否则只有两个子元素时它们会顺次落进 1fr 与 auto 列（中栏偏左，交卷偏中） */
+.nav-c{grid-column:2;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+.nav-r{grid-column:3;display:flex;justify-content:flex-end}
 /* 键盘切句提示（键帽样式） */
-.nav-left{display:flex;align-items:center;gap:10px}
 .kbd-hint{font-size:12px;color:var(--mut);border:1px solid var(--bd);border-bottom-width:2px;border-radius:6px;padding:1px 7px;background:#fafbfc;white-space:nowrap}
 
 /* 结果 */

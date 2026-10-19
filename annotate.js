@@ -297,9 +297,11 @@ function renderWork() {
   : `<div class="mt-box empty-mt">（本条无机翻底稿，已跳过）</div>`}
  </div>
  <div class="nav-row">
- <span class="nav-left"><button class="btn btn-g" onclick="navPair(-1)" ${A.idx === 0 ? 'disabled' : ''}> 上一条</button><span class="kbd-hint">← → 切句</span></span>
+ <span class="nav-c">
+ <button class="btn btn-g" onclick="navPair(-1)" ${A.idx === 0 ? 'disabled' : ''}> 上一条</button>
  <button class="btn btn-g" onclick="navPair(1)" ${A.idx === A.paper.length - 1 ? 'disabled' : ''}>下一条 </button>
- <button class="btn btn-p" onclick="confirmSubmit()">交卷</button>
+ <span class="kbd-hint">← → 切句</span></span>
+ <span class="nav-r"><button class="btn btn-p" onclick="confirmSubmit()">交卷</button></span>
  </div>
  </div>
  <div class="sel-panel hidden" id="sel-panel"></div>
