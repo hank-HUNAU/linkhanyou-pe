@@ -293,6 +293,66 @@ node verify_live.mjs             # 线上文件端到端：登录 → 分片按�
    - 首页（home.js 自管侧栏，未登录只显示登录层）；教师页（teacher/review/class）
      仍为横向顶栏「教师通道」。SW 缓存 v15。E2E 17 项全过。
 
+0e. **Realtime 实时推送（Supabase Realtime）—— 未做（挂账）**：
+   - 教师看板目前只能刷新页面看新数据。若要"学生交卷即刻出现在看板上"，
+     需对 attempts / annotation_sessions 挂 `supabase_realtime` publication + 前端订阅。
+   - 注意：RLS 会同样作用于 Realtime 的授权判断，教师端靠 `x-teacher-key` 头订阅，
+     需确认 Realtime 通道能透传自定义头（多半需要在 `realtime.messages` 策略里处理）。
+
+0f. **①找 作答页宽度两档 —— 已定案并实现（2026-10-19）**：
+   - `.ans-wrap` 内卡片**限宽 960px 居中**（中文最佳行宽 35–45 字），超宽屏不再拉成一行长带。
+   - ⚠️ 教训：`scrollbar-gutter:stable` 在 Chromium **根元素上不生效**（实测 1280→1265→1260 仍跳）；
+     改 `html{overflow-y:scroll}` 恒定有效（1280 视口内容区全程 1265，位移 0.00px）。
+   - ⚠️ 复现滚动条类 bug **必须有头模式**（`headless:false`）：headless 的滚动条是0 宽 overlay 类型，
+     headless 下永远复现不出来。
+
+0g. **toast 空元素占位+ 溢出修复 —— 已修（2026-10-19）**：
+   - `#toast:empty, .toast:empty { display:none !important }`：空toast 容器仍占位导致布局出现空隙。
+
+**P1 —— ①找 作答页体验系列（2026-10-19 一日内完成，线上 cbc5fe2，SW v28）**
+
+这一轮的连续改造已全部上线，**读代码前先看这一节**，别当成独立小补丁：
+
+1. **字号与排版**：译文（操作对象）17px / line-height 1.8 / 白底 + 3px 蓝左边线；
+   原文（参考）15px / 浅灰底 `--src-box`。原先两者同字号同底色，主次不分。
+2. **底栏固定**：`.nav-row` 改 `position:fixed; bottom:0; z-index:90` + 毛玻璃白底 +
+   `env(safe-area-inset-bottom)`，上一条/下一条位置**恒定不随句子变化**（③测「工具栏 always sticky」同一模式）。
+   - 三栏 grid `1fr auto 1fr`；**`.nav-c` 必须显式 `grid-column:2/3`、`.nav-r` `grid-column:3`**
+     ——只有两个子元素时会顺次落进第 1、2 列，导致中栏偏左 327px、交卷跑到中间。
+   - 顶栏「交卷」已删除，**交卷只有底栏一个入口**（避免同功能两个名字）。
+3. **共享高度变量**：`.ans-wrap{--nav-h:59px}`，被 `.nav-row`、`.sel-panel`（bottom）、内容让位
+   padding 三处引用——改底栏高度只改这一处。
+4. **面板跟随选区（popover）**：`.sel-panel` 水平对齐选区中心（左右 16px 安全边），
+   垂直优先下方 10px → 放不下翻上方 → 仍不行贴底栏上方；多行划选取 `getClientRects()` 最后一行；
+   滚动/缩放用 rAF 节流 `repositionPanel()`。
+   - ⚠️ 教训（踩了两次）：`.sel-panel` 的 bottom/z-index 必须跟着 `--nav-h` 走，
+     否则被固定底栏盖住，「保存标注/取消」点不到。
+   - ⚠️ 教训：算间隙符号别算反——`gap = bar.top − panel.bottom`（正值 = 不重叠）。
+5. **防丢片段双守卫**：键盘 `←/→` 切句 + 鼠标 `lockNavButtons()`（记录 `dataset.wasDisabled`
+   精确还原 disabled 态）；面板打开时 `body.panel-open` 令底栏中栏按钮 `opacity:.4`。
+6. **Esc 优先级**：先关标注面板，再关 `#modal-mask`（Esc 取消打标）。
+7. **M0 chip 视觉区分**：M0 是「正确处理」，不是错误。`.t-chip.m0` 虚线灰底、`.m0.on` 绿色实底、
+   渲染加 `✓` 前缀 + `.m0-hint` 说明行——此前与 M1–M9 错误类型长得一样，学生会误以为标错了。
+8. **P0 修复：`editAnn()` 从未定义**（annotate.js:337 调用、全项目搜不到定义）→ 点已打标注抛
+   `ReferenceError`，等于**无法修改已有标注**。已补：定位 mark 并带锚点重开面板、M4 正确预选。
+9. **零标注空态**：无任何标注时显示引导文案，而非空白卡片。
+10. **括号全半角统一**、**键盘切句**（`←/→`）、**文案去重**（两个交卷入口统一为「交卷」）。
+
+**MQM 侧同日改造**：
+- 速查弹窗：宽度 `min(680px,94vw)` → `min(1180px,94vw)`；≥1080px 时判据列 `white-space:nowrap`
+  （窄屏自动换行兜底）；行内样式改注入 `<style>` 块（作用域 `#mqm-ref`）+ 严重度色分级；
+  按钮写明「知道了（Esc）」，`mqm.js` 加 Esc 监听。
+  ⚠️ 测「是否折行」不能拿 `height > lineHeight*1.6` 判断（会把 padding 算成折行），
+  正确算法 `lines = round((td高 − padding上下) / lineHeight)`。
+- `MQM错误类型参考手册.html` **整体重写为教学型练习手册**：10 张学习卡（M0–M9）=
+  判据一句话 + 例句对照（问题片段红高亮 / 漏译在原文标出丢失部分）+ 四选一即时判定 + 解析；
+  进度存localStorage `mqm_practice`（已练 n/10 · 答对 m）；学术内容（七维度表 / 权重公式 /
+  `?dim=` 维度入口 / 来源）收进折叠 `<details>` 附录；sticky 目录；顶部「按 Esc 返回上一页」。
+  重写时踩坑：原用 `$('#toc')` 但重写后没有定义 → 补 `const $ = (s) => document.querySelector(s);`。
+  ⚠️ 来源标注遵守用户文献规范：MQM 手册（无 DOI，类型：行业标准手册）→ qt21.eu；
+  ISO 18587:2017（无 DOI，类型：国际标准）→ iso.org/standard/62970.html。
+  ⚠️ `参考资料/` 目录未被 git 跟踪，站内链接会 404 → 改为纯文本路径说明（教师本机文件）。
+
 **P0 —— 已解决（2026-10-17，提交 c8dc15f1）**
 
 1. ~~**机房串号**~~ **已修复——按昵称分区**：所有用户数据带保存时的昵称戳（history 用已有
