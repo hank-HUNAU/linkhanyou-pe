@@ -330,7 +330,7 @@ function bindSelection() {
  if (!sel || sel.isCollapsed) return;
  const { start, end, text } = offsetWithin(box, sel);
  if (start === null || end - start < 1) return;
- openPanel({ start, end, text });
+ openPanel({ start, end, text }, null, sel.getRangeAt(0));
  });
  box.addEventListener('click', (e) => {
  const mark = e.target.closest('mark.mine');
@@ -357,8 +357,9 @@ function offsetWithin(container, sel) {
 
 /* ---- 标注面板 ---- */
 let pending = null, editing = null;
-function openPanel(sel, editIdx) {
+function openPanel(sel, editIdx, anchor) {
  pending = sel; editing = (editIdx === undefined || editIdx === null) ? null : editIdx;
+ panelAnchor = anchor || null;
  const anns = A.anns[A.paper[A.idx].k] || [];
  const cur = editing !== null ? anns[editing] : null;
  const panel = $('#sel-panel');
@@ -366,8 +367,9 @@ function openPanel(sel, editIdx) {
  panel.innerHTML = `
  <div class="stext">已选片段：「${esc((cur ? cur.text : sel.text) || '')}」</div>
  <div class="tag-chips" id="tag-chips">
- ${SCHEME.map(([id, label]) => `<span class="t-chip${cur && cur.tag === id ? ' on' : ''}" data-tag="${id}">${id} ${label}</span>`).join('')}
+ ${SCHEME.map(([id, label]) => `<span class="t-chip${id === 'M0' ? ' m0' : ''}${cur && cur.tag === id ? ' on' : ''}" data-tag="${id}"${id === 'M0' ? ' title="M0 不是错误类型——「这一段不用改」也是一次正确判断"' : ''}>${id === 'M0' ? '✓ ' : ''}${id} ${label}</span>`).join('')}
  </div>
+ <p class="m0-hint">✓ M0 不是错误类型，而是「这一段不用改」的判断；留白不标同样是得分动作。</p>
  <div class="sev-row">
  <span style="font-size:12.5px;color:var(--tx2)">严重度：</span>
  ${['Critical', 'Major', 'Minor'].map(s => `<span class="sev-opt${cur && cur.sev === s ? ' on' : ''}" data-sev="${s}">${s}</span>`).join('')}
@@ -385,8 +387,77 @@ function openPanel(sel, editIdx) {
  panel.querySelectorAll('.sev-opt').forEach(x => x.classList.remove('on'));
  s.classList.add('on');
  });
+ /* 面板打开期间锁住切句（鼠标）：已选好的片段不会因误点下一条而丢失。
+    键盘 ←/→ 已由下方键盘守卫拦住，这里补鼠标路径。 */
+ lockNavButtons(true);
+ placePanel();
 }
-function closePanel() { $('#sel-panel').classList.add('hidden'); pending = null; editing = null; }
+/* ---- 面板跟随选区就近弹出（不再固定在屏幕底部） ---- */
+let panelAnchor = null;
+function anchorRect() {
+ if (!panelAnchor) return null;
+ if (panelAnchor.nodeType === 1) return panelAnchor.getBoundingClientRect();
+ const rects = panelAnchor.getClientRects ? panelAnchor.getClientRects() : null;
+ if (rects && rects.length) return rects[rects.length - 1];  // 多行划选取最后一行定位
+ return panelAnchor.getBoundingClientRect ? panelAnchor.getBoundingClientRect() : null;
+}
+function placePanel() {
+ const panel = $('#sel-panel');
+ if (!panel || panel.classList.contains('hidden')) return;
+ const r = anchorRect();
+ if (!r || (!r.width && !r.height)) return;         // 选区已失效（如点了别处）→ 保持原位
+ const pw = panel.offsetWidth, ph = panel.offsetHeight;
+ const vw = window.innerWidth, vh = window.innerHeight, M = 16;
+ const bar = document.querySelector('.nav-row');
+ const barTop = bar ? bar.getBoundingClientRect().top : vh;
+ // 水平：与选区中心对齐，左右各留 16px 安全边
+ let left = r.left + r.width / 2 - pw / 2;
+ left = Math.max(M, Math.min(left, vw - pw - M));
+ // 垂直：默认选区下方 10px；下方放不下翻到上方；仍放不下就贴底栏上方
+ let top;
+ if (barTop - r.bottom >= ph + 12) top = r.bottom + 10;
+ else if (r.top - M >= ph + 12) top = r.top - ph - 10;
+ else top = Math.max(M, barTop - ph - 12);
+ panel.style.left = Math.round(left) + 'px';
+ panel.style.top = Math.round(top) + 'px';
+ panel.style.bottom = 'auto';
+ panel.style.transform = 'none';
+}
+/* 滚动/缩放时跟随选区重定位（选区随文本移动，浮层要跟着走） */
+let panelRaf = 0;
+function repositionPanel() {
+ if (panelRaf) return;
+ panelRaf = requestAnimationFrame(() => { panelRaf = 0; placePanel(); });
+}
+window.addEventListener('scroll', repositionPanel, true);
+window.addEventListener('resize', repositionPanel);
+/* 切句按钮锁：记住原禁用状态，面板关闭时精确还原 */
+function lockNavButtons(lock) {
+ const btns = document.querySelectorAll('.nav-c .btn');
+ btns.forEach(b => {
+ if (lock) {
+ if (b.dataset.wasDisabled === undefined) b.dataset.wasDisabled = b.disabled ? '1' : '0';
+ b.disabled = true;
+ } else {
+ b.disabled = b.dataset.wasDisabled === '1';
+ }
+ });
+ document.body.classList.toggle('panel-open', !!lock);
+}
+/* 点已打的标注 → 回到面板修改（此前 editAnn 未定义，点标注会抛 ReferenceError） */
+function editAnn(i) {
+ const k = A.paper[A.idx].k;
+ const a = (A.anns[k] || [])[i];
+ if (!a) return;
+ const mark = document.querySelector('#mtbox mark.mine[data-i="' + i + '"]');
+ openPanel(a, i, mark || null);
+}
+function closePanel() {
+ const panel = $('#sel-panel');
+ if (panel) { panel.classList.add('hidden'); panel.style.left = panel.style.top = panel.style.bottom = panel.style.transform = ''; }
+ pending = null; editing = null; panelAnchor = null;
+ lockNavButtons(false);
+}
 function saveAnn() {
  const tag = document.querySelector('#tag-chips .t-chip.on');
  const sev = document.querySelector('.sev-opt.on');
@@ -583,9 +654,12 @@ function openModal(h) {
 }
 function closeModal() { const m = $('#modal-mask'); if (m) m.classList.add('hidden'); }
 
-/* Esc 关闭本页弹窗（交卷确认等）；速查弹窗由 mqm.js 自己监听 */
+/* Esc 关闭本页浮层：先关标注面板（取消本次打标），再关弹窗（交卷确认等）；
+   速查弹窗由 mqm.js 自己监听 */
 document.addEventListener('keydown', (e) => {
  if (e.key !== 'Escape' && e.key !== 'Esc') return;
+ const panel = $('#sel-panel');
+ if (panel && !panel.classList.contains('hidden')) { closePanel(); return; }
  const m = $('#modal-mask');
  if (m && !m.classList.contains('hidden')) closeModal();
 });

@@ -37,6 +37,12 @@ select,input[type=number]{border:1px solid var(--bd);border-radius:8px;padding:7
 .tag-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
 .t-chip{border:1.5px solid var(--bd);border-radius:999px;padding:3px 12px;font-size:12.5px;background:#fff;color:var(--tx2);user-select:none}
 .t-chip.on{background:var(--an);border-color:var(--an);color:#fff;font-weight:600}
+/* M0「无需修改」不是错误类型：虚线灰底区分，误点风险降下来 */
+.t-chip.m0{border-style:dashed;color:var(--mut)}
+.t-chip.m0.on{background:var(--g);border-color:var(--g);color:#fff}
+.m0-hint{font-size:12px;color:var(--mut);margin:-4px 0 10px}
+/* 标注面板打开期间：切句按钮置灰（点击已由 lockNavButtons 禁用，这里只做视觉） */
+body.panel-open .nav-c .btn{opacity:.4}
 .sev-row{display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap}
 .sev-opt{border:1.5px solid var(--bd);border-radius:8px;padding:4px 12px;font-size:12.5px;background:#fff;cursor:pointer}
 .sev-opt.on{border-color:var(--an);background:var(--anl);color:var(--and);font-weight:700}
