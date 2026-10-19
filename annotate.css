@@ -15,10 +15,11 @@ select,input[type=number]{border:1px solid var(--bd);border-radius:8px;padding:7
 .row>div{flex:1;min-width:150px}
 .meta{font-size:12.5px;color:var(--mut);display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px}
 
-/* 标注区 */
-.src-box,.mt-box{background:#f8fbfa;border:1px solid var(--bd);border-radius:10px;padding:12px 14px;margin-bottom:10px;font-size:16px;line-height:1.7}
+/* 标注区 —— 主次分层（2026-10-19）：译文是划选操作对象（17px 白底+蓝左边线），
+   原文只是参考（15px 浅灰底），一眼分清该看哪、点哪 */
+.src-box{background:#fafbfc;border:1px solid var(--bd);border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:15px;line-height:1.65}
+.mt-box{background:#fff;border:1px solid var(--bd);border-left:3px solid var(--yc);border-radius:10px;padding:14px 16px;margin-bottom:10px;font-size:17px;line-height:1.8;cursor:text;user-select:text}
 .lab{font-size:12px;color:var(--mut);font-weight:600;margin-bottom:4px}
-.mt-box{cursor:text;user-select:text}
 .mt-box:active{border-color:var(--an)}
 .mt-box mark{border-radius:3px;padding:0 1px}
 .mt-box mark.hit{background:#c9f0dc;border-bottom:2px solid var(--g);cursor:pointer}
@@ -55,6 +56,12 @@ select,input[type=number]{border:1px solid var(--bd);border-radius:8px;padding:7
 }
 /* 作答视图内容区让位：防止最后一段标注列表被固定底栏遮挡 */
 .ans-wrap{padding-bottom:96px}
+/* 卡片限宽居中：全宽 1080px 下译文一行 60+ 字远超中文最佳行宽（35–45 字），
+   960px 内一行 ~45 字，划选扫视距离减半。①找非考场页，不受 ③测 全宽定案约束 */
+.ans-wrap .card{max-width:960px;margin-left:auto;margin-right:auto}
+/* 键盘切句提示（键帽样式） */
+.nav-left{display:flex;align-items:center;gap:10px}
+.kbd-hint{font-size:12px;color:var(--mut);border:1px solid var(--bd);border-bottom-width:2px;border-radius:6px;padding:1px 7px;background:#fafbfc;white-space:nowrap}
 
 /* 结果 */
 .score-hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}

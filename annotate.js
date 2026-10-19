@@ -272,7 +272,6 @@ function renderWork() {
   <div class="muted">第 ${A.idx + 1}/${A.paper.length} 条</div>
   <div class="top-acts">
   <button class="btn btn-o" onclick="mqmQuickRef()">错误类型</button>
-  <button class="btn btn-p" onclick="confirmSubmit()">交卷</button>
   <a class="muted" href="annotate.html" style="text-decoration:none" onclick="saveSession()">退出</a>
   </div>
  </div>
@@ -298,7 +297,7 @@ function renderWork() {
   : `<div class="mt-box empty-mt">（本条无机翻底稿，已跳过）</div>`}
  </div>
  <div class="nav-row">
- <button class="btn btn-g" onclick="navPair(-1)" ${A.idx === 0 ? 'disabled' : ''}> 上一条</button>
+ <span class="nav-left"><button class="btn btn-g" onclick="navPair(-1)" ${A.idx === 0 ? 'disabled' : ''}> 上一条</button><span class="kbd-hint">← → 切句</span></span>
  <button class="btn btn-g" onclick="navPair(1)" ${A.idx === A.paper.length - 1 ? 'disabled' : ''}>下一条 </button>
  <button class="btn btn-p" onclick="confirmSubmit()">交卷</button>
  </div>
@@ -581,6 +580,21 @@ function openModal(h) {
  m.classList.remove('hidden');
 }
 function closeModal() { const m = $('#modal-mask'); if (m) m.classList.add('hidden'); }
+
+/* ---------------- 键盘切句：← 上一条 / → 下一条 ----------------
+   只在作答态生效；正在划选、输入、或弹窗/标注面板打开时不干扰（2026-10-19） */
+document.addEventListener('keydown', (e) => {
+ if (!A || e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+ if (e.target && /^(input|textarea|select)$/i.test(e.target.tagName || '')) return;
+ const sel = window.getSelection && window.getSelection();
+ if (sel && !sel.isCollapsed) return;                       // 正在划选片段
+ const modal = $('#modal-mask');   // MQM 速查 / 交卷确认弹窗打开时不切句
+ if (modal && !modal.classList.contains('hidden')) return;
+ const panel = $('#sel-panel');    // 标注面板打开时不切句（防丢待标注片段）
+ if (panel && !panel.classList.contains('hidden')) return;
+ e.preventDefault();
+ navPair(e.key === 'ArrowLeft' ? -1 : 1);
+});
 
 const app = $('#app');
 renderSetup();
