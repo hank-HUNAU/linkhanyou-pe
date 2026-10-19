@@ -533,10 +533,11 @@ function submitAnn() {
  A.paper.forEach(p => {
  const my = A.anns[p.k] || [];
  const seeds = SEEDS.filter(s => s.k === p.k);
- const pairInfo = { p, my, seeds, scored: seeds.length > 0 };
+ const pairInfo = { p, my, seeds, scored: seeds.some(s => s.tag !== 'M0') };
  if (seeds.length) {
  const used = new Set();
  seeds.forEach(s => {
+ if (s.tag === 'M0') return; // M0=无需修改：跳过计分，避免误判漏检（pilot #1 的 seg_1_决赛_2/6/8 因此曾假 FN）
  let best = null, bestSim = 0;
  my.forEach((a, i) => { if (used.has(i)) return; const sim = simT(a.text, s.span); if (sim >= 0.6 && sim > bestSim) { best = { a, i }; bestSim = sim; } });
  if (best) {
