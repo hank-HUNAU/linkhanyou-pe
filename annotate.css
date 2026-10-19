@@ -29,7 +29,10 @@ select,input[type=number]{border:1px solid var(--bd);border-radius:8px;padding:7
 .mt-box mark.mine[data-sev="Major"]{background:#ffeccc;border-color:var(--a)}
 .empty-mt{color:var(--mut);font-style:italic}
 .hint{font-size:12px;color:var(--mut);margin:-4px 0 10px}
-.sel-panel{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;width:min(680px,94vw);background:#fff;border:1px solid var(--bd);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.18);padding:14px 16px;z-index:80}
+/* 标注面板：fixed 浮层。此前 bottom:18px + z-index:80，被固定底栏（z-index:90，高约 59px）
+   压住底部 41px——「保存标注 / 取消」按钮点不到（2026-10-19 用户截图发现）。
+   修法：与底栏共享 --nav-h 高度，面板停靠在底栏上方 14px，层级抬到底栏之上。 */
+.sel-panel{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h,59px) + 14px);width:min(680px,94vw);background:#fff;border:1px solid var(--bd);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.18);padding:14px 16px;z-index:95}
 .sel-panel .stext{background:var(--anl);border-radius:8px;padding:6px 10px;font-size:13.5px;margin-bottom:10px;max-height:60px;overflow:auto}
 .tag-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
 .t-chip{border:1.5px solid var(--bd);border-radius:999px;padding:3px 12px;font-size:12.5px;background:#fff;color:var(--tx2);user-select:none}
@@ -54,8 +57,9 @@ select,input[type=number]{border:1px solid var(--bd);border-radius:8px;padding:7
   -webkit-backdrop-filter:saturate(1.8) blur(12px);backdrop-filter:saturate(1.8) blur(12px);
   border-top:1px solid var(--bd);
 }
-/* 作答视图内容区让位：防止最后一段标注列表被固定底栏遮挡 */
-.ans-wrap{padding-bottom:96px}
+/* 作答视图内容区让位：防止最后一段标注列表被固定底栏遮挡；
+   --nav-h 为固定底栏高度，面板与内容让位都引用这一个值（改一处三处同步） */
+.ans-wrap{--nav-h:59px;padding-bottom:calc(var(--nav-h) + 37px)}
 /* 卡片限宽居中：全宽 1080px 下译文一行 60+ 字远超中文最佳行宽（35–45 字），
    960px 内一行 ~45 字，划选扫视距离减半。①找非考场页，不受 ③测 全宽定案约束 */
 .ans-wrap .card{max-width:960px;margin-left:auto;margin-right:auto}
