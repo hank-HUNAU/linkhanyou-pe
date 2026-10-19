@@ -406,6 +406,10 @@ function placePanel() {
  if (!panel || panel.classList.contains('hidden')) return;
  const r = anchorRect();
  if (!r || (!r.width && !r.height)) return;         // 选区已失效（如点了别处）→ 保持原位
+ /* 宽度贴合选区：短片段不必铺满 680px 挡住下方内容；留出下限保证 chip 行不折行 */
+ const minW = 420, maxW = Math.min(680, vw0() - 32);
+ const fitW = Math.round(Math.max(minW, Math.min(maxW, r.width + 260)));
+ panel.style.width = fitW + 'px';
  const pw = panel.offsetWidth, ph = panel.offsetHeight;
  const vw = window.innerWidth, vh = window.innerHeight, M = 16;
  const bar = document.querySelector('.nav-row');
@@ -423,6 +427,7 @@ function placePanel() {
  panel.style.bottom = 'auto';
  panel.style.transform = 'none';
 }
+function vw0() { return window.innerWidth; }
 /* 滚动/缩放时跟随选区重定位（选区随文本移动，浮层要跟着走） */
 let panelRaf = 0;
 function repositionPanel() {
@@ -454,7 +459,7 @@ function editAnn(i) {
 }
 function closePanel() {
  const panel = $('#sel-panel');
- if (panel) { panel.classList.add('hidden'); panel.style.left = panel.style.top = panel.style.bottom = panel.style.transform = ''; }
+ if (panel) { panel.classList.add('hidden'); panel.style.left = panel.style.top = panel.style.bottom = panel.style.transform = panel.style.width = ''; }
  pending = null; editing = null; panelAnchor = null;
  lockNavButtons(false);
 }
