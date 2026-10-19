@@ -6,52 +6,52 @@
 .top{background:#fff;border-bottom:1px solid var(--bd);padding:12px 22px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:var(--mtpe-nav-h, 57px);z-index:40}
 /* 作答栏三页统一：左=步骤标签，中=进度，右=交卷/退出（与 ② 改 / ③ 测 同一版式） */
 .top-acts{display:flex;align-items:center;gap:10px}
-h1{font-size:21px;margin-bottom:4px}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px 18px;margin-bottom:12px;box-shadow:0 1px 3px rgba(20,60,55,.06)}
-h3{font-size:15.5px;margin-bottom:10px}
-label{font-size:13px;color:var(--tx2);display:block;margin-bottom:4px;font-weight:600}
-select,input[type=number]{border:1px solid var(--bd);border-radius:8px;padding:7px 10px;font-family:inherit;font-size:14px;background:#fff}
+h1{font-size:var(--fs-lg);margin-bottom:4px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r-md2);padding:16px 18px;margin-bottom:12px;box-shadow:0 1px 3px rgba(20,60,55,.06)}
+h3{font-size:var(--fs-base);margin-bottom:10px}
+label{font-size:var(--fs-sm);color:var(--tx2);display:block;margin-bottom:4px;font-weight:600}
+select,input[type=number]{border:1px solid var(--bd);border-radius:var(--r-sm);padding:7px 10px;font-family:inherit;font-size:var(--fs-sm);background:#fff}
 .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
 .row>div{flex:1;min-width:150px}
-.meta{font-size:12.5px;color:var(--mut);display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.meta{font-size:var(--fs-xs);color:var(--mut);display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px}
 
 /* 标注区 —— 主次分层（2026-10-19）：译文是划选操作对象（17px 白底+蓝左边线），
    原文只是参考（15px 浅灰底），一眼分清该看哪、点哪 */
-.src-box{background:#fafbfc;border:1px solid var(--bd);border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:15px;line-height:1.65}
-.mt-box{background:#fff;border:1px solid var(--bd);border-left:3px solid var(--yc);border-radius:10px;padding:14px 16px;margin-bottom:10px;font-size:17px;line-height:1.8;cursor:text;user-select:text}
-.lab{font-size:12px;color:var(--mut);font-weight:600;margin-bottom:4px}
+.src-box{background:#fafbfc;border:1px solid var(--bd);border-radius:var(--r-md);padding:10px 14px;margin-bottom:10px;font-size:var(--fs-base);line-height:var(--lh-read)}
+.mt-box{background:#fff;border:1px solid var(--bd);border-left:3px solid var(--yc);border-radius:var(--r-md);padding:14px 16px;margin-bottom:10px;font-size:var(--fs-read);line-height:var(--lh-read);cursor:text;user-select:text}
+.lab{font-size:var(--fs-2xs);color:var(--mut);font-weight:600;margin-bottom:4px}
 .mt-box:active{border-color:var(--an)}
-.mt-box mark{border-radius:3px;padding:0 1px}
+.mt-box mark{border-radius:var(--r-xs);padding:0 1px}
 .mt-box mark.hit{background:#c9f0dc;border-bottom:2px solid var(--g);cursor:pointer}
 .mt-box mark.miss{background:#ffe2e2;border-bottom:2px dashed var(--r);cursor:pointer}
-.mt-box mark.mine{background:#d6e6ff;border-bottom:2px solid var(--b);cursor:pointer}
+.mt-box mark.mine{background:#d6e6ff;border-bottom:2px solid var(--yc);cursor:pointer}
 .mt-box mark.mine[data-sev="Critical"]{background:#ffd3d3;border-color:var(--r)}
 .mt-box mark.mine[data-sev="Major"]{background:#ffeccc;border-color:var(--a)}
 .empty-mt{color:var(--mut);font-style:italic}
-.hint{font-size:12px;color:var(--mut);margin:-4px 0 10px}
+.hint{font-size:var(--fs-2xs);color:var(--mut);margin:-4px 0 10px}
 /* 标注面板：fixed 浮层。此前 bottom:18px + z-index:80，被固定底栏（z-index:90，高约 59px）
    压住底部 41px——「保存标注 / 取消」按钮点不到（2026-10-19 用户截图发现）。
    修法：与底栏共享 --nav-h 高度，面板停靠在底栏上方 14px，层级抬到底栏之上。 */
-.sel-panel{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h,59px) + 14px);width:min(680px,94vw);background:#fff;border:1px solid var(--bd);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.18);padding:14px 16px;z-index:95}
-.sel-panel .stext{background:var(--anl);border-radius:8px;padding:6px 10px;font-size:13.5px;margin-bottom:10px;max-height:60px;overflow:auto}
+.sel-panel{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h,59px) + 14px);width:min(680px,94vw);background:#fff;border:1px solid var(--bd);border-radius:var(--r-lg);box-shadow:0 12px 40px rgba(0,0,0,.18);padding:14px 16px;z-index:95}
+.sel-panel .stext{background:var(--anl);border-radius:var(--r-sm);padding:6px 10px;font-size:var(--fs-sm);margin-bottom:10px;max-height:60px;overflow:auto}
 .tag-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
-.t-chip{border:1.5px solid var(--bd);border-radius:999px;padding:3px 12px;font-size:12.5px;background:#fff;color:var(--tx2);user-select:none}
+.t-chip{border:1.5px solid var(--bd);border-radius:var(--r-pill);padding:3px 12px;font-size:var(--fs-xs);background:#fff;color:var(--tx2);user-select:none}
 .t-chip.on{background:var(--an);border-color:var(--an);color:#fff;font-weight:600}
 /* M0「无需修改」不是错误类型：虚线灰底区分，误点风险降下来 */
 .t-chip.m0{border-style:dashed;color:var(--mut)}
 .t-chip.m0.on{background:var(--g);border-color:var(--g);color:#fff}
-.m0-hint{font-size:12px;color:var(--mut);margin:-4px 0 10px}
+.m0-hint{font-size:var(--fs-2xs);color:var(--mut);margin:-4px 0 10px}
 /* 标注面板打开期间：切句按钮置灰（点击已由 lockNavButtons 禁用，这里只做视觉） */
 body.panel-open .nav-c .btn{opacity:.4}
 .sev-row{display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap}
-.sev-opt{border:1.5px solid var(--bd);border-radius:8px;padding:4px 12px;font-size:12.5px;background:#fff;cursor:pointer}
+.sev-opt{border:1.5px solid var(--bd);border-radius:var(--r-sm);padding:4px 12px;font-size:var(--fs-xs);background:#fff;cursor:pointer}
 .sev-opt.on{border-color:var(--an);background:var(--anl);color:var(--and);font-weight:700}
-.fix-input{flex:1;min-width:200px;border:1px solid var(--bd);border-radius:8px;padding:7px 10px;font-family:inherit;font-size:13.5px}
+.fix-input{flex:1;min-width:200px;border:1px solid var(--bd);border-radius:var(--r-sm);padding:7px 10px;font-family:inherit;font-size:var(--fs-sm)}
 .ann-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 /* 零标注空态：告诉学生标注结果的落点，兼给列表区最小高度（2026-10-19） */
-.ann-empty{color:var(--mut);font-size:13.5px;text-align:center;padding:16px 12px;border:1px dashed var(--bd);border-radius:8px;background:#fafbfc}
-.ann-item{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fff;border:1px solid var(--bd);border-radius:8px;padding:6px 10px;font-size:13px}
-.ann-item .del{border:none;background:var(--rb);color:var(--r);border-radius:6px;padding:2px 9px;font-size:12px}
+.ann-empty{color:var(--mut);font-size:var(--fs-sm);text-align:center;padding:16px 12px;border:1px dashed var(--bd);border-radius:var(--r-sm);background:#fafbfc}
+.ann-item{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fff;border:1px solid var(--bd);border-radius:var(--r-sm);padding:6px 10px;font-size:var(--fs-sm)}
+.ann-item .del{border:none;background:var(--rb);color:var(--r);border-radius:var(--r-sm2);padding:2px 9px;font-size:var(--fs-2xs)}
 /* 底部操作条：fixed 常驻视口底缘 —— 每句内容高度不同（原文/译文长短、标注多少），
    文档流里跟在卡片后会让按钮上下漂移；钉死在底部后任何句子位置恒定（2026-10-19）。
    与 ③测 页「工具栏 always sticky」同一模式。 */
@@ -66,8 +66,8 @@ body.panel-open .nav-c .btn{opacity:.4}
 /* 底栏左格：进度（2026-10-19「进度进底栏」，顶栏只留页面级操作） */
 .nav-l{grid-column:1;display:flex;align-items:center;gap:10px;min-width:0;
   justify-self:start;overflow:hidden}
-.pg-txt{font-size:13px;color:var(--tx2);white-space:nowrap}
-.pg-txt b{color:var(--tx);font-size:14px;font-weight:700}
+.pg-txt{font-size:var(--fs-sm);color:var(--tx2);white-space:nowrap}
+.pg-txt b{color:var(--tx);font-size:var(--fs-base);font-weight:700}
 .pg-sum{color:var(--mut)}
 .pg-dots{display:flex;align-items:center;gap:4px;flex-wrap:nowrap}
 .pg-dot{width:7px;height:7px;border-radius:50%;background:#fff;
@@ -88,17 +88,17 @@ body.panel-open .pg-dots{opacity:.4}
 .nav-c{grid-column:2;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
 .nav-r{grid-column:3;display:flex;justify-content:flex-end}
 /* 键盘切句提示（键帽样式） */
-.kbd-hint{font-size:12px;color:var(--mut);border:1px solid var(--bd);border-bottom-width:2px;border-radius:6px;padding:1px 7px;background:#fafbfc;white-space:nowrap}
+.kbd-hint{font-size:var(--fs-2xs);color:var(--mut);border:1px solid var(--bd);border-bottom-width:2px;border-radius:var(--r-sm2);padding:1px 7px;background:#fafbfc;white-space:nowrap}
 
 /* 结果 */
 .score-hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}
-.stat-box{background:#fff;border:1px solid var(--bd);border-radius:12px;padding:14px;text-align:center}
-.stat-box .v{font-size:24px;font-weight:800;color:var(--an)}
-.stat-box .l{font-size:12px;color:var(--tx2)}
+.stat-box{background:#fff;border:1px solid var(--bd);border-radius:var(--r-md2);padding:14px;text-align:center}
+.stat-box .v{font-size:var(--fs-xl);font-weight:800;color:var(--an)}
+.stat-box .l{font-size:var(--fs-2xs);color:var(--tx2)}
 .stat-box .v.g{color:var(--g)}.stat-box .v.r{color:var(--r)}.stat-box .v.a{color:var(--a)}
-.legend{font-size:12.5px;color:var(--tx2);margin-bottom:12px;display:flex;gap:14px;flex-wrap:wrap}
-.legend i{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:4px}
-.muted{color:var(--mut);font-size:12.5px}
+.legend{font-size:var(--fs-xs);color:var(--tx2);margin-bottom:12px;display:flex;gap:14px;flex-wrap:wrap}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:var(--r-xs);vertical-align:-2px;margin-right:4px}
+.muted{color:var(--mut);font-size:var(--fs-xs)}
 
 /* 2026-10-12：原先这里也叠了一整块「Apple 设计语言覆盖」并用 !important 压按钮圆角——
    与 style.css 里的那份重复且各写各的。已全部上移到共用的 ui.css，此处不再需要。
@@ -125,8 +125,8 @@ body.panel-open .pg-dots{opacity:.4}
 @media (max-width:860px){
   .top{padding:10px 16px}
   .card{padding:14px}
-  .src-box{font-size:14.5px;padding:10px 12px}
-  .mt-box{font-size:16.5px;padding:12px 14px}   /* 仍保持译文最大，维持主次 */
+  .src-box{font-size:var(--fs-narrow-ref);padding:10px 12px}
+  .mt-box{font-size:var(--fs-narrow-read);padding:12px 14px}   /* 仍 > 原文，主次不塌 */
   .pg-dots{gap:3px}
   .pg-dot{width:6px;height:6px}
 }
@@ -138,27 +138,27 @@ body.panel-open .pg-dots{opacity:.4}
   .ans-wrap{padding:12px 12px calc(var(--nav-h) + 24px)}
   .nav-row{padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px));gap:6px 8px}
   .nav-l{width:100%}
-  .pg-txt{font-size:12px}
+  .pg-txt{font-size:var(--fs-2xs)}
   .pg-dots{flex-wrap:wrap;row-gap:4px;max-height:26px;overflow:hidden}
 
   /* 切句与交卷做成大按钮，触屏友好 */
-  .nav-c .btn,.nav-r .btn{padding:11px 16px;font-size:15px}
+  .nav-c .btn,.nav-r .btn{padding:11px 16px;font-size:var(--fs-base)}
   .nav-c{width:100%;justify-content:space-between}
 
   /* 面板：贴底抽屉，避开软键盘与拇指遮挡区 */
   .sel-panel{
     left:0;right:0;bottom:0;width:auto;transform:none;
-    border-radius:16px 16px 0 0;border-bottom:none;
+    border-radius:var(--r-xl) var(--r-xl) 0 0;border-bottom:none;
     padding:14px 16px calc(16px + env(safe-area-inset-bottom,0px));
     max-height:76vh;overflow-y:auto;
   }
   /* 抽屉顶部加个小抓手，暗示可下拉关闭 */
-  .sel-panel::before{content:'';display:block;width:38px;height:4px;border-radius:2px;
+  .sel-panel::before{content:'';display:block;width:38px;height:4px;border-radius:var(--r-xs2);
     background:var(--bd);margin:0 auto 10px}
   /* 面板打开时正文不再让位（抽屉是覆盖式的） */
   body.panel-open{overflow:hidden}
 
-  .t-chip{padding:8px 12px;font-size:14px}      /* chip 加大便于点按 */
+  .t-chip{padding:8px 12px;font-size:var(--fs-base)}   /* chip 加大便于点按 */
   .sev-opt{padding:9px 14px}
-  #fix-input,.sel-panel input,.sel-panel textarea{font-size:16px}  /* ≥16px 防 iOS 聚焦缩放 */
+  #fix-input,.sel-panel input,.sel-panel textarea{font-size:var(--fs-touch)}
 }

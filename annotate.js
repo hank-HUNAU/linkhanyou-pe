@@ -28,7 +28,7 @@ function simT(a, b) { const A = tokenize(a), B = tokenize(b); if (!A.length && !
  return 1 - editDist(A, B) / Math.max(A.length, B.length); }
 
 const TAG_LABEL = Object.fromEntries(SCHEME.map(([id, label]) => [id, label]));
-const SEV_COLOR = { Critical: 'var(--r)', Major: 'var(--a)', Minor: 'var(--b)' };
+const SEV_COLOR = { Critical: 'var(--r)', Major: 'var(--a)', Minor: 'var(--yc)' };
 /* ---------------- 优化B：错误维度组卷 / 错题本 ---------------- */
 const DIM_LIST = ['准确性', '术语', '语言规范', '风格', '区域规范', '格式'];
 function qs() { try { return new URLSearchParams(location.search); } catch (e) { return new URLSearchParams(''); } }
@@ -606,7 +606,7 @@ function renderResult(r) {
  <div class="legend">
  <span><i style="background:#c9f0dc;border-bottom:2px solid var(--g)"></i>命中种子</span>
  <span><i style="background:#ffe2e2;border-bottom:2px dashed var(--r)"></i>漏检的种子错误</span>
- <span><i style="background:#d6e6ff;border-bottom:2px solid var(--b)"></i>你的标注</span>
+ <span><i style="background:#d6e6ff;border-bottom:2px solid var(--yc)"></i>你的标注</span>
  </div>
  ${(r.wrongAdded || r.wrongTotal) ? `<div class="card" style="border-color:#f0d9a8;background:#fffdf7">
  <h3> 错题本已更新</h3>
