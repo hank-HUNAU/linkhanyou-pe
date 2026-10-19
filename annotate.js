@@ -279,7 +279,7 @@ function renderWork() {
  <div class="wrap">
  <div class="card">
  <div class="meta">
- ${A.special ? `<span class="tag teal">专项训练 · ${esc(A.special.name)}（不计入常规 F1）</span>` : ''}
+ ${A.special ? `<span class="tag teal">专项训练 · ${esc(A.special.name).replace(/\(/g, '（').replace(/\)/g, '）')}（不计入常规 F1）</span>` : ''}
  ${A.wrongMode ? '<span class="tag teal">错题回练卷</span>' : ''}
  <span class="tag teal">${esc(p.dir)}</span><span class="tag gray">第${esc(p.ed)}届 · ${esc(p.stage)}</span>
  <span>引擎：${esc(p.eng) || '（未公布）'}</span>
@@ -290,17 +290,17 @@ function renderWork() {
  <div class="lab">机翻译文（选中错误片段后打标；无错误可选 M0）</div>
  ${p.mt ? `<div class="mt-box" id="mtbox">${renderMT(p.mt, anns)}</div>
  <div class="ann-list" id="ann-list">
- ${anns.map((a, i) => `<div class="ann-item">
+ ${anns.length ? anns.map((a, i) => `<div class="ann-item">
  <span>「${esc(a.text.slice(0, 30))}${a.text.length > 30 ? '…' : ''}」 <b>${TAG_LABEL[a.tag]}</b> · ${a.sev}${a.fix ? ' · 改：' + esc(a.fix.slice(0, 20)) : ''}</span>
  <button class="del" onclick="delAnn(${i})">删除</button>
- </div>`).join('')}
+ </div>`).join('') : '<div class="ann-empty">尚无标注 —— 用鼠标划选上方译文中的错误片段，选错误类型后标注会列在这里；整句无错可不标，或标「M0 无需修改」。</div>'}
  </div>`
   : `<div class="mt-box empty-mt">（本条无机翻底稿，已跳过）</div>`}
  </div>
  <div class="nav-row">
  <button class="btn btn-g" onclick="navPair(-1)" ${A.idx === 0 ? 'disabled' : ''}> 上一条</button>
  <button class="btn btn-g" onclick="navPair(1)" ${A.idx === A.paper.length - 1 ? 'disabled' : ''}>下一条 </button>
- <button class="btn btn-p" onclick="confirmSubmit()">完成并交卷评分</button>
+ <button class="btn btn-p" onclick="confirmSubmit()">交卷</button>
  </div>
  </div>
  <div class="sel-panel hidden" id="sel-panel"></div>
