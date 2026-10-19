@@ -63,6 +63,19 @@ body.panel-open .nav-c .btn{opacity:.4}
   -webkit-backdrop-filter:saturate(1.8) blur(12px);backdrop-filter:saturate(1.8) blur(12px);
   border-top:1px solid var(--bd);
 }
+/* 底栏左格：进度（2026-10-19「进度进底栏」，顶栏只留页面级操作） */
+.nav-l{grid-column:1;display:flex;align-items:center;gap:10px;min-width:0;
+  justify-self:start;overflow:hidden}
+.pg-txt{font-size:13px;color:var(--tx2);white-space:nowrap}
+.pg-txt b{color:var(--tx);font-size:14px;font-weight:700}
+.pg-sum{color:var(--mut)}
+.pg-dots{display:flex;align-items:center;gap:4px;flex-wrap:nowrap}
+.pg-dot{width:7px;height:7px;border-radius:50%;background:#fff;
+  border:1.5px solid var(--bd);flex:0 0 auto;transition:background .15s,border-color .15s}
+.pg-dot.done{background:var(--yc);border-color:var(--yc)}   /* 已标注：实心 */
+.pg-dot.cur{border-color:var(--yc);box-shadow:0 0 0 2px rgba(0,113,227,.18)} /* 当前句：环 */
+/* 面板打开锁切句时，进度点也一起淡出（与中栏按钮同一视觉语言） */
+body.panel-open .pg-dots{opacity:.4}
 /* 作答视图内容区让位：防止最后一段标注列表被固定底栏遮挡；
    --nav-h 为固定底栏高度，面板与内容让位都引用这一个值（改一处三处同步） */
 .ans-wrap{--nav-h:59px;padding-bottom:calc(var(--nav-h) + 37px)}

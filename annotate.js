@@ -269,7 +269,6 @@ function renderWork() {
  app.innerHTML = `
  <div class="top">
   ${stepTag('① 找 · 作答中')}
-  <div class="muted">第 ${A.idx + 1}/${A.paper.length} 条</div>
   <div class="top-acts">
   <button class="btn btn-o" onclick="mqmQuickRef()">错误类型</button>
   <a class="muted" href="annotate.html" style="text-decoration:none" onclick="saveSession()">退出</a>
@@ -290,13 +289,17 @@ function renderWork() {
  ${p.mt ? `<div class="mt-box" id="mtbox">${renderMT(p.mt, anns)}</div>
  <div class="ann-list" id="ann-list">
  ${anns.length ? anns.map((a, i) => `<div class="ann-item">
- <span>「${esc(a.text.slice(0, 30))}${a.text.length > 30 ? '…' : ''}」 <b>${TAG_LABEL[a.tag]}</b> · ${a.sev}${a.fix ? ' · 改：' + esc(a.fix.slice(0, 20)) : ''}</span>
+ <span>「${esc(a.text.slice(0, 30))}${a.text.length > 30 ? '…' : ''}」 <b>${TAG_LABEL[a.tag] || a.tag}</b> · ${a.sev}${a.fix ? ' · 改：' + esc(a.fix.slice(0, 20)) : ''}</span>
  <button class="del" onclick="delAnn(${i})">删除</button>
  </div>`).join('') : '<div class="ann-empty">尚无标注 —— 用鼠标划选上方译文中的错误片段，选错误类型后标注会列在这里；整句无错可不标，或标「M0 无需修改」。</div>'}
  </div>`
   : `<div class="mt-box empty-mt">（本条无机翻底稿，已跳过）</div>`}
  </div>
  <div class="nav-row">
+ <span class="nav-l" aria-label="答题进度">
+  <span class="pg-dots">${renderProgressDots()}</span>
+  <span class="pg-txt">第 <b>${A.idx + 1}</b>/${A.paper.length} 条${progressSummary()}</span>
+ </span>
  <span class="nav-c">
  <button class="btn btn-g" onclick="navPair(-1)" ${A.idx === 0 ? 'disabled' : ''}> 上一条</button>
  <button class="btn btn-g" onclick="navPair(1)" ${A.idx === A.paper.length - 1 ? 'disabled' : ''}>下一条 </button>
@@ -316,7 +319,7 @@ function renderMT(mt, anns) {
  for (const a of sorted) {
  if (a.start < pos) continue;
  html += esc(mt.slice(pos, a.start));
- html += `<mark class="mine" data-i="${a.i}" data-sev="${a.sev}" title="${TAG_LABEL[a.tag]} · ${a.sev}">${esc(mt.slice(a.start, a.end))}</mark>`;
+ html += `<mark class="mine" data-i="${a.i}" data-sev="${a.sev}" title="${TAG_LABEL[a.tag] || a.tag} · ${a.sev}">${esc(mt.slice(a.start, a.end))}</mark>`;
  pos = a.end;
  }
  html += esc(mt.slice(pos));
@@ -484,6 +487,28 @@ function saveSession() {
  store.set('paper', { keys: A.paper.map(p => p.k), idx: A.idx, anns: A.anns, startedAt: A.startedAt });
 }
 function navPair(d) { saveSession(); A.idx = Math.max(0, Math.min(A.paper.length - 1, A.idx + d)); saveSession(); renderWork(); }
+
+/* ---------------- 底栏进度（2026-10-19「进度进底栏」）----------------
+   底栏既然常驻，进度就该和切句按钮在同一视线内；顶栏只留页面级操作。
+   点阵 = 每句一个点：当前句高亮、已标句实心、待标句空心，一眼看出进度与漏标。 */
+function renderProgressDots() {
+ const total = A.paper.length;
+ /* 句数多时不画点（避免糊成一片），只留文字 */
+ if (total > 40) return '';
+ const cur = A.idx + 1;
+ return A.paper.map((p, i) => {
+   const n = (A.anns[p.k] || []).length;
+   const cls = [i + 1 === cur ? 'cur' : '', n ? 'done' : ''].filter(Boolean).join(' ');
+   const tip = n ? `第${i + 1}条·已标${n}处` : `第${i + 1}条·未标注`;
+   return `<i class="pg-dot ${cls}" title="${tip}"></i>`;
+ }).join('');
+}
+/* 已标注句数提示（>0 才显示，避免「0 句」噪声） */
+function progressSummary() {
+ const total = A.paper.length;
+ const done = A.paper.filter((p) => (A.anns[p.k] || []).length).length;
+ return done ? `<span class="pg-sum"> · 已标 ${done}/${total} 句</span>` : '';
+}
 
 /* ---------------- 交卷与评分 ---------------- */
 function confirmSubmit() {
