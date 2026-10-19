@@ -405,7 +405,13 @@ node verify_live.mjs             # 线上文件端到端：登录 → 分片按�
    - **并入流程（金标准护栏）**：专家逐条签批 pilot CSV → 把通过行并入训练集源
      `种子标注_pair_annotations.csv` → 重跑 `build_corpus.mjs` 走 **build → seal → 部署** 三步，
      机器初判**绝不**直接上线（会污染 F1 评分口径）。
-   - **下一步**：用户签批 pilot #1 → 依签批反馈滚动做 pilot #2（建议 `seg_1_决赛` 23–41 迪拜段 或第 7/8 届初赛）。
+   - **2026-10-20 已签批并部署（用户「全收」）**：
+     · 22 条经 `(k,片段)` 去重并入 `_sealed_backup/annotate-data.js` 的 SEEDS（65→87；`seg_1_决赛_7` 同句补第二条术语种子，旧 M6 语法碎片 + 新 M4 存款准备金互补）；
+     · 重封 `secure.js`/`s-pairs.js`/`s-tasks.js`（指纹 `ver=d2e574f5`），解密核验 `seeds=87 / pairs=1402 / 新种子 seg_1_决赛_1 已装入`；
+     · 配套脚本：`merge_seeds.mjs`（并入器）/ `gen_pilot_seeds.mjs`（初判）/ `gen_seed_candidates.mjs`（差异分诊 v0，噪声大已弃用）；
+     · 提交 `daee0cd` → `gh api` Git Data API 直推 main（`1cc2e88a`；`git push` 仍被 TLS 拦截 "Empty reply"）；
+     · Pages 源=main 自动触发构建（run `#39284758164`），约 1–2 min 后线上生效。
+   - **下一步**：线上确认 87 条生效后 → 滚动 pilot #2（建议 `seg_1_决赛` 23–41 迪拜段 或第 7/8 届初赛）。
 10. 暗色模式（挂账）：需先把颜色完全收敛到 token。
 
 ---
