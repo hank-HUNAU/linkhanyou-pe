@@ -581,6 +581,13 @@ function openModal(h) {
 }
 function closeModal() { const m = $('#modal-mask'); if (m) m.classList.add('hidden'); }
 
+/* Esc 关闭本页弹窗（交卷确认等）；速查弹窗由 mqm.js 自己监听 */
+document.addEventListener('keydown', (e) => {
+ if (e.key !== 'Escape' && e.key !== 'Esc') return;
+ const m = $('#modal-mask');
+ if (m && !m.classList.contains('hidden')) closeModal();
+});
+
 /* ---------------- 键盘切句：← 上一条 / → 下一条 ----------------
    只在作答态生效；正在划选、输入、或弹窗/标注面板打开时不干扰（2026-10-19） */
 document.addEventListener('keydown', (e) => {

@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>MQM 错误类型参考手册 · 完整版与两种简化版</title>
-<meta name="description" content="MQM 2.0 多维度质量度量：完整七大维度与两种简化版，配套译后编辑实训平台的标注与自评。">
+<title>MQM 错误类型练习手册 · 10 类各配一练</title>
+<meta name="description" content="MQM 错误类型学习手册：M0–M9 每类的判据、真实例句与随堂小练习，练完直接进 ①找 实战标注。">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0071e3">
 <link rel="icon" href="icon-192.png">
@@ -13,156 +13,234 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="MQM 手册">
 <style>
-:root{--p:#2f5fe0;--pd:#2348b0;--pl:#eef3ff;--bg:#f4f6fb;--card:#fff;--bd:#e3e8f2;--tx:#1f2430;--tx2:#5a6478;--mut:#9099ad;--g:#16a34a;--gb:#e8f7ee;--r:#dc2626;--rb:#fdecec;--a:#d97706;--ab:#fef3e2;}
+:root{--p:#0071e3;--pd:#0058b0;--pl:#eaf3fd;--bg:#f5f5f7;--card:#fff;--bd:rgba(0,0,0,.08);--tx:#1d1d1f;--tx2:#515154;--mut:#6e6e73;
+--g:#1c6e31;--gb:#e6f4ea;--r:#d70015;--rb:#fdeced;--a:#a35a00;--ab:#fdf0e3;--sk:rgba(0,0,0,.06)}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--tx);font-size:15px;line-height:1.7;padding:30px 18px 80px}
-.wrap{max-width:980px;margin:0 auto}
-h1{font-size:24px;margin-bottom:4px}
-.sub{color:var(--mut);font-size:13px;margin-bottom:24px}
-h2{font-size:19px;margin:34px 0 12px;padding-left:12px;border-left:4px solid var(--p)}
-h3{font-size:15.5px;margin:18px 0 8px}
-p{margin-bottom:8px}
-table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--bd);border-radius:10px;overflow:hidden;font-size:14px;box-shadow:0 1px 3px rgba(30,41,72,.06)}
-th,td{padding:9px 12px;border-bottom:1px solid var(--bd);text-align:left;vertical-align:top}
-th{background:#f8f9fd;color:var(--tx2);font-size:13px}
-tr:last-child td{border-bottom:none}
-.dim{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px 18px;margin-bottom:12px;box-shadow:0 1px 3px rgba(30,41,72,.06)}
-.dim h3{margin-top:0;display:flex;align-items:center;gap:8px}
-.dim h3 .en{color:var(--mut);font-weight:400;font-size:13px}
-.chip{display:inline-block;background:var(--pl);color:var(--p);border-radius:999px;padding:1px 10px;font-size:12px;font-weight:600}
-.subs{margin-top:8px;font-size:13.5px;color:var(--tx2)}
-.subs code{background:#f0f2f8;border:1px solid #dfe4ef;border-radius:4px;padding:0 6px;margin:0 3px;display:inline-block;font-size:12.5px}
-.warn{background:var(--ab);border-radius:8px;padding:10px 14px;font-size:13.5px;margin:10px 0}
-.ok{background:var(--gb);border-radius:8px;padding:10px 14px;font-size:13.5px;margin:10px 0}
-.formula{background:#1f2430;color:#e6ebf5;border-radius:10px;padding:14px 16px;font-family:Consolas,monospace;font-size:13.5px;margin:10px 0;overflow-x:auto}
-.sev-c{background:var(--rb);color:var(--r);padding:1px 8px;border-radius:99px;font-size:12px;font-weight:700}
-.sev-m{background:var(--ab);color:var(--a);padding:1px 8px;border-radius:99px;font-size:12px;font-weight:700}
-.sev-n{background:#f0f2f8;color:var(--tx2);padding:1px 8px;border-radius:99px;font-size:12px;font-weight:700}
-.src{font-size:12.5px;color:var(--mut);margin-top:26px;line-height:1.9}
-.card2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media(max-width:760px){.card2{grid-template-columns:1fr}}
-.vcard{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:18px;box-shadow:0 1px 3px rgba(30,41,72,.06)}
-.vcard h3{margin-top:0}
-.vcard ul{padding-left:18px;font-size:13.5px;color:var(--tx2)}
-.vcard li{margin-bottom:4px}
-.badge{font-size:12px;font-weight:700;padding:2px 10px;border-radius:999px}
-.badge.a{background:var(--gb);color:var(--g)}
-.badge.b{background:var(--pl);color:var(--p)}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--tx);font-size:15px;line-height:1.7;padding:22px 18px 70px}
+.wrap{max-width:960px;margin:0 auto}
+a{color:var(--p)}
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.back{font-size:13.5px;text-decoration:none;color:var(--p);border:1px solid var(--bd);border-radius:999px;padding:4px 12px;background:var(--card)}
+.esc-tip{font-size:12.5px;color:var(--mut);border:1px solid var(--bd);border-bottom-width:2px;border-radius:6px;padding:1px 8px;background:var(--card)}
+h1{font-size:25px;letter-spacing:-.01em;margin-bottom:6px}
+.sub{color:var(--mut);font-size:13.5px;margin-bottom:16px}
+.progress{font-size:13px;color:var(--tx2);background:var(--card);border:1px solid var(--bd);border-radius:999px;padding:4px 12px}
+.toc{position:sticky;top:0;z-index:20;display:flex;gap:6px;flex-wrap:wrap;padding:10px 0;margin-bottom:6px;background:rgba(245,245,247,.92);backdrop-filter:saturate(1.8) blur(10px);border-bottom:1px solid var(--bd)}
+.toc a{font-size:12.5px;text-decoration:none;color:var(--p);background:var(--pl);border-radius:999px;padding:2px 10px;font-weight:600}
+.lesson{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px 18px;margin:14px 0;box-shadow:0 1px 3px rgba(20,60,55,.06);scroll-margin-top:58px}
+.lesson h2{font-size:18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.code{background:var(--p);color:#fff;border-radius:8px;padding:1px 9px;font-size:15px;font-weight:700}
+.tag{font-size:12px;font-weight:600;border-radius:999px;padding:1px 9px;background:var(--pl);color:var(--p)}
+.tag.g{background:var(--gb);color:var(--g)}
+.tag.a{background:var(--ab);color:var(--a)}
+.tag.n{background:#f0f2f8;color:var(--tx2)}
+.tag.c{background:#ffecec;color:var(--r)}
+.def{font-size:14.5px;color:var(--tx2);margin-bottom:10px}
+.src-box{background:#fafbfc;border:1px solid var(--bd);border-radius:10px;padding:9px 13px;font-size:15px;line-height:1.65;margin-bottom:8px}
+.mt-box{background:#fff;border:1px solid var(--bd);border-left:3px solid var(--p);border-radius:10px;padding:12px 15px;font-size:17px;line-height:1.8;margin-bottom:10px}
+.lab{font-size:12px;color:var(--mut);font-weight:600;margin:0 0 3px 2px}
+mark.err{background:#ffe0e0;border-bottom:2px solid var(--r);border-radius:3px;padding:0 2px;color:inherit}
+mark.miss{background:#fdf0e3;border-bottom:2px dashed var(--a);border-radius:3px;padding:0 2px;color:inherit}
+.q{font-size:14.5px;font-weight:600;margin:12px 0 8px}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{font:inherit;font-size:14px;border:1px solid var(--bd);background:var(--card);border-radius:999px;padding:4px 14px;cursor:pointer;color:var(--tx)}
+.opt:hover{border-color:var(--p);color:var(--p)}
+.opt.right{background:var(--gb);border-color:var(--g);color:var(--g);font-weight:700}
+.opt.wrong{background:var(--rb);border-color:var(--r);color:var(--r)}
+.opt.dim{opacity:.5;cursor:default}
+.fb{display:none;margin-top:10px;font-size:14px;border-radius:10px;padding:9px 13px;line-height:1.65}
+.fb.show{display:block}
+.fb.ok{background:var(--gb);color:var(--g)}
+.fb.no{background:var(--rb);color:var(--r)}
+.cta{font-size:13px;color:var(--p);text-decoration:none;margin-left:2px}
+details.appendix{margin-top:26px;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px 16px}
+details.appendix summary{cursor:pointer;font-weight:600;font-size:15px}
+details.appendix h3{font-size:14.5px;margin:16px 0 6px;color:var(--tx2)}
+details.appendix table{width:100%;border-collapse:collapse;font-size:13.5px;margin:6px 0}
+details.appendix td,details.appendix th{padding:6px 9px;border-bottom:1px solid var(--bd);text-align:left;vertical-align:top}
+details.appendix th{background:#f8f9fd;color:var(--tx2);font-size:12.5px}
+.formula{background:#1f2430;color:#e6ebf5;border-radius:10px;padding:12px 14px;font-family:Consolas,monospace;font-size:13px;margin:8px 0;overflow-x:auto}
+.src{font-size:12.5px;color:var(--mut);line-height:1.9;margin-top:12px}
 </style>
 </head>
 <body>
 <div class="wrap">
-<p style="margin-bottom:16px;font-size:13.5px"><a href="index.html" style="color:var(--p);text-decoration:none">← 返回首页</a>　｜　<a href="annotate.html" style="color:var(--p);text-decoration:none">① 找 · 标注实训</a>　｜　<a href="practice.html" style="color:var(--p);text-decoration:none">② 改 · 译后编辑练习</a></p>
-<h1>MQM 错误类型参考手册</h1>
-<p class="sub">多维度质量度量标准（Multidimensional Quality Metrics, MQM 2.0）· 完整七大维度 + 两种简化版 ｜ 配套：译后编辑实训平台</p>
+  <div class="top">
+    <a class="back" href="javascript:history.length>1?history.back():location.replace('index.html')">← 返回上一页</a>
+    <a class="back" href="annotate.html">① 找 · 标注实训</a>
+    <span class="esc-tip">按 Esc 返回上一页</span>
+    <span class="progress" id="pg">已练 0/10 · 答对 0</span>
+  </div>
 
-<h2>一、MQM 全部七大维度（完整版）</h2>
-<p>MQM 由欧盟 QT21 项目与行业共同开发（Lommel 等），是国际翻译质量评估的事实标准（Google、Microsoft、Airbnb 等均采用）。它是一个<strong>层级化类型库</strong>：顶层 7 个维度，每个维度下再分子类（MQM-Full 数百条），并要求对每条错误标注<strong>严重度</strong>（Critical / Major / Minor）。日常使用最广的是两层子集 <strong>MQM-Core</strong>（即下表内容），取代了此前的 MQM/DQF 合并版。</p>
+  <h1>MQM 错误类型练习手册</h1>
+  <p class="sub">每类三件事：<b>判据一句话</b> → <b>看一个真实例句</b> → <b>做一道小练习</b>。做完这 10 道，直接进 ①找 实战标注。</p>
 
-<div class="dim">
-  <h3>1. 术语 <span class="en">Terminology</span> <span class="chip">规范维度</span></h3>
-  <p>译文术语不符合领域规范或组织术语库，或目标语术语不是源语术语的正确规范等价物。</p>
-  <div class="subs">子类：<code>与术语库不一致</code><code>术语使用前后不一致</code><code>错误等价术语</code><code>生造术语</code></div>
-</div>
-<div class="dim">
-  <h3>2. 准确性 <span class="en">Accuracy</span> <span class="chip">核心维度</span></h3>
-  <p>译文未能准确传达原文命题内容——歪曲、遗漏或添加信息。译后编辑中权重最高。</p>
-  <div class="subs">子类：<code>增译 Addition</code><code>漏译 Omission</code><code>误译 Mistranslation</code>（含<code>假朋友</code><code>技术关系误表征</code><code>机翻幻觉 MT hallucination</code>）<code>未翻译 Untranslated</code><code>TM匹配不当</code></div>
-</div>
-<div class="dim">
-  <h3>3. 语言规范（流利性） <span class="en">Linguistic conventions / Fluency</span></h3>
-  <p>目标语文本本身的语言正确性问题（不对照原文即可判定）。</p>
-  <div class="subs">子类：<code>语法 Grammar</code><code>拼写 Spelling</code><code>标点 Punctuation</code><code>大小写/机械正确性 Capitalization</code><code>字符编码</code><code>语内不一致 Inconsistency</code></div>
-</div>
-<div class="dim">
-  <h3>4. 风格 <span class="en">Style</span></h3>
-  <p>语法上可接受，但违反组织风格指南或语言风格不当。</p>
-  <div class="subs">子类：<code>生硬/别扭 Awkward</code><code>违反公司风格</code><code>风格前后不一致</code><code>语域不当 Register</code><code>不地道 Unidiomatic</code></div>
-</div>
-<div class="dim">
-  <h3>5. 地区惯例 <span class="en">Locale conventions</span></h3>
-  <p>违反目标市场对数据元素的内容或格式要求。</p>
-  <div class="subs">子类：<code>日期/时间格式</code><code>数字与小数</code><code>货币格式</code><code>度量单位</code><code>地址/邮编</code><code>电话号码</code><code>快捷键</code></div>
-</div>
-<div class="dim">
-  <h3>6. 受众适宜性 <span class="en">Audience appropriateness（v1 称 Verity）</span></h3>
-  <p>内容对目标地区/目标受众无效、不适当或违反预期用途（文化适配、合规性、事实正确性）。</p>
-  <div class="subs">子类：<code>文化冒犯/不当联想</code><code>法律合规</code><code>事实性错误</code><code>违反客户指南</code></div>
-</div>
-<div class="dim">
-  <h3>7. 设计与标记 <span class="en">Design &amp; markup</span></h3>
-  <p>译文产品的物理呈现问题，本地化工程与 DTP 环节的高频错误源。</p>
-  <div class="subs">子类：<code>标记/标签错误</code><code>占位符/变量</code><code>链接与交叉引用</code><code>截断/文本膨胀</code><code>字符与段落格式</code><code>页面布局</code></div>
-</div>
-<div class="warn"><b>严重度（三个框架通用机制）：</b><span class="sev-n">Minor 轻微</span> 不影响信息传达的小问题（如单处标点）；<span class="sev-m">Major 严重</span> 影响理解或专业性的问题（如术语错译、漏译半句）；<span class="sev-c">Critical 致命</span> 造成错误决策、安全/法律风险（如数字方向译反、条款漏译）。常用默认扣分权重：Minor −1、Major −5、Critical −25（按千词计），团队可自行配置；并设通过阈值决定批次是否返工。</div>
+  <nav class="toc" id="toc"></nav>
+  <div id="lessons"></div>
 
-<h2>二、简化版 A：教学讲解版（课堂 / 自我检查用）</h2>
-<div class="card2">
-<div class="vcard">
-  <h3><span class="badge a">版本 A</span> 八类速查（中文授课口径）</h3>
-  <ul>
-    <li><b>① 误译</b>——词义选错、假朋友、逻辑关系译反、数字/数量级译错（含大模型<b>幻觉</b>：无中生有）</li>
-    <li><b>② 漏译 / 增译</b>——信息缺一半、无中生有加戏（Accuracy 的两头）</li>
-    <li><b>③ 术语问题</b>——错译 + 前后不一致，两项合并记忆</li>
-    <li><b>④ 单位格式</b>——日期、货币、度量单位格式（数量级译错归①）</li>
-    <li><b>⑤ 语法与搭配</b>——主谓一致、时态、介词、冠词</li>
-    <li><b>⑥ 拼写与标点</b>——大小写、双引号、机械性低错</li>
-    <li><b>⑦ 风格与语域</b>——口语 vs 书面、欧化长句、不地道表达</li>
-    <li><b>⑧ 格式与标记</b>——占位符、标签、排版（本地化场景）</li>
-  </ul>
-  <p style="font-size:12.5px;color:var(--mut);margin-top:8px">对应关系：①②→Accuracy，③→Terminology，④→Locale convention（区域规范），⑤⑥→Fluency，⑦→Style，⑧→Design&amp;markup；受众适宜性并入①⑦在课堂上口头延伸。</p>
-</div>
-<div class="vcard">
-  <h3><span class="badge a">版本 A</span> 使用方法</h3>
-  <ul>
-    <li>课堂讲解：每类配 1 个平台内置语料的真实例子（如"能耗降低30%"漏 less、"close→关闭"误译）</li>
-    <li>学生自查：交卷前按 ①→⑧ 过一遍，先查 ①②③④（准确类），再查 ⑤⑥⑦⑧（语言与形式类）</li>
-    <li>点评标签：教材 7 类可直接替换为这 8 类，覆盖更全且与 MQM 对齐</li>
-  </ul>
-  <div class="ok">适用：翻译课堂、培训讲座、学生互评。只分类、不扣分。</div>
-</div>
+  <details class="appendix">
+    <summary>附录：MQM 框架背景 · 严重度与权重 · 练这一维度 · 来源（学术说明，需要时再看）</summary>
+    <h3>一、MQM 七大维度（本平台 M0–M9 的上位框架）</h3>
+    <table>
+      <tr><th>维度</th><th>本平台对应</th><th>一句话说明</th></tr>
+      <tr><td>术语 Terminology</td><td>M4</td><td>不符合领域规范/术语库，或全篇前后不一致</td></tr>
+      <tr><td>准确性 Accuracy</td><td>M1 / M2 / M3</td><td>歪曲、遗漏或添加原文命题内容（权重最高）</td></tr>
+      <tr><td>语言规范 Linguistic conventions</td><td>M6 / M7</td><td>不对照原文即可判定的语法、拼写、标点问题</td></tr>
+      <tr><td>风格 Style</td><td>M8</td><td>语法可接受但语域/文体不当</td></tr>
+      <tr><td>地区惯例 Locale conventions</td><td>M5</td><td>日期、货币、度量等不符合目标地区习惯</td></tr>
+      <tr><td>受众适宜性 Audience appropriateness</td><td>课堂口头延伸</td><td>文化、合规、事实性不当（本平台不单列）</td></tr>
+      <tr><td>设计与标记 Design &amp; markup</td><td>M9</td><td>占位符、标签、排版等物理呈现问题</td></tr>
+    </table>
+    <h3>二、严重度与权重（平台默认）</h3>
+    <table>
+      <tr><th>级别</th><th>含义</th><th>默认权重</th></tr>
+      <tr><td><span class="tag n">Minor</span></td><td>不影响信息传达（如单处标点）</td><td>−1</td></tr>
+      <tr><td><span class="tag a">Major</span></td><td>影响理解或专业性（如术语错译）</td><td>−5</td></tr>
+      <tr><td><span class="tag" style="background:#ffecec;color:#d70015">Critical</span></td><td>导致错误决策/法律安全风险</td><td>−25</td></tr>
+    </table>
+    <div class="formula">质量分 = 100 − Σ(错误数 × 权重) ÷ 千词数<br>例：2000 字任务中 1 处 Critical + 3 处 Major + 5 处 Minor = 100 − (25×1+5×3+1×5)×0.5 = 70 分</div>
+    <h3>三、练这一维度（组卷页支持 ?dim= 直达）</h3>
+    <p style="font-size:13.5px">
+      <a href="annotate.html?dim=%E5%87%86%E7%A1%AE%E6%80%A7&n=15&go=1">准确性 15 句</a>　｜　
+      <a href="annotate.html?dim=%E6%9C%AF%E8%AF%AD&n=15&go=1">术语 15 句</a>　｜　
+      <a href="annotate.html?dim=%E8%AF%AD%E8%A8%80%E8%A7%84%E8%8C%83&n=15&go=1">语言规范 15 句</a>　｜　
+      <a href="annotate.html?dim=%E9%A3%8E%E6%A0%BC&n=15&go=1">风格 15 句</a>　｜　
+      <a href="annotate.html?dim=%E5%8C%BA%E5%9F%9F%E8%A7%84%E8%8C%83&n=15&go=1">区域规范 15 句</a>　｜　
+      <a href="annotate.html?dim=%E6%A0%BC%E5%BC%8F&n=15&go=1">格式 15 句</a>
+    </p>
+    <h3>四、来源</h3>
+    <p class="src">
+      · MQM 错误类型学（MQM Council / QT21）：<b>无 DOI（类型：行业标准手册）</b>，稳定链接 <a href="http://www.qt21.eu/mqm-definition/issues-list.html" target="_blank" rel="noopener">qt21.eu · MQM Error Typology</a>。MQM 由欧盟资助的 QTLaunchPad/QT21 项目产出（DFKI 等），MQM Core 为最广泛使用的两层子集。<br>
+      · ISO 18587:2017 <i>Translation services — Post-editing of machine translation output — Requirements</i>：<b>无 DOI（类型：国际标准）</b>，稳定链接 <a href="https://iso.org/standard/62970.html" target="_blank" rel="noopener">iso.org/standard/62970.html</a>。该标准把译后编辑分为轻度/深度两级，明确译后编辑人员能力要求；标准已进入复审修订程序（ISO/CD 18587.2）。<br>
+      · 本平台语料与标注口径（含 DQF 等对照）：见教师端参考资料目录 <code>参考资料/MQM7维度文献_3轮审核DOI.html</code>（三轮审核 · DOI 版清单，未公开部署于线上站点）。<br>
+      本页判据口径与平台 <code>mqm.js</code> / <code>build_corpus.mjs</code> 的 SCHEME 完全一致（单一真实来源），改文案请改那两处。
+    </p>
+  </details>
 </div>
 
-<h2>三、简化版 B：实训评分版（平台打分 / 质量验收用）</h2>
-<div class="card2">
-<div class="vcard">
-  <h3><span class="badge b">版本 B</span> 错误分级与扣分权重</h3>
-  <table>
-    <tr><th>维度</th><th>典型错误</th><th>常见级别</th></tr>
-    <tr><td>准确性</td><td>误译/漏译/增译/数字数量级/幻觉</td><td><span class="sev-c">Critical</span>~<span class="sev-m">Major</span></td></tr>
-    <tr><td>术语</td><td>错译/不一致</td><td><span class="sev-m">Major</span></td></tr>
-    <tr><td>单位格式（区域规范）</td><td>日期/货币/单位格式</td><td><span class="sev-c">Critical</span></td></tr>
-    <tr><td>语言规范</td><td>语法/拼写/标点</td><td><span class="sev-n">Minor</span>~<span class="sev-m">Major</span></td></tr>
-    <tr><td>风格</td><td>语域/欧化/不地道</td><td><span class="sev-n">Minor</span></td></tr>
-    <tr><td>格式标记</td><td>占位符/标签/排版</td><td><span class="sev-m">Major</span></td></tr>
-  </table>
-<!-- 考点页的用法：看完定义直接开练——组卷页支持 ?dim= 参数直达 -->
-<div class="ok" style="line-height:2.1">练这一维度：
-  <a href="annotate.html?dim=%E5%87%86%E7%A1%AE%E6%80%A7&n=15&go=1">准确性 15 句</a>　｜　
-  <a href="annotate.html?dim=%E6%9C%AF%E8%AF%AD&n=15&go=1">术语 15 句</a>　｜　
-  <a href="annotate.html?dim=%E8%AF%AD%E8%A8%80%E8%A7%84%E8%8C%83&n=15&go=1">语言规范 15 句</a>　｜　
-  <a href="annotate.html?dim=%E9%A3%8E%E6%A0%BC&n=15&go=1">风格 15 句</a>　｜　
-  <a href="annotate.html?dim=%E5%8C%BA%E5%9F%9F%E8%A7%84%E8%8C%83&n=15&go=1">区域规范 15 句</a>　｜　
-  <a href="annotate.html?dim=%E6%A0%BC%E5%BC%8F&n=15&go=1">格式 15 句</a>
-  <div style="color:var(--mut);font-size:12.5px">点进去就是按该维度组好的卷，交卷立刻给出该维度的查准 / 查全 / F1。（覆盖为 0 的维度点进去会自动放宽为不限维度。）</div>
-</div>
-  <p style="font-size:12.5px;color:var(--mut);margin-top:8px">默认权重：Minor −1 ｜ Major −5 ｜ Critical −25（每千词），可按内容风险调整。</p>
-</div>
-<div class="vcard">
-  <h3><span class="badge b">版本 B</span> 计分与阈值</h3>
-  <div class="formula">质量分 = 100 − Σ(错误数 × 权重) ÷ 千词数<br>
-  例：2000 字任务中 1 处 Critical + 3 处 Major + 5 处 Minor<br>
-  = 100 − (25×1 + 5×3 + 1×5) × 0.5 = 70 分</div>
-  <ul>
-    <li><b>通过阈值（可配置）</b>：≥95 直接交付；85–94 轻度返修；&lt;85 重做译后编辑</li>
-    <li><b>一票否决</b>：任一 Critical 可直接判不通过（受监管内容建议启用）</li>
-    <li><b>平台落地</b>：教师端逐段打标签+级别 → 自动汇总质量分 → 与修订率/相似度并列展示</li>
-  </ul>
-  <div class="ok">适用：实训平台评分、企业 LQA 抽检、译员绩效。分类 + 分级 + 加权 = 可比较的质量数据。</div>
-</div>
-</div>
+<script>
+/* Esc 返回上一页（用户要求） */
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' || e.key === 'Esc') {
+    if (history.length > 1) history.back(); else location.replace('index.html');
+  }
+});
 
-<p class="src">参考来源：MQM 官方类型库（qt21.eu，Lommel et al. 2014）；TAUS DQF 错误类型学；ISO 18587:2017 译后编辑服务要求；Krings (2001) <i>Repairing Texts</i>；崔启亮 (2015)；冯全功、崔启亮 (2016)；王华树、刘世界 (2022)。本手册由译后编辑实训平台配套生成。</p>
-</div>
+/* ---- 教学数据：判据（引自 mqm.js 口径）+ 例句 + 练一练 ---- */
+const $ = (s) => document.querySelector(s);
+const DIMLINK = {
+  '准确性':'annotate.html?dim=%E5%87%86%E7%A1%AE%E6%80%A7&n=15&go=1',
+  '术语':'annotate.html?dim=%E6%9C%AF%E8%AF%AD&n=15&go=1',
+  '语言规范':'annotate.html?dim=%E8%AF%AD%E8%A8%80%E8%A7%84%E8%8C%83&n=15&go=1',
+  '风格':'annotate.html?dim=%E9%A3%8E%E6%A0%BC&n=15&go=1',
+  '区域规范':'annotate.html?dim=%E5%8C%BA%E5%9F%9F%E8%A7%84%E8%8C%83&n=15&go=1',
+  '格式':'annotate.html?dim=%E6%A0%BC%E5%BC%8F&n=15&go=1'
+};
+const SEVC = { Minor:'n', Major:'a', Critical:'c' };
+const LESSON = [
+ { code:'M1', name:'误译', dim:'准确性', sev:'Major',
+   def:'词义选错、假朋友、逻辑关系译反、数字/数量级译错（含大模型幻觉：无中生有）。',
+   src:'The new drug reduces the risk of infection by 30%.',
+   mt:'该新药将感染风险降低了 30<mark class="err">个百分点</mark>。',
+   opts:['M1 误译','M5 单位格式','M6 语法搭配','M0 无需修改'], ans:0,
+   why:'by 30% 是相对降幅，应译「降低了 30%」；译成「个百分点」（percentage points）就变成了绝对差值，含义完全不同。' },
+ { code:'M2', name:'漏译', dim:'准确性', sev:'Major',
+   def:'原文信息缺失——该译的没译出来。',
+   src:'The trial enrolled 500 patients <mark class="miss">across 12 hospitals</mark>.',
+   mt:'该试验纳入了 500 名患者。',
+   opts:['M2 漏译','M1 误译','M3 增译'], ans:0,
+   why:'across 12 hospitals「横跨 12 家医院」整段没有译出（原文里已标出丢掉的部分），信息缺失归 M2。' },
+ { code:'M3', name:'增译', dim:'准确性', sev:'Minor',
+   def:'原文里没有的内容被加了进去。',
+   src:'She finished the report.',
+   mt:'她<mark class="err">耐心地</mark>完成了这份报告。',
+   opts:['M3 增译','M8 风格语域','M1 误译'], ans:0,
+   why:'原文没有「耐心地」「这份」，凭空添加的内容归 M3；注意与「风格润色」的界线——风格调整不能加新信息。' },
+ { code:'M4', name:'术语', dim:'术语', sev:'Major',
+   def:'术语 / 专名错译，或全篇前后不一致。',
+   src:'…protects the client’s intellectual property. …IP is a company asset.',
+   mt:'……保护客户的知识产权。……<mark class="err">智力产权</mark>是公司资产。',
+   opts:['M4 术语','M1 误译','M7 拼写标点'], ans:0,
+   why:'同一术语前后两种译法（知识产权 / 智力产权），术语一致性问题归 M4——即使两个译法都“看得懂”。' },
+ { code:'M5', name:'单位格式', dim:'区域规范', sev:'Critical',
+   def:'日期、货币、度量单位等本地化格式不符合目标地区习惯（数量级/数字译错归 M1）。',
+   src:'报名截止日期为 2025 年 3 月 15 日。',
+   mt:'The registration deadline is <mark class="err">15/3/2025</mark>.',
+   opts:['M5 单位格式','M1 误译','M9 格式标记'], ans:0,
+   why:'数字本身译对了，但日期写法不符合英语地区习惯（应为 March 15, 2025）——区域格式归 M5；若是数字/数量级本身译错则归 M1。' },
+ { code:'M6', name:'语法搭配', dim:'语言规范', sev:'Minor',
+   def:'主谓一致、时态、介词、冠词、搭配不当。',
+   src:'I <mark class="miss">have worked</mark> here for five years.',
+   mt:'我在这里工作<mark class="err">了</mark>五年。',
+   opts:['M6 语法搭配','M1 误译','M8 风格语域'], ans:0,
+   why:'现在完成时 have worked for… 表示「一直在做」，译成一般过去「工作了五年」是时态错误——语言层面的问题归 M6。' },
+ { code:'M7', name:'拼写标点', dim:'语言规范', sev:'Minor',
+   def:'大小写、引号、机械性低错。',
+   src:'我们需要尽快处理这个问题。',
+   mt:'<mark class="err">w</mark>e need to handle this issue as soon as possible.',
+   opts:['M7 拼写标点','M1 误译','M6 语法搭配'], ans:0,
+   why:'句首字母未大写属机械正确性错误，不改变语义——这类低错统一归 M7，判分时级别最低。' },
+ { code:'M8', name:'风格语域', dim:'风格', sev:'Minor',
+   def:'口语 vs 书面、欧化长句、不地道表达。',
+   src:'本协议自双方签署之日起生效。',
+   mt:'<mark class="err">Yo</mark>，this thing kicks in the second you sign it.',
+   opts:['M8 风格语域','M6 语法搭配','M1 误译'], ans:0,
+   why:'正式条款被译成口语：语法没错，但语域/文体与原文场合不符——归 M8。' },
+ { code:'M9', name:'格式标记', dim:'格式', sev:'Major',
+   def:'占位符、标签、排版（本地化场景）。',
+   src:'请在 <a href="#">此处</a> 提交申请。',
+   mt:'请在 <mark class="err">此处</mark> 提交申请。',
+   opts:['M9 格式标记','M2 漏译','M6 语法搭配'], ans:0,
+   why:'原文的 <a> 标签在译文里被吞掉——标签/占位符属「设计与标记」维度归 M9，不是普通的漏译。' },
+ { code:'M0', name:'无需修改', dim:'—', sev:'',
+   def:'机翻这一段没问题——留白、不标，也是得分动作。',
+   src:'报告已提交。',
+   mt:'报告已提交。',
+   opts:['M1 误译','M0 无需修改','M7 拼写标点'], ans:1,
+   why:'这段机翻没有错误——「不标」本身也是一次正确判断（种子未覆盖的句对按正确计）。' }
+];
+
+/* ---- 渲染 ---- */
+const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+$('#toc').innerHTML = LESSON.map((L,i)=>`<a href="#L${i}">${L.code} ${L.name}</a>`).join('');
+$('#lessons').innerHTML = LESSON.map((L,i)=>`
+<section class="lesson" id="L${i}" data-i="${i}">
+  <h2><span class="code">${L.code}</span>${L.name}
+    ${L.dim!=='—'?`<span class="tag">${L.dim}</span>`:''}
+    ${L.sev?`<span class="tag ${SEVC[L.sev]}">常见 ${L.sev}</span>`:''}</h2>
+  <p class="def">${esc(L.def)}</p>
+  <div class="lab">原文（参考）</div>
+  <div class="src-box">${L.src}</div>
+  <div class="lab">机翻译文（红色为问题片段）</div>
+  <div class="mt-box">${L.mt}</div>
+  <div class="q">练一练：这段机翻的问题属于哪一类？</div>
+  <div class="opts">${L.opts.map((o,j)=>`<button class="opt" data-j="${j}">${o}</button>`).join('')}</div>
+  <div class="fb"></div>
+  ${L.dim!=='—'?`<p style="margin-top:10px"><a class="cta" href="${DIMLINK[L.dim]}">→ 练这个维度（15 句实战）</a></p>`:''}
+</section>`).join('');
+
+/* ---- 作答与进度（进度按本机记忆：localStorage） ---- */
+let done = 0, right = 0;
+try { const s = JSON.parse(localStorage.getItem('mqm_practice')||'{}'); done = s.done||0; right = s.right||0; } catch(e) {}
+const pg = $('#pg'); const sync = () => { pg.textContent = `已练 ${done}/${LESSON.length} · 答对 ${right}`; };
+sync();
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('.opt'); if (!b) return;
+  const card = b.closest('.lesson'); if (card.dataset.done) return;
+  card.dataset.done = '1';
+  const i = +card.dataset.i, j = +b.dataset.j, L = LESSON[i], ok = j === L.ans;
+  card.querySelectorAll('.opt').forEach(x => {
+    const k = +x.dataset.j;
+    x.classList.add(k === L.ans ? 'right' : 'dim');
+    if (k === j && !ok) x.classList.add('wrong');
+  });
+  const fb = card.querySelector('.fb');
+  fb.className = 'fb show ' + (ok ? 'ok' : 'no');
+  fb.textContent = (ok ? '✓ 正确。' : `✗ 这是 ${L.code} ${L.name}。`) + L.why;
+  done++; if (ok) right++;
+  try { localStorage.setItem('mqm_practice', JSON.stringify({ done, right })); } catch(err) {}
+  sync();
+});
+</script>
 </body>
 </html>

@@ -21,7 +21,12 @@ window.MQM_ITEMS = [
 /* M0 不是错误，单独列出：作答时"这一段不用改"也是一个判断 */
 window.MQM_M0 = { code: 'M0', name: '无需修改', def: '机翻这一段没问题——留白、不标，也是得分动作' };
 
-/* ---------- 作答中随手查：不跳页的速查弹窗（任何页面都能调） ---------- */
+/* ---------- 作答中随手查：不跳页的速查弹窗（任何页面都能调） ----------
+ * 可读性改造（2026-10-19 用户反馈「不利于阅读」）：
+ *   原 13px 表格挤在 640px 宽的弹窗里，判据列长句换行拥挤 →
+ *   字号提到 14.5px、行高 1.65、单元格留白加大，类型列固定不折行，
+ *   判据列自动换行并悬挂缩进（text-indent 反悬挂），严重度列右对齐。
+ * ESC 一键关闭（用户要求）。 */
 window.mqmQuickRef = function () {
   let m = document.getElementById('mqm-ref');
   if (!m) {
@@ -29,18 +34,22 @@ window.mqmQuickRef = function () {
     m = document.createElement('div');
     m.id = 'mqm-ref';
     m.className = 'mask';
-    m.innerHTML = '<div class="modal" style="width:min(640px,94vw)">'
-      + '<h3>错误类型速查</h3>'
-      + '<p class="page-s" style="margin:4px 0 12px">划中片段后按对应的类型打标；严重度按常见级别预置，可自行调。</p>'
-      + '<table style="width:100%;font-size:13px;border-collapse:collapse">'
-      + '<tr><th style="text-align:left;padding:4px 6px">类型</th><th style="text-align:left;padding:4px 6px">判据</th><th style="padding:4px 6px">常见严重度</th></tr>'
-      + window.MQM_ITEMS.map((it) => '<tr><td style="padding:4px 6px;white-space:nowrap"><b>' + it.code + '</b> ' + esc(it.name) + '</td>'
-        + '<td style="padding:4px 6px">' + esc(it.def) + '</td><td style="padding:4px 6px;white-space:nowrap">' + it.sev + '</td></tr>').join('')
-      + '<tr><td style="padding:4px 6px;white-space:nowrap"><b>M0</b> ' + esc(window.MQM_M0.name) + '</td>'
-      + '<td style="padding:4px 6px">' + esc(window.MQM_M0.def) + '</td><td style="padding:4px 6px">—</td></tr>'
+    m.innerHTML = '<div class="modal" style="width:min(680px,94vw);max-height:86vh;overflow:auto">'
+      + '<h3 style="margin-bottom:2px">错误类型速查</h3>'
+      + '<p class="page-s" style="margin:4px 0 14px">划中片段后按对应的类型打标；严重度按常见级别预置，可自行调。按 <b>Esc</b> 关闭。</p>'
+      + '<table style="width:100%;font-size:14.5px;border-collapse:collapse;line-height:1.65">'
+      + '<tr><th style="text-align:left;padding:8px 10px">类型</th>'
+      + '<th style="text-align:left;padding:8px 10px">判据</th>'
+      + '<th style="text-align:right;padding:8px 10px">常见严重度</th></tr>'
+      + window.MQM_ITEMS.map((it) => '<tr><td style="padding:8px 10px;white-space:nowrap;vertical-align:top"><b style="font-size:15px">' + it.code + '</b> ' + esc(it.name) + '</td>'
+        + '<td style="padding:8px 10px;vertical-align:top;text-indent:-0.85em;padding-left:calc(10px + 0.85em)">' + esc(it.def) + '</td>'
+        + '<td style="padding:8px 10px;white-space:nowrap;vertical-align:top;text-align:right">' + it.sev + '</td></tr>').join('')
+      + '<tr><td style="padding:8px 10px;white-space:nowrap;vertical-align:top"><b style="font-size:15px">M0</b> ' + esc(window.MQM_M0.name) + '</td>'
+      + '<td style="padding:8px 10px;vertical-align:top;text-indent:-0.85em;padding-left:calc(10px + 0.85em)">' + esc(window.MQM_M0.def) + '</td>'
+      + '<td style="padding:8px 10px;vertical-align:top;text-align:right">—</td></tr>'
       + '</table>'
-      + '<div class="m-actions"><a class="btn btn-ghost" href="MQM错误类型参考手册.html">完整手册</a>'
-      + '<button class="btn btn-primary" onclick="mqmQuickRefClose()">知道了</button></div>'
+      + '<div class="m-actions"><a class="btn btn-ghost" href="MQM错误类型参考手册.html">完整手册（含练习）</a>'
+      + '<button class="btn btn-primary" onclick="mqmQuickRefClose()">知道了（Esc）</button></div>'
       + '</div>';
     m.onclick = (e) => { if (e.target === m) window.mqmQuickRefClose(); };
     document.body.appendChild(m);
@@ -51,3 +60,9 @@ window.mqmQuickRefClose = function () {
   const m = document.getElementById('mqm-ref');
   if (m) m.style.display = 'none';
 };
+/* Esc 关闭速查弹窗（用户要求：一键返回）；按住不放连按 Esc 时只响应一次 keyup */
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape' && e.key !== 'Esc') return;
+  const m = document.getElementById('mqm-ref');
+  if (m && m.style.display === 'flex') window.mqmQuickRefClose();
+});
