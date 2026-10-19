@@ -104,3 +104,61 @@ body.panel-open .pg-dots{opacity:.4}
    与 style.css 里的那份重复且各写各的。已全部上移到共用的 ui.css，此处不再需要。
    本页保留一条：卡片圆角跟着统一档位走。 */
 .card{border-radius:var(--r-lg)}
+
+/* ============================================================================
+   响应式（2026-10-19 新增，本页此前零断点）
+   断点取 1100 / 860 / 620三档，依据实测：1024 尚宽裕，820 开始挤，640 必须重排。
+   ========================================================================== */
+
+/* ① 中屏（≤1100px）：底栏三栏改两行——进度独占首行，切句+交卷同行。
+      1fr auto 1fr 在此宽度下左格被压到放不下点阵。 */
+@media (max-width:1100px){
+  .nav-row{grid-template-columns:1fr auto;gap:8px 12px;padding:8px 16px calc(8px + env(safe-area-inset-bottom,0px))}
+  .nav-l{grid-column:1;grid-row:1;justify-self:start}
+  .nav-c{grid-column:1;grid-row:2;justify-self:start}
+  .nav-r{grid-column:2;grid-row:1 / span 2;align-self:center;justify-self:end}
+  .ans-wrap{--nav-h:96px}
+  .kbd-hint{display:none}          /* 触屏无键盘，提示无意义 */
+}
+
+/* ② 窄屏（≤860px）：卡片收窄内边距，译文加大点按区域 */
+@media (max-width:860px){
+  .top{padding:10px 16px}
+  .card{padding:14px}
+  .src-box{font-size:14.5px;padding:10px 12px}
+  .mt-box{font-size:16.5px;padding:12px 14px}   /* 仍保持译文最大，维持主次 */
+  .pg-dots{gap:3px}
+  .pg-dot{width:6px;height:6px}
+}
+
+/* ③ 手机（≤620px）：全流程单列。
+      触屏无法精确划选 → 把「标注」主按钮加大，并给译文加选中高亮反馈；
+      面板改为贴底抽屉（拇指可达区），不再浮在文字中间。 */
+@media (max-width:620px){
+  .ans-wrap{padding:12px 12px calc(var(--nav-h) + 24px)}
+  .nav-row{padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px));gap:6px 8px}
+  .nav-l{width:100%}
+  .pg-txt{font-size:12px}
+  .pg-dots{flex-wrap:wrap;row-gap:4px;max-height:26px;overflow:hidden}
+
+  /* 切句与交卷做成大按钮，触屏友好 */
+  .nav-c .btn,.nav-r .btn{padding:11px 16px;font-size:15px}
+  .nav-c{width:100%;justify-content:space-between}
+
+  /* 面板：贴底抽屉，避开软键盘与拇指遮挡区 */
+  .sel-panel{
+    left:0;right:0;bottom:0;width:auto;transform:none;
+    border-radius:16px 16px 0 0;border-bottom:none;
+    padding:14px 16px calc(16px + env(safe-area-inset-bottom,0px));
+    max-height:76vh;overflow-y:auto;
+  }
+  /* 抽屉顶部加个小抓手，暗示可下拉关闭 */
+  .sel-panel::before{content:'';display:block;width:38px;height:4px;border-radius:2px;
+    background:var(--bd);margin:0 auto 10px}
+  /* 面板打开时正文不再让位（抽屉是覆盖式的） */
+  body.panel-open{overflow:hidden}
+
+  .t-chip{padding:8px 12px;font-size:14px}      /* chip 加大便于点按 */
+  .sev-opt{padding:9px 14px}
+  #fix-input,.sel-panel input,.sel-panel textarea{font-size:16px}  /* ≥16px 防 iOS 聚焦缩放 */
+}

@@ -407,6 +407,12 @@ function anchorRect() {
 function placePanel() {
  const panel = $('#sel-panel');
  if (!panel || panel.classList.contains('hidden')) return;
+ /* 手机档（≤620px）面板是贴底抽屉，由 CSS 定位，JS 不再干预位置 */
+ if (window.matchMedia('(max-width:620px)').matches) {
+ panel.style.left = panel.style.top = panel.style.width = '';
+ panel.style.bottom = '0'; panel.style.transform = 'none';
+ return;
+ }
  const r = anchorRect();
  if (!r || (!r.width && !r.height)) return;         // 选区已失效（如点了别处）→ 保持原位
  /* 宽度贴合选区：短片段不必铺满 680px 挡住下方内容；留出下限保证 chip 行不折行 */
