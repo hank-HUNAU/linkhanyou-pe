@@ -42,7 +42,19 @@ select,input[type=number]{border:1px solid var(--bd);border-radius:8px;padding:7
 .ann-empty{color:var(--mut);font-size:13.5px;text-align:center;padding:16px 12px;border:1px dashed var(--bd);border-radius:8px;background:#fafbfc}
 .ann-item{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fff;border:1px solid var(--bd);border-radius:8px;padding:6px 10px;font-size:13px}
 .ann-item .del{border:none;background:var(--rb);color:var(--r);border-radius:6px;padding:2px 9px;font-size:12px}
-.nav-row{display:flex;justify-content:space-between;gap:10px;margin-top:6px;flex-wrap:wrap}
+/* 底部操作条：fixed 常驻视口底缘 —— 每句内容高度不同（原文/译文长短、标注多少），
+   文档流里跟在卡片后会让按钮上下漂移；钉死在底部后任何句子位置恒定（2026-10-19）。
+   与 ③测 页「工具栏 always sticky」同一模式。 */
+.nav-row{
+  position:fixed;left:0;right:0;bottom:0;z-index:90;
+  display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+  margin:0;padding:10px 24px calc(10px + env(safe-area-inset-bottom, 0px));
+  background:rgba(255,255,255,.92);
+  -webkit-backdrop-filter:saturate(1.8) blur(12px);backdrop-filter:saturate(1.8) blur(12px);
+  border-top:1px solid var(--bd);
+}
+/* 作答视图内容区让位：防止最后一段标注列表被固定底栏遮挡 */
+.ans-wrap{padding-bottom:96px}
 
 /* 结果 */
 .score-hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}

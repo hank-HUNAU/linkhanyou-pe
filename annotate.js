@@ -276,7 +276,7 @@ function renderWork() {
   <a class="muted" href="annotate.html" style="text-decoration:none" onclick="saveSession()">退出</a>
   </div>
  </div>
- <div class="wrap">
+ <div class="wrap ans-wrap">
  <div class="card">
  <div class="meta">
  ${A.special ? `<span class="tag teal">专项训练 · ${esc(A.special.name).replace(/\(/g, '（').replace(/\)/g, '）')}（不计入常规 F1）</span>` : ''}
