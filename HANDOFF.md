@@ -427,9 +427,15 @@ node verify_live.mjs             # 线上文件端到端：登录 → 分片按�
      · 重封 `secure.js`/`s-pairs.js`/`s-tasks.js`（指纹 `ver=0c97f311`），`verify_seal.mjs` 解密核验 `seeds=111 / seedPairs=101 / pairs=1402`；
      · 配套脚本新增：`gen_pilot3_seeds.mjs`（初判）/ `merge_pilot3.mjs`（并入）；
      · 经 `gh api` Git Data API 直推 main（提交 `081d6725`；`git push` 仍被 TLS 拦截）；远程 `secure.js` 已核验含 `0c97f311`、不再含旧 `42e9fd6b`，Pages 源=main 自动触发构建后线上生效。
+   - **2026-10-22 pilot #4 已签批并部署（专家「67 排除，其他全收」）**：
+     · 科技文本段（5G/mmWave/微蜂窝/光纤/SDN/NFV）：AI 逐对初判 **15 条** → 专家排除整句 `seg_1_决赛_67`（Major「女性细胞」→微蜂窝基站，判不收），实收 **12 条**（M4×8 / M1×4，全 Minor），覆盖 9 段（54/59/66/68/70/71/72/73/74）；
+     · 并入 SEEDS（**111→123**，seedPairs 101→110）；`_sealed_backup/annotate-data.js` 明文合并（`merge_pilot4.mjs`）；
+     · **封口脚本 `seal_content.mjs` 丢失**（不在工作区、不进 git）→ 按安全重建法 `reseal_pilot4.mjs`：复用现有 CK（从 `keys[0].wrap` 解出，不新生成密钥），**仅重封 meta 片**（inspect_shards.mjs 实测种子只在 meta，pairs/tasks 片无种子，可原样），gzip+AES-GCM 重加密；写 `secure.js.new` 后**本地往返校验闸门**（解密回读：seeds=123 / seedPairs=110 / pairs=1402 完好 / 12 新+111 旧无回归 / scheme·flags·pre 不变）通过才覆盖线上；旧 `secure.js` 备份为 `secure.js.bak_pilot4`；
+     · 指纹 `ver=207065dc`；`verify_seal.mjs` 解密核验 `seeds=123 / seedPairs=110 / pairs=1402` 通过；
+     · 经 `gh api` Git Data API 直推 main（变更 `secure.js` + `HANDOFF.md`；`s-pairs.js`/`s-tasks.js` 原样未动；git push 仍被 TLS 拦截）。
    - 2026-10-22 ③ 项 P0/P1 待办**已实施并部署**：④ 布置深链 `#task=&mode=&due=`（practice.html 自动开卷 + 截止提示 + 成绩带 due/overdue）；⑤ 难度分级徽章 + 按难度筛选（MT↔REF 编辑距离 TER 式估计，阈值本地标定）；⑧ 导出作业 HMAC-SHA256 校验和 + 校验按钮 + 导入自动比对。部署经 `gh api` Git Data API 直推（变更 `app.js` / `stats.js` / `ui.css` / `HANDOFF.md`；git push 仍被 TLS 拦截），Pages 源=main 自动构建后生效。
    - **2026-10-22 ⑤ 阈值回标已实施并部署**：`calib_diff.mjs` 解密线上 tasks 分片（20 卷 676 句对）实测分布，旧阈值 0.20/0.45/0.80 使 20 卷全归「挑战」（功能失效）；改为数据锚定 `0.85 / 1.10 / 单段 2.0`，分档 7/7/6。变更仅 `app.js` + `HANDOFF.md`，经 `gh api` 直推（ver=0c97f311 密文片不变）。`reports/难度回标_每卷均值.csv` 留存逐卷明细。
-   - **下一步**：① 滚动 pilot #4（可选：seg_1_决赛 66+ 的 SDN/NFV/fiber 段，或第 7/8 届初赛未覆盖句对）；② （已完成）难度阈值按实际分布回标；③ 若要把难度精修到 MQM 罚分口径，需先把 `window.SEEDS` 暴露到 practice.html 运行时（现仅 annotate 页加载）。
+   - **下一步**：① （已完成）pilot #4 科技文本段种子扩充（12 条，SEEDS 111→123）；② （已完成）难度阈值按实际分布回标；③ 若要把难度精修到 MQM 罚分口径，需先把 `window.SEEDS` 暴露到 practice.html 运行时（现仅 annotate 页加载）；④ 封口脚本 `seal_content.mjs` 丢失，已用 `reseal_pilot4.mjs` 安全重建法替代——后续任何种子扩充都走「merge_pilotN → reseal_pilotN（带往返校验）」；建议把 `reseal_pilot4.mjs` 固化为正式 `seal_content.mjs` 并补一份离线备份。
 10. 暗色模式（挂账）：需先把颜色完全收敛到 token。
 
 ---
