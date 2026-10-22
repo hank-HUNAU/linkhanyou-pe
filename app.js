@@ -140,7 +140,13 @@ function parseTaskLink(h) {
    （Martinez, Koglin, Mesa-Lao & Carl, 2015, IATIS；"Difficulty Estimation of Machine
    Translation" 学位论文，TER↑ ⇒ PE 努力↑）。覆盖全部句对，不依赖金标准种子
    （金标准仅 111 条，不足以给每卷打档；若日后把 SEEDS 暴露到本页，可叠加 MQM 罚分精修）。
-   阈值(0.20 / 0.45、单段>0.80)为本课堂本地标定，跑完 pilot 后按实际分布回标。 */
+   阈值已按「线上 tasks 分片」真实分布回标（2026-10-22，calib_diff.mjs 解密实测）：
+   20 卷每卷均值 revisionRate ∈ [0.536, 1.337]，中位数 0.925；单句 revisionRate p95=1.50、p99=2.11。
+   故把口径从初版本地拍脑袋的 0.20/0.45/0.80 改为数据锚定：
+     入门 easy   : avg ≤ 0.85（≈p33，轻量译后编辑）
+     进阶 medium : 0.85 < avg ≤ 1.10（中等编辑量）
+     挑战 hard   : avg > 1.10（编辑量超过机翻本身词数，重度）或 含「杀手句」(单段>2.0，≈p99)
+   回标后 20 卷分档 = 入门7 / 进阶7 / 挑战6，三档均有内容。语料大幅扩充后需重跑回标。 */
 const _diffCache = new Map();
 function taskDifficulty(task) {
   if (!task || !task.segs || !task.segs.length) return { tier: '入门', avg: 0, cls: 'easy' };
@@ -152,8 +158,8 @@ function taskDifficulty(task) {
   }
   const avg = sum / task.segs.length;
   let tier = '入门', cls = 'easy';
-  if (avg > 0.45 || maxSeg > 0.8) { tier = '挑战'; cls = 'hard'; }
-  else if (avg > 0.20) { tier = '进阶'; cls = 'medium'; }
+  if (avg > 1.10 || maxSeg > 2.0) { tier = '挑战'; cls = 'hard'; }
+  else if (avg > 0.85) { tier = '进阶'; cls = 'medium'; }
   const d = { tier, avg: Math.round(avg * 1000) / 1000, cls };
   _diffCache.set(task.id, d);
   return d;
