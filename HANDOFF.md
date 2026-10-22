@@ -435,7 +435,14 @@ node verify_live.mjs             # 线上文件端到端：登录 → 分片按�
      · 经 `gh api` Git Data API 直推 main（变更 `secure.js` + `HANDOFF.md`；`s-pairs.js`/`s-tasks.js` 原样未动；git push 仍被 TLS 拦截）。
    - 2026-10-22 ③ 项 P0/P1 待办**已实施并部署**：④ 布置深链 `#task=&mode=&due=`（practice.html 自动开卷 + 截止提示 + 成绩带 due/overdue）；⑤ 难度分级徽章 + 按难度筛选（MT↔REF 编辑距离 TER 式估计，阈值本地标定）；⑧ 导出作业 HMAC-SHA256 校验和 + 校验按钮 + 导入自动比对。部署经 `gh api` Git Data API 直推（变更 `app.js` / `stats.js` / `ui.css` / `HANDOFF.md`；git push 仍被 TLS 拦截），Pages 源=main 自动构建后生效。
    - **2026-10-22 ⑤ 阈值回标已实施并部署**：`calib_diff.mjs` 解密线上 tasks 分片（20 卷 676 句对）实测分布，旧阈值 0.20/0.45/0.80 使 20 卷全归「挑战」（功能失效）；改为数据锚定 `0.85 / 1.10 / 单段 2.0`，分档 7/7/6。变更仅 `app.js` + `HANDOFF.md`，经 `gh api` 直推（ver=0c97f311 密文片不变）。`reports/难度回标_每卷均值.csv` 留存逐卷明细。
-   - **下一步**：① （已完成）pilot #4 科技文本段种子扩充（12 条，SEEDS 111→123）；② （已完成）难度阈值按实际分布回标；③ 若要把难度精修到 MQM 罚分口径，需先把 `window.SEEDS` 暴露到 practice.html 运行时（现仅 annotate 页加载）；④ 封口脚本 `seal_content.mjs` 丢失，已用 `reseal_pilot4.mjs` 安全重建法替代——后续任何种子扩充都走「merge_pilotN → reseal_pilotN（带往返校验）」；建议把 `reseal_pilot4.mjs` 固化为正式 `seal_content.mjs` 并补一份离线备份。
+   - **2026-10-22 ③ 挂账项「SEEDS 暴露 + MQM 罚分难度精修」已实施**：
+     · **暴露**：`corpus.js` 改为同时加载 `tasks` + `meta` 两片并挂 `window.SEEDS = meta.seeds`（与 annotate 页 `annotate-data.js` 同构；meta 仅含 seeds/flags/pre/stats，无密文可公开）。practice.html / pe-exam.html 均加载 corpus.js，故练习页与仿真页同时生效。
+     · **匹配口径（重要修正）**：种子 `k` 是句对键（`seg_1_决赛_54`），而 `task.pair` 是**翻译方向**（英译中/中译英），两者不可混用 → 改用 **`seg.mt.includes(seed.span)`** 匹配（与标注页计分同构），更稳健。
+     · **精修公式**：`mqmOf(task)` 累加命中的严重度乘数（MQM Council 标准 **Minor=1 / Major=5 / Critical=25**），按 MT 词数归一得罚分密度；`refined = max(terAvg, mqmScore)` —— 难度取「编辑努力」与「已知错误严重度」的较大值，含 Major/Critical 种子的卷被正确上探到挑战档；**无种子卷仍纯 TER，回标后的 7/7/6 分布不变**。阈值沿用 0.85 / 1.10 / 单段 2.0。
+     · **UI**：任务卡（主网格 + 历史卷）对含种子卷显示 `★MQM <密度>` 标记，按最高严重度着色（Minor 蓝 / Major 琥珀 / Critical 红，新增 `.tag.mqm.*`，复用语义色 token）；广场说明文字同步为「MT↔REF 需改动量 + 金标准 MQM 罚分」（原仍写旧阈值 0.20/0.45，属遗留错误文案，一并修正）。
+     · 诚实边界：金标准仅 123 条 / 1402 句对（覆盖 110 个句对），**当前已签批种子多为 Minor**，故 MQM 分量的即时影响很小（refined 仍主要由 TER 决定）；机制已就位，随 Major/Critical 种子扩充而生效。
+   - **2026-10-22 ④ 挂账项「字号/圆角 token 收敛 第2/3 步」已实施**：`style.css`（字号 74 处 + 圆角 30 处）、`pe-exam.css`（字号 41 处 + 圆角 19 处）硬编码 `font-size`/`border-radius` 全部替换为 `ui.css` token；新增 `--fs-11/14/22/23/26/30`、`--r-22` 共 7 个 token 以**保证零像素漂移**（未用近似档硬套）；非目标属性（padding/width/gap/margin）按要求保留 px。原文件备份 `style.css.bak_20261022` / `pe-exam.css.bak_20261022`；脚本 `token_conv.mjs` 可复跑（已收敛处不再匹配）。核验：两文件残留硬编码 = 0。
+   - **下一步**：① （已完成）pilot #4 种子扩充；② （已完成）难度阈值回标；③ （已完成）MQM 罚分难度精修 + SEEDS 暴露；④ （已完成）style/pe-exam token 收敛；⑤ **封口脚本 `seal_content.mjs` 丢失，已用 `reseal_pilot4.mjs` 安全重建法替代——后续任何种子扩充都走「merge_pilotN → reseal_pilotN（带往返校验）」；建议把 `reseal_pilot4.mjs` 固化为正式 `seal_content.mjs` 并补一份离线备份**。
 10. 暗色模式（挂账）：需先把颜色完全收敛到 token。
 
 ---

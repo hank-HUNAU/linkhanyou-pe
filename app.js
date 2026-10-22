@@ -135,21 +135,48 @@ function parseTaskLink(h) {
   } catch (e) { return null; }
 }
 
-/* ⑤ 难度分级：基于 MT↔REF 编辑距离（revisionRate，类 TER）的「译后编辑努力估计」。
+/* ⑤ 难度分级：基于 MT↔REF 编辑距离（revisionRate，类 TER）的「译后编辑努力估计」为主，
+   叠加 ③（2026-10-22）MQM 罚分密度精修。
    文献依据：TER 与实际 PE 努力（插入/删除/用时）正相关
    （Martinez, Koglin, Mesa-Lao & Carl, 2015, IATIS；"Difficulty Estimation of Machine
-   Translation" 学位论文，TER↑ ⇒ PE 努力↑）。覆盖全部句对，不依赖金标准种子
-   （金标准仅 111 条，不足以给每卷打档；若日后把 SEEDS 暴露到本页，可叠加 MQM 罚分精修）。
+   Translation" 学位论文，TER↑ ⇒ PE 努力↑）。覆盖全部句对。
    阈值已按「线上 tasks 分片」真实分布回标（2026-10-22，calib_diff.mjs 解密实测）：
    20 卷每卷均值 revisionRate ∈ [0.536, 1.337]，中位数 0.925；单句 revisionRate p95=1.50、p99=2.11。
    故把口径从初版本地拍脑袋的 0.20/0.45/0.80 改为数据锚定：
-     入门 easy   : avg ≤ 0.85（≈p33，轻量译后编辑）
-     进阶 medium : 0.85 < avg ≤ 1.10（中等编辑量）
-     挑战 hard   : avg > 1.10（编辑量超过机翻本身词数，重度）或 含「杀手句」(单段>2.0，≈p99)
-   回标后 20 卷分档 = 入门7 / 进阶7 / 挑战6，三档均有内容。语料大幅扩充后需重跑回标。 */
+     入门 easy   : refined ≤ 0.85（≈p33，轻量译后编辑）
+     进阶 medium : 0.85 < refined ≤ 1.10（中等编辑量）
+     挑战 hard   : refined > 1.10（编辑量超过机翻本身词数，重度）或 含「杀手句」(单段>2.0，≈p99)
+   回标后 20 卷分档 = 入门7 / 进阶7 / 挑战6，三档均有内容。语料大幅扩充后需重跑回标。
+   —— ③ MQM 精修：SEEDS 已由 corpus.js 暴露到练习/仿真运行时（meta 片，无密文）；种子经
+      seg.mt.includes(span) 匹配（与标注页计分同构；task.pair 是翻译方向、不可用于匹配）。
+      严重度乘数采用 MQM Council 标准：Minor=1 / Major=5 / Critical=25；罚分按 MT 词数归一得密度；
+      refined = max(terAvg, mqmScore) —— 难度取「编辑努力」与「已知错误严重度」的较大值，
+      含 Major/Critical 种子的卷会被正确上探到挑战档；无种子卷仍纯 TER，分布不变。 */
 const _diffCache = new Map();
+const _mqmSevW = { Minor: 1, Major: 5, Critical: 25 };
+const _mqmCache = new Map();
+function mqmOf(task) {
+  const seeds = window.SEEDS || [];
+  if (!seeds.length || !task || !task.segs) return { score: 0, raw: 0, maxSev: 0, count: 0 };
+  if (_mqmCache.has(task.id)) return _mqmCache.get(task.id);
+  let raw = 0, maxSev = 0, count = 0;
+  for (const g of task.segs) {
+    const mt = g.mt || '';
+    if (!mt) continue;
+    for (const s of seeds) {
+      if (mt.indexOf(s.span) >= 0) {
+        const w = _mqmSevW[s.sev] || 1;
+        raw += w; if (w > maxSev) maxSev = w; count++;
+      }
+    }
+  }
+  const words = task.segs.reduce((a, g) => a + wordCount(g.mt || ''), 0);
+  const r = { score: words ? raw / words : 0, raw, maxSev, count };
+  _mqmCache.set(task.id, r);
+  return r;
+}
 function taskDifficulty(task) {
-  if (!task || !task.segs || !task.segs.length) return { tier: '入门', avg: 0, cls: 'easy' };
+  if (!task || !task.segs || !task.segs.length) return { tier: '入门', avg: 0, cls: 'easy', mqm: { score: 0, raw: 0, maxSev: 0, count: 0 } };
   if (_diffCache.has(task.id)) return _diffCache.get(task.id);
   let sum = 0, maxSeg = 0;
   for (const g of task.segs) {
@@ -157,12 +184,25 @@ function taskDifficulty(task) {
     sum += r; if (r > maxSeg) maxSeg = r;
   }
   const avg = sum / task.segs.length;
+  const mqm = mqmOf(task);
+  const refined = Math.max(avg, mqm.score);
   let tier = '入门', cls = 'easy';
-  if (avg > 1.10 || maxSeg > 2.0) { tier = '挑战'; cls = 'hard'; }
-  else if (avg > 0.85) { tier = '进阶'; cls = 'medium'; }
-  const d = { tier, avg: Math.round(avg * 1000) / 1000, cls };
+  if (refined > 1.10 || maxSeg > 2.0) { tier = '挑战'; cls = 'hard'; }
+  else if (refined > 0.85) { tier = '进阶'; cls = 'medium'; }
+  const d = {
+    tier, avg: Math.round(avg * 1000) / 1000, cls,
+    mqm: { score: Math.round(mqm.score * 1000) / 1000, raw: mqm.raw, maxSev: mqm.maxSev, count: mqm.count }
+  };
   _diffCache.set(task.id, d);
   return d;
+}
+/* ③ 任务卡上的 MQM 金标准标记：仅对含种子卷显示，按最高严重度着色（Minor 蓝 / Major 琥珀 / Critical 红） */
+function mqmBadge(diff) {
+  const m = diff && diff.mqm;
+  if (!m || !m.count) return '';
+  const sev = m.maxSev >= 25 ? 'crit' : m.maxSev >= 5 ? 'major' : 'minor';
+  const sevTxt = m.maxSev >= 25 ? 'Critical' : m.maxSev >= 5 ? 'Major' : 'Minor';
+  return `<span class="tag mqm ${sev}" title="金标准种子罚分密度 ${m.score}（共 ${m.count} 处，最高 ${sevTxt}）">★MQM ${m.score}</span>`;
 }
 /* 难度筛选状态（renderPlaza 顶部的下拉） */
 let diffFilter = 'all';
@@ -255,7 +295,7 @@ function renderPlaza() {
  <option value="medium"${diffFilter==='medium'?' selected':''}>进阶</option>
  <option value="hard"${diffFilter==='hard'?' selected':''}>挑战</option>
  </select>
- <span class="muted" style="margin-left:8px">难度按「MT↔REF 需改动量」估算（入门≤0.20 ｜ 进阶 0.20–0.45 ｜ 挑战＞0.45）</span>
+ <span class="muted" style="margin-left:8px">难度按「MT↔REF 需改动量 + 金标准 MQM 罚分」估算（入门≤0.85 ｜ 进阶 0.85–1.10 ｜ 挑战＞1.10，含杀手句单段＞2.0）；★MQM 标记表示该题已被专家标注</span>
  </div>
  <div class="task-grid">
  ${shown.map(t => {
@@ -267,7 +307,7 @@ function renderPlaza() {
  <div class="t-head">
  <h3>${esc(t.name)}</h3>
  <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
- <span class="tag diff ${diff.cls}">难度·${diff.tier}</span>
+ <span class="tag diff ${diff.cls}">难度·${diff.tier}</span>${mqmBadge(diff)}
  <span class="tag pair">${esc(t.pair)}</span>
  <span class="tag domain">${esc(t.domain)}</span>
  </div>
@@ -301,7 +341,7 @@ function renderPlaza() {
  <div class="t-head">
  <h3>${esc(t.name)}</h3>
  <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
- <span class="tag diff ${diff.cls}">难度·${diff.tier}</span>
+ <span class="tag diff ${diff.cls}">难度·${diff.tier}</span>${mqmBadge(diff)}
  <span class="tag pair">${esc(t.pair)}</span>
  <span class="tag domain">${esc(t.domain)}</span>
  </div>

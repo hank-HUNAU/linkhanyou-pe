@@ -10,10 +10,15 @@
     done();
     return;
   }
-  window.__MTPE_READY__ = Promise.all([window.mtpeEnsureSlice('tasks')]).then(function (r) {
+  /* ③（2026-10-22）练习/仿真运行时也暴露金标准种子：加载 meta 片（与 annotate 页 annotate-data.js 同构），
+     供 app.js 的 taskDifficulty 叠加 MQM 罚分精修。meta 仅含 seeds/flags/pre/stats，无密文，可公开。
+     映射用 seg.mt.includes(span) 而非 task.pair（task.pair 是翻译方向，种子 k 才是句对键）。 */
+  window.__MTPE_READY__ = Promise.all([window.mtpeEnsureSlice('tasks'), window.mtpeEnsureSlice('meta')]).then(function (r) {
     var d = r[0] || {};
     window.CORPUS_TASKS = d.tasks || [];
     window.CORPUS_TAG_INDEX = d.tagIndex || {};
+    var meta = r[1] || {};
+    window.SEEDS = meta.seeds || [];
     if (typeof TASKS !== 'undefined') TASKS.push.apply(TASKS, window.CORPUS_TASKS);
   }).catch(function () {
     window.__MTPE_SLICE_FAIL__ = true;

@@ -35,6 +35,7 @@
   --r-sm2:6px;  /* 小标签：.meta .tag、sev-opt未选中态 */
   --r-md2:12px; /* 中卡片：与 --r-lg 同族，出现在嵌套卡片里 */
   --r-xl:16px;  /* 大浮层：标注面板（抽屉态圆角） */
+  --r-22:22px;  /* 大圆角浮层：工作台聚焦卡（原 22px 硬编码，第④步 token 收敛） */
   /* 字号七档（2026-10-19 扩档）
      五档不够用的原因：①找 作答页要做「主次分层」——原文是参考、译文是操作对象，
      两者必须不同字号（15 vs 17），且 17px 是中文正文舒适阅读的下限，不宜归并。
@@ -46,6 +47,7 @@
   --fs-read:17px; /* ★ 阅读正文：译文（操作对象，全站最大的正文）*/
   --fs-lg:20px;   /* 小标题 */
   --fs-xl:24px;   /* 大标题 */
+  --fs-14:14px; --fs-22:22px; --fs-26:26px; --fs-30:30px; --fs-11:11px; --fs-23:23px; /* 收敛 style.css/pe-exam.css 硬编码字号（第④步 token 收敛，2026-10-22） */
   /* 兼容别名：老代码写 --fs-md 的仍指到通用正文 */
   --fs-md:var(--fs-base);
   /* 行高三档：与字号配套，避免每处自己写 1.6/1.8 */
@@ -126,6 +128,11 @@ textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2p
 .tag.blue{background:var(--primary-light);color:var(--primary-dark)}
 .tag.teal{background:var(--step1-bg);color:var(--step1)}
 .tag.diff.easy{background:var(--green-bg);color:var(--green)}
+/* ③ MQM 金标准标记：按最高严重度着色（Minor 蓝 / Major 琥珀 / Critical 红），复用语义色 token */
+.tag.mqm{padding:2px 10px;border-radius:var(--r-pill);font-size:var(--fs-xs);font-weight:600;white-space:nowrap}
+.tag.mqm.minor{color:var(--primary);background:var(--primary-light)}
+.tag.mqm.major{color:var(--amber);background:var(--amber-bg)}
+.tag.mqm.crit{color:var(--red);background:var(--red-bg)}
 .tag.diff.medium{background:var(--amber-bg);color:var(--amber)}
 .tag.diff.hard{background:var(--red-bg);color:var(--red)}
 .tag.gray{background:#f0f0f2;color:var(--text-2)}
