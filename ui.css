@@ -125,6 +125,9 @@ textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2p
 .tag.custom,.tag.need{background:var(--amber-bg);color:var(--amber)}
 .tag.blue{background:var(--primary-light);color:var(--primary-dark)}
 .tag.teal{background:var(--step1-bg);color:var(--step1)}
+.tag.diff.easy{background:var(--green-bg);color:var(--green)}
+.tag.diff.medium{background:var(--amber-bg);color:var(--amber)}
+.tag.diff.hard{background:var(--red-bg);color:var(--red)}
 .tag.gray{background:#f0f0f2;color:var(--text-2)}
 
 /* ---------- 6. 步骤标签（作答栏左端） ---------- */
@@ -141,6 +144,8 @@ textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2p
 .plaza-head h2{font-size:22px}
 .plaza-head p{color:var(--text-2);font-size:14px;margin-top:var(--sp-1)}
 .page-s{color:var(--muted);font-size:13px;margin-bottom:var(--sp-4)}
+.filter-row{display:flex;align-items:center;gap:6px;margin:2px 0 16px;flex-wrap:wrap}
+.diff-select{font:14px/1.4 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;padding:6px 10px;border:1px solid rgba(0,0,0,.14);border-radius:var(--r-sm);background:#fff;color:var(--text-1)}
 .page-t{font-size:var(--fs-lg);font-weight:700;margin-bottom:var(--sp-1)}
 .task-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:var(--sp-4)}
 .task-card{

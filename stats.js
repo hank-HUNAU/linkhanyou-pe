@@ -99,6 +99,7 @@
  <h2>我的统计</h2>
  <button class="btn btn-primary" onclick="exportHomework()"> 导出作业 JSON（交给老师汇总）</button>
  <button class="btn btn-ghost" onclick="importHomework()"> 导入作业 JSON（恢复本机记录）</button>
+ <button class="btn btn-ghost" onclick="verifyHomeworkFile()"> 校验作业文件</button>
  <button class="btn btn-ghost" onclick="exportCSV()">导出明细 CSV</button>
  </div>
  <div class="score-hero">
@@ -131,7 +132,7 @@
  <td class="muted">${esc(h.date)}</td>
  <td>${esc(h.taskName)}</td>
  <td>${modeLabel(h)}</td>
- <td><b>${h.score}</b></td><td>${h.ter}%</td>
+ <td><b>${h.score}</b>${h.overdue ? ' <span style="color:#d70015;font-size:11px">逾期</span>' : ''}</td><td>${h.ter}%</td>
  <td>${h.segDone}/${h.total}</td><td>${fmtTime(h.timeUsed)}</td>
  <td><button class="btn btn-ghost" style="padding:4px 10px" onclick="viewRecord('${h.id}')">查看</button></td>
  </tr>`).join('')}
@@ -198,21 +199,71 @@
  </div>`;
   }
 
-  /* 导出作业 JSON：交给老师汇总（含账号、作答记录与画像、标注实训成绩、错题本） */
-  window.exportHomework = function () {
-    if (!hasNick()) { askNick(window.exportHomework); return; }
-    const loginAccount = (window.mtpeAccount && window.mtpeAccount()) || '';
-    const account = getNick();
-    const ann = myAnnStats('mtpe_ann_stats');
-    const wrong = myWrongbook();
-    const payload = {
-      account: account, loginAccount: loginAccount, exported: now(),
-      tasks: (history() || []).length, history: history() || [], annStats: ann, wrongbook: wrong
-    };
-    const name = 'MTPE作业_' + String(account).replace(/[^\w-]/g, '') + '_' + new Date().toISOString().slice(0, 10) + '.json';
-    window.mtpeDownload(name, JSON.stringify(payload, null, 1), 'application/json');
-    toast('已导出作业：' + name + '　请交给老师汇总');
-  };
+ /* ⑧ 防篡改校验和：导出时给作业文件加 HMAC-SHA256 签名（canonical + 内置密钥）。
+ 诚实边界：密钥在客户端 JS 里（可逆向提取），只挡「随手改 localStorage 抬高分数」，
+ 挡不住刻意攻击者；真正防篡改靠 Supabase attempts 表（服务端时间戳、不可改）。 */
+ const MTPE_INTEGRITY_KEY = 'mtpe-hw-integrity-v1-7f3a9c2e'; // 仅客户端混淆用，非安全边界
+ async function hmacSha256(msg, key) {
+ if (!crypto || !crypto.subtle) return null;
+ const ec = new TextEncoder();
+ const k = await crypto.subtle.importKey('raw', ec.encode(key), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+ const sig = await crypto.subtle.sign('HMAC', k, ec.encode(msg));
+ return btoa(String.fromCharCode.apply(null, new Uint8Array(sig)));
+ }
+ function canonicalOf(p) {
+ const h = (p.history || []).map(r => [r.id, r.score, r.ter, r.date].join(':')).sort().join('|');
+ const a = (p.annStats || []).map(x => [x.date, x.paper, x.precision, x.recall, x.f1].join(':')).sort().join('|');
+ const w = (p.wrongbook || []).map(x => [x.k, x.span, x.tag, x.kind].join(':')).sort().join('|');
+ return [p.account || '', h, a, w].join('##');
+ }
+ window.verifyHomework = async function (payload) {
+ if (!payload || typeof payload !== 'object') return { ok: false, reason: '格式错误' };
+ if (!('sig' in payload)) return { ok: false, reason: '文件无签名（旧版或未签名环境导出）' };
+ if (!crypto || !crypto.subtle) return { ok: false, reason: '本环境不支持签名校验' };
+ const expect = await hmacSha256(canonicalOf(payload), MTPE_INTEGRITY_KEY);
+ if (!expect) return { ok: false, reason: '本环境不支持签名校验' };
+ return expect === payload.sig ? { ok: true } : { ok: false, reason: '签名不符，文件疑似被修改' };
+ };
+ window.verifyHomeworkFile = function () {
+ let inp = document.getElementById('hw-verify');
+ if (!inp) {
+ inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json,application/json'; inp.id = 'hw-verify'; inp.style.display = 'none';
+ inp.addEventListener('change', function () {
+ const f = inp.files && inp.files[0]; inp.value = '';
+ if (!f) return;
+ const rd = new FileReader();
+ rd.onload = async function () {
+ try {
+ const p = JSON.parse(String(rd.result));
+ const r = await window.verifyHomework(p);
+ toast(r.ok ? '✓ 校验通过：作业文件未被篡改' : ('⚠️ ' + r.reason));
+ } catch (e) { toast('校验失败：不是有效的作业 JSON 文件'); }
+ };
+ rd.onerror = function () { toast('校验失败：文件读取错误'); };
+ rd.readAsText(f, 'utf-8');
+ });
+ document.body.appendChild(inp);
+ }
+ inp.click();
+ };
+
+ /* 导出作业 JSON：交给老师汇总（含账号、作答记录与画像、标注实训成绩、错题本） */
+ window.exportHomework = async function () {
+ if (!hasNick()) { askNick(window.exportHomework); return; }
+ const loginAccount = (window.mtpeAccount && window.mtpeAccount()) || '';
+ const account = getNick();
+ const ann = myAnnStats('mtpe_ann_stats');
+ const wrong = myWrongbook();
+ const payload = {
+ account: account, loginAccount: loginAccount, exported: now(),
+ tasks: (history() || []).length, history: history() || [], annStats: ann, wrongbook: wrong
+ };
+ /* ⑧ 加签名（环境不支持 crypto.subtle 时 sig=null，文件仍可导出但无校验和） */
+ try { payload.sig = await hmacSha256(canonicalOf(payload), MTPE_INTEGRITY_KEY); payload.signedAt = new Date().toISOString(); } catch (e) { payload.sig = null; }
+ const name = 'MTPE作业_' + String(account).replace(/[^\w-]/g, '') + '_' + new Date().toISOString().slice(0, 10) + '.json';
+ window.mtpeDownload(name, JSON.stringify(payload, null, 1), 'application/json');
+ toast('已导出作业：' + name + (payload.sig ? '（含防篡改校验和）' : '（本环境不支持签名）') + '　请交给老师汇总');
+ };
 
   /* 导入作业 JSON（P0-2，2026-10-17）：学生清缓存 / 换电脑后，用导出的作业文件
      恢复本机记录。只合并"文件里有而本机没有"的记录（按 id / 键去重），导入的
@@ -228,8 +279,15 @@
         inp.value = '';
         if (!f) return;
         const rd = new FileReader();
-        rd.onload = function () {
-          try { mergeHomework(JSON.parse(String(rd.result))); }
+        rd.onload = async function () {
+          try {
+            const p = JSON.parse(String(rd.result));
+            if (crypto && crypto.subtle) {
+              const v = await window.verifyHomework(p);
+              if (!v.ok) toast('⚠️ ' + v.reason + '：请确认后再采信');
+            }
+            mergeHomework(p);
+          }
           catch (e) { toast('导入失败：不是有效的作业 JSON 文件'); }
         };
         rd.onerror = function () { toast('导入失败：文件读取错误'); };
@@ -288,13 +346,13 @@
   }
 
   window.exportCSV = function () {
-    const rows = [['时间', '昵称', '任务', '语向', '领域', '模式', '得分', '修订率%', '完成段', '总段', '字数', '用时秒', '编辑率%', '有效编辑率%', '编辑倾向', '速度段每分', '后半程变化']];
-    history().forEach((h) => rows.push([h.date, h.nickname, h.taskName, h.pair, h.domain, modeLabel(h), h.score, h.ter, h.segDone, h.total, h.words, h.timeUsed,
+ const rows = [['时间', '昵称', '任务', '语向', '领域', '模式', '得分', '修订率%', '完成段', '总段', '字数', '用时秒', '编辑率%', '有效编辑率%', '编辑倾向', '速度段每分', '后半程变化', '布置截止', '是否逾期']];
+ history().forEach((h) => rows.push([h.date, h.nickname, h.taskName, h.pair, h.domain, modeLabel(h), h.score, h.ter, h.segDone, h.total, h.words, h.timeUsed,
       h.profile ? h.profile.editRate : '', h.profile ? h.profile.effRate : '', h.profile ? h.profile.quadrant : '',
-      h.profile ? h.profile.speed : '', h.profile ? h.profile.stability : '']));
-    const csv = '\uFEFF' + rows.map((r) => r.map((c) => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n');
-    window.mtpeDownload('MTPE实训明细.csv', csv, 'text/csv');
-  };
+      h.profile ? h.profile.speed : '', h.profile ? h.profile.stability : '', h.due || '', h.overdue ? '是' : '']));
+ const csv = '\uFEFF' + rows.map((r) => r.map((c) => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n');
+ window.mtpeDownload('MTPE实训明细.csv', csv, 'text/csv');
+ };
 
   renderStats();
 })();

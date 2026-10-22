@@ -101,6 +101,7 @@ function now() { return new Date().toLocaleString('zh-CN', { hour12: false }); }
 /* ---------------- 全局状态 ---------------- */
 let view = 'plaza';
 let S = null; // 当前答题会话 {task, mode, answers[], startTs, duration, cheat, timer, idx}
+let _pendingDue = ''; // ④ 布置深链带来的截止日期（openSetup→startSession→submitSession 透传）
 const getNick = () => store.get('nickname', '');
 /* 是否填过"真实姓名/学号"：登录时系统会把昵称预置成账号名，那不算填过。
    班级汇总按这个身份归档，所以导出作业前必须先填。 */
@@ -120,6 +121,46 @@ const myDraft = (id) => {
   const n = curNick();
   return (!n || d.nick === n) ? d : null;
 };
+
+/* ④ 布置深链解析：#task=<id>&mode=competition|practice|demo&due=YYYY-MM-DD
+   老师把生成的链接（practice.html#task=<id>&mode=competition&due=...）发群里即一次布置。 */
+function parseTaskLink(h) {
+  try {
+    const raw = (h || '').split('&').reduce((m, kv) => {
+      const i = kv.indexOf('='); if (i < 0) return m;
+      m[decodeURIComponent(kv.slice(0, i))] = decodeURIComponent(kv.slice(i + 1)); return m;
+    }, {});
+    if (!raw.task) return null;
+    return { taskId: raw.task, mode: raw.mode || 'competition', due: raw.due || '' };
+  } catch (e) { return null; }
+}
+
+/* ⑤ 难度分级：基于 MT↔REF 编辑距离（revisionRate，类 TER）的「译后编辑努力估计」。
+   文献依据：TER 与实际 PE 努力（插入/删除/用时）正相关
+   （Martinez, Koglin, Mesa-Lao & Carl, 2015, IATIS；"Difficulty Estimation of Machine
+   Translation" 学位论文，TER↑ ⇒ PE 努力↑）。覆盖全部句对，不依赖金标准种子
+   （金标准仅 111 条，不足以给每卷打档；若日后把 SEEDS 暴露到本页，可叠加 MQM 罚分精修）。
+   阈值(0.20 / 0.45、单段>0.80)为本课堂本地标定，跑完 pilot 后按实际分布回标。 */
+const _diffCache = new Map();
+function taskDifficulty(task) {
+  if (!task || !task.segs || !task.segs.length) return { tier: '入门', avg: 0, cls: 'easy' };
+  if (_diffCache.has(task.id)) return _diffCache.get(task.id);
+  let sum = 0, maxSeg = 0;
+  for (const g of task.segs) {
+    const r = revisionRate(g.mt || '', g.ref || '');
+    sum += r; if (r > maxSeg) maxSeg = r;
+  }
+  const avg = sum / task.segs.length;
+  let tier = '入门', cls = 'easy';
+  if (avg > 0.45 || maxSeg > 0.8) { tier = '挑战'; cls = 'hard'; }
+  else if (avg > 0.20) { tier = '进阶'; cls = 'medium'; }
+  const d = { tier, avg: Math.round(avg * 1000) / 1000, cls };
+  _diffCache.set(task.id, d);
+  return d;
+}
+/* 难度筛选状态（renderPlaza 顶部的下拉） */
+let diffFilter = 'all';
+window.filterDifficulty = function (v) { diffFilter = v || 'all'; renderPlaza(); };
 
 /* 两类"交卷"的口径判断（isExamRecord）与统计页一起搬到了 report.js / stats.js；
    本页只在结果页标题里用到它，改由 window.mtpeIsExamRecord 提供。 */
@@ -192,6 +233,8 @@ function renderPlaza() {
  // 课堂演示临时开关：practice.html#demo（只在本机演示时有意义，公开站点无入口）
  const isTeacher = location.hash.indexOf('demo') >= 0;
  const tasks = allTasks();
+ const shown = diffFilter === 'all' ? tasks.filter(t => t.group !== 'history')
+   : tasks.filter(t => t.group !== 'history' && taskDifficulty(t).cls === diffFilter);
  const html = `
  <div class="plaza-head">
   <h2>② 改 · 译后编辑练习</h2>
@@ -199,15 +242,26 @@ function renderPlaza() {
   ｜ <a href="MQM错误类型参考手册.html">MQM 错误类型参考手册</a></p>
  </div>
  <div class="page-s" style="margin:14px 0 18px">限时练习：8 / 15 / 30 分钟计时，离开页面计数 ｜ 自由练习：不限时、可存草稿</div>
+ <div class="filter-row"><span class="muted">难度筛选：</span>
+ <select class="diff-select" onchange="filterDifficulty(this.value)">
+ <option value="all"${diffFilter==='all'?' selected':''}>全部</option>
+ <option value="easy"${diffFilter==='easy'?' selected':''}>入门</option>
+ <option value="medium"${diffFilter==='medium'?' selected':''}>进阶</option>
+ <option value="hard"${diffFilter==='hard'?' selected':''}>挑战</option>
+ </select>
+ <span class="muted" style="margin-left:8px">难度按「MT↔REF 需改动量」估算（入门≤0.20 ｜ 进阶 0.20–0.45 ｜ 挑战＞0.45）</span>
+ </div>
  <div class="task-grid">
- ${tasks.filter(t => t.group !== 'history').map(t => {
+ ${shown.map(t => {
  const wc = t.segs.reduce((s, g) => s + wordCount(g.src), 0);
  const draft = myDraft(t.id);
+ const diff = taskDifficulty(t);
  return `
  <div class="task-card">
  <div class="t-head">
  <h3>${esc(t.name)}</h3>
  <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+ <span class="tag diff ${diff.cls}">难度·${diff.tier}</span>
  <span class="tag pair">${esc(t.pair)}</span>
  <span class="tag domain">${esc(t.domain)}</span>
  </div>
@@ -235,11 +289,13 @@ function renderPlaza() {
  ${hist.map((t) => {
  const wc = t.segs.reduce((s, g) => s + wordCount(g.src), 0);
  const draft = myDraft(t.id);
+ const diff = taskDifficulty(t);
  return `
  <div class="task-card">
  <div class="t-head">
  <h3>${esc(t.name)}</h3>
  <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+ <span class="tag diff ${diff.cls}">难度·${diff.tier}</span>
  <span class="tag pair">${esc(t.pair)}</span>
  <span class="tag domain">${esc(t.domain)}</span>
  </div>
@@ -259,11 +315,12 @@ function renderPlaza() {
 }
 
 /* ---------------- 竞赛设置弹窗 ---------------- */
-function openSetup(taskId, mode) {
+function openSetup(taskId, mode, due) {
  const task = allTasks().find(t => t.id === taskId);
  if (!task) return;
+ _pendingDue = due || '';
 
- if (!getNick() && mode === 'competition') { askNickname(() => openSetup(taskId, mode)); return; }
+ if (!getNick() && mode === 'competition') { askNickname(() => openSetup(taskId, mode, due)); return; }
 
  const myPrev = myDraft(taskId);
  if (mode === 'practice' && myPrev) {
@@ -271,14 +328,23 @@ function openSetup(taskId, mode) {
  <h3>检测到练习草稿</h3>
  <div class="info-box">上次练习已编辑 ${myPrev.done} 段，可继续或重新开始。</div>
  <div class="m-actions">
- <button class="btn btn-ghost" onclick="closeModal();startSession('${taskId}','practice',true)">重新开始</button>
- <button class="btn btn-primary" onclick="closeModal();startSession('${taskId}','practice')">继续上次草稿</button>
+ <button class="btn btn-ghost" onclick="closeModal();startSession('${taskId}','practice',true,0,_pendingDue)">重新开始</button>
+ <button class="btn btn-primary" onclick="closeModal();startSession('${taskId}','practice',0,0,_pendingDue)">继续上次草稿</button>
  </div>`);
  return;
  }
 
  const modeName = { competition: '限时练习', practice: '自由练习', demo: '教学演示' }[mode];
- let body = `<div class="info-box">
+ let dueBox = '';
+ if (_pendingDue) {
+ const dueTs = Date.parse(_pendingDue);
+ const overdue = dueTs && dueTs < Date.now();
+ const days = isNaN(dueTs) ? '' : Math.ceil((dueTs - Date.now()) / 86400000);
+ dueBox = `<div class="info-box" style="border-color:${overdue ? '#d70015' : '#0071e3'};color:${overdue ? '#d70015' : 'inherit'}">`
+ + `本次为老师布置作业，截止：<b>${esc(_pendingDue)}</b>`
+ + (isNaN(dueTs) ? '（日期格式无法识别）' : overdue ? '（已截止，仍可提交，老师会看到「逾期」标记）' : `（剩 ${days} 天）`) + `</div>`;
+ }
+ let body = dueBox + `<div class="info-box">
  任务：${esc(task.name)}（${esc(task.pair)} · ${task.segs.length} 段）<br>
  模式：${modeName}
  </div>`;
@@ -290,8 +356,8 @@ function openSetup(taskId, mode) {
  openModal(`<h3>继续上次限时练习？</h3>
  <div class="info-box">上次还剩 <b>${fmtTime(Math.floor(d.remain))}</b>，已编辑 ${d.done || 0}/${task.segs.length} 段。<br>继续会接着剩余时间计时（不会因为刷新而多出时间）。</div>
  <div class="m-actions">
- <button class="btn btn-ghost" onclick="closeModal();startSession('${taskId}','competition',true)">重新开始</button>
- <button class="btn btn-primary" onclick="closeModal();startSession('${taskId}','competition',false,${Math.floor(d.remain)})">继续（剩余 ${fmtTime(Math.floor(d.remain))}）</button>
+ <button class="btn btn-ghost" onclick="closeModal();startSession('${taskId}','competition',true,0,_pendingDue)">重新开始</button>
+ <button class="btn btn-primary" onclick="closeModal();startSession('${taskId}','competition',false,${Math.floor(d.remain)},_pendingDue)">继续（剩余 ${fmtTime(Math.floor(d.remain))}）</button>
  </div>`);
  return;
  }
@@ -307,7 +373,7 @@ function openSetup(taskId, mode) {
  body += `
  <div class="m-actions">
  <button class="btn btn-ghost" onclick="closeModal()">取消</button>
- <button class="btn btn-primary" onclick="closeModal();startSession('${taskId}','${mode}')">开始作答 </button>
+ <button class="btn btn-primary" onclick="closeModal();startSession('${taskId}','${mode}',0,0,_pendingDue)">开始作答 </button>
  </div>`;
  openModal(`<h3>开始${modeName}</h3>${body}`);
  window._dur = mode === 'competition' ? task.minutes : 0;
@@ -319,7 +385,7 @@ function pickDur(el) {
 }
 
 /* ---------------- 答题会话 ---------------- */
-function startSession(taskId, mode, fresh, remainSec) {
+function startSession(taskId, mode, fresh, remainSec, due) {
  const task = allTasks().find(t => t.id === taskId);
  if (!task) return;
  /* 起新会话前先收掉旧会话的计时器（详见 renderExam 里的注释） */
@@ -339,7 +405,8 @@ function startSession(taskId, mode, fresh, remainSec) {
  task, mode, answers, idx: 0,
  startTs: Date.now(),
  duration: dur,
- cheat: 0, timer: null, draftSaveTm: null, done: false
+ cheat: 0, timer: null, draftSaveTm: null, done: false,
+ due: due || ''   // ④ 布置深链带来的截止日期，交卷时写入成绩，供老师核对逾期
  };
  window._sessionActive = true;
  if (mode === 'competition') {
@@ -613,7 +680,9 @@ function submitSession() {
  pair: task.pair, domain: task.domain, mode,
  nickname: getNick() || '匿名', date: now(),
  timeUsed, score, ter: Math.round(avgTer * 1000) / 10,
- segDone, total: task.segs.length, words, details
+ segDone, total: task.segs.length, words, details,
+ due: S.due || '',
+ overdue: !!(S.due && Date.parse(S.due) < Date.now())
  };
 
  stopSession(true);
@@ -640,4 +709,11 @@ updateNickBadge();
  if (h === 'stats') { location.replace('stats.html'); return; }
  if (h === 'plaza') go('plaza');
  else renderPlaza();
+ /* ④ 布置深链：#task=<id>&mode=&due= → 加载后自动打开该卷设置框 */
+ const dl = parseTaskLink(h);
+ if (dl && dl.taskId) {
+ const t = allTasks().find(x => x.id === dl.taskId);
+ if (t) { openSetup(dl.taskId, dl.mode, dl.due); }
+ else toast('布置链接里的任务不存在：' + dl.taskId);
+ }
 })();
