@@ -442,7 +442,17 @@ node verify_live.mjs             # 线上文件端到端：登录 → 分片按�
      · **UI**：任务卡（主网格 + 历史卷）对含种子卷显示 `★MQM <密度>` 标记，按最高严重度着色（Minor 蓝 / Major 琥珀 / Critical 红，新增 `.tag.mqm.*`，复用语义色 token）；广场说明文字同步为「MT↔REF 需改动量 + 金标准 MQM 罚分」（原仍写旧阈值 0.20/0.45，属遗留错误文案，一并修正）。
      · 诚实边界：金标准仅 123 条 / 1402 句对（覆盖 110 个句对），**当前已签批种子多为 Minor**，故 MQM 分量的即时影响很小（refined 仍主要由 TER 决定）；机制已就位，随 Major/Critical 种子扩充而生效。
    - **2026-10-22 ④ 挂账项「字号/圆角 token 收敛 第2/3 步」已实施**：`style.css`（字号 74 处 + 圆角 30 处）、`pe-exam.css`（字号 41 处 + 圆角 19 处）硬编码 `font-size`/`border-radius` 全部替换为 `ui.css` token；新增 `--fs-11/14/22/23/26/30`、`--r-22` 共 7 个 token 以**保证零像素漂移**（未用近似档硬套）；非目标属性（padding/width/gap/margin）按要求保留 px。原文件备份 `style.css.bak_20261022` / `pe-exam.css.bak_20261022`；脚本 `token_conv.mjs` 可复跑（已收敛处不再匹配）。核验：两文件残留硬编码 = 0。
-   - **下一步**：① （已完成）pilot #4 种子扩充；② （已完成）难度阈值回标；③ （已完成）MQM 罚分难度精修 + SEEDS 暴露；④ （已完成）style/pe-exam token 收敛；⑤ **封口脚本 `seal_content.mjs` 丢失，已用 `reseal_pilot4.mjs` 安全重建法替代——后续任何种子扩充都走「merge_pilotN → reseal_pilotN（带往返校验）」；建议把 `reseal_pilot4.mjs` 固化为正式 `seal_content.mjs` 并补一份离线备份**。
+   - **2026-10-22 ⑤ 挂账项「封口脚本固化」已实施**：`seal_content.mjs` 已由 `reseal_pilot4.mjs` 固化为正式脚本，安全重建法沉淀下来。
+     · **为什么必须留在仓库外**：封口脚本硬编码站点口令（可用 `MTPE_SEAL_PW` 环境变量覆盖）→ **严禁提交/部署**（公开 Pages 仓库一旦含此文件即泄口令）。原 `seal_content.mjs` 正是作为未跟踪 `.mjs` 丢失的。
+     · **相对 pilot4 版的三处强化**：① 回归比对改为**与线上 meta 逐条比对**（原 `SEEDS.slice(0, N-new)` 隐含"新种子追加在末尾"的脆弱假设）；② 新增 `--dry-run`（只校验不写盘）与 `--tag`（备份后缀）；③ pairs 交叉验证补齐。
+     · **dry-run 实测抓到两个坑（均已修）**：
+       - `s-pairs.js` 解密结果是 `{pairs:[...]}` 对象包装（与 tasks 片 `{tasks:[],tagIndex}` 同构），直接取 `.length` 得 `undefined`；
+       - 6 条种子报"span 无法定位" → 实为**假阳性**：3 条是 `59b/70b/73b` 同句补标后缀键（去掉 `[bc]$` 才是真句对键），另 3 条是 `seg_1_决赛_2/6/8` 的 **M0 干净句标记**（span 为占位 `（整句）`，annotate.js 计分本就跳过 M0、无需划选）。已按此豁免，**非数据缺陷**。
+     · **闸门有效性反向验证**：构造丢 1 条种子的样本 → 精确报 `丢失 1：seg_1_决赛_74 拍照片` 并拒绝封口（退出码非 0、不写盘）✓。
+     · **离线备份（两处）**：`C:/Users/Thinkpad/.workbuddy/backups/mtpe-seal/`（`seal_content.mjs` + `verify_seal.mjs` + `README.md` 用法/禁忌，跨会话持久、不在仓库内）；项目内 `_sealed_backup/seal_content.mjs.bak_20261022`。
+     · 后续流程固定为：`merge_pilotN → node seal_content.mjs --dry-run → node seal_content.mjs --tag pilotN → node verify_seal.mjs → deploy_ghapi.mjs（只传 secure.js + HANDOFF.md）`。
+   - **下一步**：① （已完成）pilot #4 种子扩充；② （已完成）难度阈值回标；③ （已完成）MQM 罚分难度精修 + SEEDS 暴露；④ （已完成）style/pe-exam token 收敛；⑤ （已完成）封口脚本固化 + 离线备份。
+   - **唯余可选方向**：继续 pilot #5 种子扩充（剩余未覆盖句对还很多，需先定子集），或按用户新意另行排期。
 10. 暗色模式（挂账）：需先把颜色完全收敛到 token。
 
 ---
