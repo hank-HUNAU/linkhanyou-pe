@@ -440,7 +440,7 @@ node verify_live.mjs             # 线上文件端到端：登录 → 分片按�
      · **匹配口径（重要修正）**：种子 `k` 是句对键（`seg_1_决赛_54`），而 `task.pair` 是**翻译方向**（英译中/中译英），两者不可混用 → 改用 **`seg.mt.includes(seed.span)`** 匹配（与标注页计分同构），更稳健。
      · **精修公式**：`mqmOf(task)` 累加命中的严重度乘数（MQM Council 标准 **Minor=1 / Major=5 / Critical=25**），按 MT 词数归一得罚分密度；`refined = max(terAvg, mqmScore)` —— 难度取「编辑努力」与「已知错误严重度」的较大值，含 Major/Critical 种子的卷被正确上探到挑战档；**无种子卷仍纯 TER，回标后的 7/7/6 分布不变**。阈值沿用 0.85 / 1.10 / 单段 2.0。
      · **UI**：任务卡（主网格 + 历史卷）对含种子卷显示 `★MQM <密度>` 标记，按最高严重度着色（Minor 蓝 / Major 琥珀 / Critical 红，新增 `.tag.mqm.*`，复用语义色 token）；广场说明文字同步为「MT↔REF 需改动量 + 金标准 MQM 罚分」（原仍写旧阈值 0.20/0.45，属遗留错误文案，一并修正）。
-     · 诚实边界：金标准仅 123 条 / 1402 句对（覆盖 110 个句对），**当前已签批种子多为 Minor**，故 MQM 分量的即时影响很小（refined 仍主要由 TER 决定）；机制已就位，随 Major/Critical 种子扩充而生效。
+     · 诚实边界：金标准 137 条 / 1402 句对（覆盖 122 个句对，覆盖率 8.7%，2026-10-24 pilot #5 后），**当前已签批种子多为 Minor**，故 MQM 分量的即时影响很小（refined 仍主要由 TER 决定）；机制已就位，随 Major/Critical 种子扩充而生效。
    - **2026-10-22 ④ 挂账项「字号/圆角 token 收敛 第2/3 步」已实施**：`style.css`（字号 74 处 + 圆角 30 处）、`pe-exam.css`（字号 41 处 + 圆角 19 处）硬编码 `font-size`/`border-radius` 全部替换为 `ui.css` token；新增 `--fs-11/14/22/23/26/30`、`--r-22` 共 7 个 token 以**保证零像素漂移**（未用近似档硬套）；非目标属性（padding/width/gap/margin）按要求保留 px。原文件备份 `style.css.bak_20261022` / `pe-exam.css.bak_20261022`；脚本 `token_conv.mjs` 可复跑（已收敛处不再匹配）。核验：两文件残留硬编码 = 0。
    - **2026-10-22 ⑤ 挂账项「封口脚本固化」已实施**：`seal_content.mjs` 已由 `reseal_pilot4.mjs` 固化为正式脚本，安全重建法沉淀下来。
      · **为什么必须留在仓库外**：封口脚本硬编码站点口令（可用 `MTPE_SEAL_PW` 环境变量覆盖）→ **严禁提交/部署**（公开 Pages 仓库一旦含此文件即泄口令）。原 `seal_content.mjs` 正是作为未跟踪 `.mjs` 丢失的。
@@ -451,8 +451,21 @@ node verify_live.mjs             # 线上文件端到端：登录 → 分片按�
      · **闸门有效性反向验证**：构造丢 1 条种子的样本 → 精确报 `丢失 1：seg_1_决赛_74 拍照片` 并拒绝封口（退出码非 0、不写盘）✓。
      · **离线备份（两处）**：`C:/Users/Thinkpad/.workbuddy/backups/mtpe-seal/`（`seal_content.mjs` + `verify_seal.mjs` + `README.md` 用法/禁忌，跨会话持久、不在仓库内）；项目内 `_sealed_backup/seal_content.mjs.bak_20261022`。
      · 后续流程固定为：`merge_pilotN → node seal_content.mjs --dry-run → node seal_content.mjs --tag pilotN → node verify_seal.mjs → deploy_ghapi.mjs（只传 secure.js + HANDOFF.md）`。
-   - **下一步**：① （已完成）pilot #4 种子扩充；② （已完成）难度阈值回标；③ （已完成）MQM 罚分难度精修 + SEEDS 暴露；④ （已完成）style/pe-exam token 收敛；⑤ （已完成）封口脚本固化 + 离线备份。
-   - **唯余可选方向**：继续 pilot #5 种子扩充（剩余未覆盖句对还很多，需先定子集），或按用户新意另行排期。
+   - **2026-10-24 pilot #5 已签批并部署（专家「按建议收录 14 条」）**：
+     · **子集选定有数据依据**：先摸底全局覆盖率仅 110/1402 = **8%**，且发现前四轮 pilot **全挤在 `第1届决赛·英译汉`**（该组覆盖率已达 60%/67%/100%，饱和）；真缺口在 5届初赛(367 段/0 覆盖)、3届初赛(212/0)、4届决赛(91)、6届初赛(85/0)、7届初赛(48)。用户选定 **`第7届初赛·英译汉·GPT-4o`**（理由：英译汉主干占语料 90%、该卷已部署 62 段大卷、GPT-4o 为真题原引擎、已有 23% 基础可做第一本完整金标准卷）。
+     · 取 `num<=20` 中尚无种子的 15 段候逐对读 SRC↔MT↔REF 初判（`gen_pilot5_seeds.mjs`），**建议收录 14 条**（M8×7 / M1×6 / M0×1，全 Minor），覆盖 12 段（1/2/3/4/5/6/8/9/10/11/13/17）；机器校验「k 存在 + 片段⊆MT」失败 0。
+     · 严重度全部压 **Minor**：本批错误均为局部、不阻断理解的语域/边角偏差，与 pilot #4 先例（12 条全 Minor）一致；非语义反转、非幻觉，够不上 Major（乘数 5）。
+     · **首次出现「金标准不可信」并据此拒收 3 段**（五轮里第一次）——留痕 `reports/种子标注_pilot5_排除说明.md`：
+       - `seg_7_初赛_15`：`just-in-time manufacturing`，**MT「准时制生产」是 JIT 标准术语、正确**，REF 却意译为「一切刚好」→ 收条等于把正确术语判为错误；且 SRC 后半句被移入第 16 段 REF（**SRC↔REF 切分错位**）。
+       - `seg_7_初赛_16`：同上错位污染（REF 首句实为第 15 段 SRC 后半句译文），唯一可取之差（存储成本→仓储成本）无法作为整句改法。
+       - `seg_7_初赛_18`：SRC `for decades`，**MT「几十年」正确，REF 作「数年」**——数量级/时间跨度误译，按本项目 M1 口径恰是 REF 自身硬伤。
+       - `seg_7_初赛_13` 仅部分收录：`chancy` REF 译「投机」（含 speculative/opportunistic 义）可疑，MT「不确定」反而更贴源文，故只收 `argue a case`（法域用法「辩护」vs MT「辩论」）一处。
+     · 由此提出待办：① 第7届初赛 REF 整体质量抽查（本批 15 段命中 3 段，20%）；② `seg_7_初赛_15/16` 需在语料层重新对齐 SRC↔REF；③ `build_corpus.mjs` 增加自动体检（REF/SRC 长度比异常即标记人工复核）。
+     · 并入 SEEDS（**123→137**，seedPairs 110→122）；`merge_pilot5.mjs` 明文合并，明文备份 `annotate-data.js.bak_20261024`。
+     · 按固化流程封口：`seal_content.mjs --dry-run` 全绿（旧 123 条零回归 / 新增 14 条全落位 / 133 条可划选 span 均可在 MT 定位）→ 正式封口 `ver=5b5d81d9`，备份 `secure.js.bak_pilot5`；`verify_seal.mjs` 核验 `seeds=137 / seedPairs=122 / pairs=1402`，种子集指纹 `e3632a40`。
+     · **顺手修 `verify_seal.mjs` 两处误导输出**：① 期望值原硬编码「期望 102」（pilot #2 时期旧值，每次都显示过时数字）→ 改为自洽校验（meta.seeds 与 stats.seeds 必须一致）；② 「分片指纹校验」原为对常量 `'ok'` 取哈希（恒真的假校验）→ 改为对种子数组整体取 sha256[:8]。
+   - **下一步**：① （已完成）pilot #4 种子扩充；② （已完成）难度阈值回标；③ （已完成）MQM 罚分难度精修 + SEEDS 暴露；④ （已完成）style/pe-exam token 收敛；⑤ （已完成）封口脚本固化 + 离线备份；⑥ （已完成）pilot #5 种子扩充。
+   - **唯余可选方向**：① 第7届初赛 REF 质量抽查 + `15/16` 切分重新对齐 + `build_corpus.mjs` 自动体检（pilot #5 暴露的数据问题）；② 把第7届初赛做成**第一本完整金标准卷**（还剩 21–65 区间约 28 段未覆盖）；③ 或按用户新意另行排期。
 10. 暗色模式（挂账）：需先把颜色完全收敛到 token。
 
 ---
