@@ -151,9 +151,14 @@ function parseTaskLink(h) {
       seg.mt.includes(span) 匹配（与标注页计分同构；task.pair 是翻译方向、不可用于匹配）。
       严重度乘数采用 MQM Council 标准：Minor=1 / Major=5 / Critical=25；罚分按 MT 词数归一得密度；
       refined = max(terAvg, mqmScore) —— 难度取「编辑努力」与「已知错误严重度」的较大值，
-      含 Major/Critical 种子的卷会被正确上探到挑战档；无种子卷仍纯 TER，分布不变。 */
+      含 Major/Critical 种子的卷会被正确上探到挑战档；无种子卷仍纯 TER，分布不变。
+   —— 2026-10-24 修正：M0「无需修改」的干净句 seeded 时 sev 记为 '—'，原先被 `_mqmSevW[s.sev] || 1`
+      兜底当成 Minor 计了罚分（全库 10 条）。权重表补 '—':0，且改用 in 判定避免 0 被 || 吃掉。
+      ⚠ 分档公式本身（refined = max(terAvg, mqmScore)）**暂冻结不改**：实测 mqmScore 中位 0.0208
+      而 terAvg 中位 0.813，20 卷中 mqmScore > terAvg 的卷数为 0，MQM 侧对分档零贡献；
+      且 raw 与「该卷被标注了多少」强相关，跨卷不可比。详见 reports/难度分档_Major影响_2026-10-24.md。*/
 const _diffCache = new Map();
-const _mqmSevW = { Minor: 1, Major: 5, Critical: 25 };
+const _mqmSevW = { Minor: 1, Major: 5, Critical: 25, '—': 0 };   /* '—'＝M0 无需修改，不计罚分 */
 const _mqmCache = new Map();
 function mqmOf(task) {
   const seeds = window.SEEDS || [];
@@ -165,7 +170,7 @@ function mqmOf(task) {
     if (!mt) continue;
     for (const s of seeds) {
       if (mt.indexOf(s.span) >= 0) {
-        const w = _mqmSevW[s.sev] || 1;
+        const w = s.sev in _mqmSevW ? _mqmSevW[s.sev] : 1;   /* M0('—') 计 0，勿用 || （会吃掉 0） */
         raw += w; if (w > maxSev) maxSev = w; count++;
       }
     }
