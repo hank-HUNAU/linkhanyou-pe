@@ -13,8 +13,9 @@
  *      没登录拿不到内容，与本站的安全边界不冲突。
  * 只在 http/https 下生效；本地双击打开（file://）时不会注册。
  * ============================================================ */
-/* 改动站点文件后把版本号 +1：新 SW 激活时会删掉旧缓存，缓存不会越积越旧 */
-const CACHE = 'mtpe-shell-v32';
+/* 改动站点文件后把版本号 +1：新 SW 激活时会删掉旧缓存，缓存不会越积越旧
+   v33（2026-10-27）：首页移除 nav.js（P0-1），CORE 同步去掉 ./nav.js */
+const CACHE = 'mtpe-shell-v33';
 
 /* 轻外壳：不含 secure.js（按需下载，由 stale-while-revalidate 自动缓存） */
 const CORE = [
@@ -27,7 +28,6 @@ const CORE = [
   './style.css',
   './annotate.css',
   './pe-exam.css',
-  './nav.js',
   './pwa.js',
   './home.js',
   './app.js',
