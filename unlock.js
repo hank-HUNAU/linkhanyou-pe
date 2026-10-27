@@ -143,6 +143,33 @@
     try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; }
   };
 
+  /* 姓名/学号保存+认领（2026-10-27 收口）：设置页与统计页此前各写了一份
+     几乎相同的逻辑，现统一到这里——改认领口径只改这一处。 */
+  window.mtpeSaveNick = function (name) {
+    const v = String(name == null ? '' : name).trim();
+    if (!v) return false;
+    try {
+      localStorage.setItem('mtpe_nickname', JSON.stringify(v));
+      localStorage.setItem('mtpe_nickname_set', '1');
+    } catch (e) { return false; }
+    if (window.mtpeClaimRecords) window.mtpeClaimRecords(v);
+    return true;
+  };
+
+  /* 「安装到桌面」按钮显隐（2026-10-27 收口）：首页与设置页此前各绑了一份
+     syncInstall，统一到这里。render() 重建按钮后调 mtpeInstallSync 重同步；
+     mtpeBindInstall 负责事件绑定 + 初次同步。 */
+  window.mtpeInstallSync = function (btnId) {
+    const b = document.getElementById(btnId);
+    if (b) b.classList.toggle('hidden', !(window.mtpeCanInstall && window.mtpeCanInstall()));
+  };
+  window.mtpeBindInstall = function (btnId) {
+    ['mtpe-install-changed', 'mtpe-installed', 'mtpe-sw-ready'].forEach(function (ev) {
+      document.addEventListener(ev, function () { window.mtpeInstallSync(btnId); });
+    });
+    window.mtpeInstallSync(btnId);
+  };
+
   /* ---- 解密后的分片（只在内存里，不落盘） ---- */
   const sliceCache = {};
 

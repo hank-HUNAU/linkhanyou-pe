@@ -21,6 +21,9 @@
   /* 历史记录里两类"交卷"的口径：②改 的练习（限时 / 自由 / 演示）与 ③测 的仿真训练。
      2026-10-12 起 ③测 写 mode='exam'；旧记录用 profile 字段反推（②改 的记录不带 profile）。
      这样「改」的统计包含限时练习（此前被 mode='competition' 误排除了），也不会把测评分混进来。 */
+  /* ⚠ 口径同步点：isExamRecord 与 report.js 的 rpIsExam（window.mtpeIsExamRecord）
+     是同一口径的两份实现——首页刻意不加载 report.js 保轻量，故本地复制。
+     改"练习 vs 测评"的判定口径时，两处必须同改，否则首页与统计页数字打架。 */
   const isExamRecord = (h) => !!h && (h.mode === 'exam' || h.profile !== undefined);
 
   /* 未完成的练习草稿（键名 mtpe_draft_<taskId>）
@@ -148,7 +151,7 @@
           <a href="#" id="mtpe-install" class="hidden" onclick="mtpeInstall();return false" title="装成桌面应用，断网也能用">⬇ 安装到桌面</a>
           ${nx.setupName
             ? '<a href="settings.html" title="共享账号按姓名归属成绩，请先报到">未报到 · 去填写</a>'
-            : '<span class="wb-acc" title="按姓名归属成绩">' + esc(s.nickname || '') + '</span>'}
+            : '<span class="wb-acc" title="按姓名归属成绩">' + esc(curNick()) + '</span>'}
           <a href="#" onclick="mtpeLogout();return false">退出</a>
         </div>
         语料加密封存 · 离线可用
@@ -194,13 +197,8 @@
   </div>`;
   }
 
-  /* 侧栏「安装到桌面」显隐：仅在浏览器确认可安装时出现 */
-  function syncInstall() {
-    const b = document.getElementById('mtpe-install');
-    if (b) b.classList.toggle('hidden', !(window.mtpeCanInstall && window.mtpeCanInstall()));
-  }
-  document.addEventListener('mtpe-install-changed', syncInstall);
-  document.addEventListener('mtpe-installed', syncInstall);
+  /* 侧栏「安装到桌面」显隐：绑定逻辑统一在 unlock.js 的 mtpeBindInstall */
+  window.mtpeBindInstall('mtpe-install');
 
   render();
 })();

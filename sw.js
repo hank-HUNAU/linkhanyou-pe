@@ -14,8 +14,9 @@
  * 只在 http/https 下生效；本地双击打开（file://）时不会注册。
  * ============================================================ */
 /* 改动站点文件后把版本号 +1：新 SW 激活时会删掉旧缓存，缓存不会越积越旧
-   v33（2026-10-27）：首页移除 nav.js（P0-1），CORE 同步去掉 ./nav.js */
-const CACHE = 'mtpe-shell-v33';
+   v33（2026-10-27）：首页移除 nav.js（P0-1），CORE 同步去掉 ./nav.js
+   v34（2026-10-27）：unlock.js 收口 mtpeSaveNick / mtpeBindInstall，home/settings/stats 改调用 */
+const CACHE = 'mtpe-shell-v34';
 
 /* 轻外壳：不含 secure.js（按需下载，由 stale-while-revalidate 自动缓存） */
 const CORE = [

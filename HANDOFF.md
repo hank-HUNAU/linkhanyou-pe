@@ -244,6 +244,7 @@ node verify_live.mjs             # 线上文件端到端：登录 → 分片按�
    - **P0-3（SWR）砍掉不实施**：收益仅二次访问省 1 RTT，测试矩阵大；现网网络优先"慢但绝对正确"。
    - **sw.js CACHE v32→v33**。冒烟验证：登录态首页截图改造前后 MD5 逐像素一致（`reports/性能优化截图/`），外部 CSS 延迟 2s 的首帧与定稿目检零差异（零 FOUC）。
    - ⚠️ 遗留：`verify_deploy_sync.mjs` / `verify_live.mjs` 从未持久化到本项目（2026-10-13 已挂账），本次部署以手工 `git hash-object` ↔ 远端 blob SHA 比对替代。
+12. **三页共享逻辑收口（2026-10-27，sw v34）**：首页/统计/设置三页经排查设计层无功能重合（摘要+导流 / 全量分析 / 账号帮助三分），但代码层 3 处重复——①姓名保存+认领双实现 → 收口为 unlock.js `mtpeSaveNick`（settings.js/stats.js 改调用）；②安装按钮显隐双实现 → 收口为 `mtpeInstallSync`（单次同步）+ `mtpeBindInstall`（事件绑定）；③`isExamRecord` 双实现保留（首页刻意不加载 report.js 保轻量），在 home.js 加「口径同步点」联动注释。顺带修一个隐性 bug：首页侧栏 `.wb-acc` 原引用不存在的 `s.nickname` 永远显示空 → 改 `curNick()`，已报到学生姓名现在正常显示。改动文件 unlock/home/settings/stats/sw 五个，全流程冒烟（真实登录→设置改名→回首页看侧栏）通过。
 
 ---
 

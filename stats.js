@@ -56,9 +56,8 @@
       window.mtpeStatsSaveNick = function () {
         const v = (document.getElementById('nick-ask-input').value || '').trim();
         if (!v) { toast('请填写姓名或学号后再保存'); return; }
-        store.set('nickname', v); store.set('nickname_set', 1);
-        /* 认领：把登录后带账号名戳的记录改标成刚填的姓名，否则按昵称过滤后看不见 */
-        if (window.mtpeClaimRecords) window.mtpeClaimRecords(v);
+        /* 保存+认领统一走 unlock.js 的 mtpeSaveNick（2026-10-27 收口） */
+        window.mtpeSaveNick(v);
         m.style.display = 'none';
         if (typeof cb === 'function') cb();
       };

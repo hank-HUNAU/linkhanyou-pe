@@ -64,28 +64,20 @@
    可用「我的统计」导出／导入作业 JSON 恢复。
  </p>
  </div>`;
-    syncInstall();
+    window.mtpeInstallSync('mtpe-install-btn');
   }
 
-  function syncInstall() {
-    const btn = document.getElementById('mtpe-install-btn');
-    if (btn) btn.classList.toggle('hidden', !(window.mtpeCanInstall && window.mtpeCanInstall()));
-  }
-
-  /* 改姓名：与首页/统计页同一套"认领"逻辑（账号名戳 → 新姓名） */
+  /* 改姓名：保存+认领统一走 unlock.js 的 mtpeSaveNick（2026-10-27 收口） */
   window.mtpeSettingsSaveNick = function () {
     const el = document.getElementById('set-nick');
     const v = ((el && el.value) || '').trim();
     if (!v) { toast('请填写姓名或学号后再保存'); return; }
-    store.set('nickname', v); store.set('nickname_set', 1);
-    if (window.mtpeClaimRecords) window.mtpeClaimRecords(v);
+    window.mtpeSaveNick(v);
     toast('已保存：' + v);
     render();
   };
 
-  document.addEventListener('mtpe-install-changed', syncInstall);
-  document.addEventListener('mtpe-installed', syncInstall);
-  document.addEventListener('mtpe-sw-ready', syncInstall);
+  window.mtpeBindInstall('mtpe-install-btn');
 
   render();
 })();
