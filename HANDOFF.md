@@ -245,6 +245,7 @@ node verify_live.mjs             # 线上文件端到端：登录 → 分片按�
    - **sw.js CACHE v32→v33**。冒烟验证：登录态首页截图改造前后 MD5 逐像素一致（`reports/性能优化截图/`），外部 CSS 延迟 2s 的首帧与定稿目检零差异（零 FOUC）。
    - ⚠️ 遗留：`verify_deploy_sync.mjs` / `verify_live.mjs` 从未持久化到本项目（2026-10-13 已挂账），本次部署以手工 `git hash-object` ↔ 远端 blob SHA 比对替代。
 12. **三页共享逻辑收口（2026-10-27，sw v34）**：首页/统计/设置三页经排查设计层无功能重合（摘要+导流 / 全量分析 / 账号帮助三分），但代码层 3 处重复——①姓名保存+认领双实现 → 收口为 unlock.js `mtpeSaveNick`（settings.js/stats.js 改调用）；②安装按钮显隐双实现 → 收口为 `mtpeInstallSync`（单次同步）+ `mtpeBindInstall`（事件绑定）；③`isExamRecord` 双实现保留（首页刻意不加载 report.js 保轻量），在 home.js 加「口径同步点」联动注释。顺带修一个隐性 bug：首页侧栏 `.wb-acc` 原引用不存在的 `s.nickname` 永远显示空 → 改 `curNick()`，已报到学生姓名现在正常显示。改动文件 unlock/home/settings/stats/sw 五个，全流程冒烟（真实登录→设置改名→回首页看侧栏）通过。
+13. **上线评估 + 云同步断线修复（2026-10-28，sw v35）**：出具 `reports/上线评估_2026-10-28.md`（十维评分：教学 4/5 有条件达线、机构商用 3/5、公开商用 2/5），实锤 P0-1 云同步断线 11 天（证据链与修复六步见报告 §1 与本文件第九节第 0 条）。本日另完成：三页收口见第 12 条；`verify_deploy_sync.mjs` 重建并持久化。
 
 ---
 
@@ -252,15 +253,20 @@ node verify_live.mjs             # 线上文件端到端：登录 → 分片按�
 
 **P0 —— 已解决（2026-10-17，提交 c8dc15f1）**
 
-0. **Supabase 前端接入 —— 已投产（2026-10-17 20:25 端到端验证通过）**：
-   - `supabase.js`（UMD 本地化 218KB，进 SW 预缓存）+ `supabase-sync.js`：匿名登录 →
-     students 身份登记；①找 → annotation_sessions + wrongbook；②改/③测 → attempts；
-     client_id 查重防重传；失败入队 `mtpe_cloud_queue`（重试 ≤5 次后丢弃）。
-   - 项目 `mtpe-trainer`（fdvypkybxhkdpvfepskf），5 表 RLS 全开。**匿名登录已开启
-     （2026-10-17 20:25），端到端验证通过**：浏览器登录 → students 落行（account/
-     nickname/uid 吻合）。学生作答自动上云，无需任何额外操作。
-   - 未开启/断网/报错一律静默降级纯本地（`window.mtpeCloudState()` 可查状态）。
-   - index.html 引用带 `?v=17a` cache-busting；改 supabase-sync.js 后需递增。
+0. **Supabase 前端接入 —— 曾投产、10-17 断线、10-28 恢复（sw v35）**：
+   - ⚠️ **断线事故（2026-10-28 上线评估发现）**：10-17 `7a9fe7b8` 四页接线完成后，同日 `bf878ead`
+     部署把过期本地副本推上远端，**index/annotate/practice/pe-exam 四页的 supabase 引用与
+     annotate/pe-exam/app 三处交卷调用点全部丢失**——静默断线 11 天（10-17 ~ 10-28），期间学生
+     作答只落本机。根因：旧副本覆盖式半部署 + 回归脚本未持久化。
+   - **10-28 修复**：六页（原四页 + settings/stats，供报到身份登记）恢复接线（supabase 脚本改
+     **defer**，218KB 不再阻塞渲染）；三处交卷调用恢复；`mtpeSaveNick` 内挂云端身份登记；
+     supabase.js/supabase-sync.js 进 SW CORE（兑现离线承诺），CACHE v32→…→**v35**。
+   - **护栏**：`verify_deploy_sync.mjs` 重建并持久化到本项目（15 项接线断言 + 远端 SHA 比对），
+     **每次部署后必须跑**。
+   - 旧数据补传：10-17 ~ 10-28 的学生作答在各自浏览器 localStorage / 导出 JSON 里，未自动上云
+     （sync 是事件驱动附加写），如需回收另写补传脚本。
+   - 项目 `mtpe-trainer`（fdvypkybxhkdpvfepskf），5 表 RLS 全开，匿名登录已开启。
+     未开启/断网/报错一律静默降级纯本地（`window.mtpeCloudState()` 可查状态）。
 
 0b. **在线教师看板（RLS 教师口令门）—— 已投产（2026-10-17，提交 55e0aa95）**：
    - `teacher.html` 改为「教师口令」登录并**正式上线**（此前线上是占位页）：

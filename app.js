@@ -735,6 +735,7 @@ function submitSession() {
  due: S.due || '',
  overdue: !!(S.due && Date.parse(S.due) < Date.now())
  };
+ if (window.mtpeCloudAttempt) window.mtpeCloudAttempt(record);   // 云同步（失败静默入队，不影响本地；2026-10-28 修复断线回归，恢复自 7a9fe7b8）
 
  stopSession(true);
  if (saveHistory([record].concat(historyRaw()).slice(0, 200))) {

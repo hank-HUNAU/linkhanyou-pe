@@ -29,6 +29,8 @@
 <!-- secure.js（密钥环 + meta 片，约 10KB）按需加载，见 unlock.js 的 sealReady()；
      本页要用的 s-tasks.js 由 corpus.js 触发按需解密 -->
 <script src="unlock.js"></script>
+<script src="supabase.js" defer></script>
+<script src="supabase-sync.js?v=17b" defer></script>
 <script src="help.js"></script>
 
 <main id="app"><!-- 语料分片解密期间先显示骨架，页面脚本就绪后整块替换 -->

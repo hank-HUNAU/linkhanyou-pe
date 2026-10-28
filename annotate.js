@@ -565,6 +565,7 @@ function submitAnn() {
  const f1 = (precision + recall) ? Math.round(2 * precision * recall / (precision + recall) * 10) / 10 : 0;
 
  const result = { date: new Date().toLocaleString('zh-CN', { hour12: false }), TP, FP, FN, tagWrong, sevWrong, precision, recall, f1, perPair, pairsN: A.paper.length, tagged: Object.values(A.anns).reduce((s, a) => s + a.length, 0), wrongAdded: wrongAdded.length, wrongTotal, nick: curNick() };
+ if (window.mtpeCloudAnnotation) window.mtpeCloudAnnotation(result, wrongAdded);   // 云同步：统计 + 错题（失败静默入队；2026-10-28 修复断线回归，恢复自 7a9fe7b8）
  /* 结果与统计都只合并"本人的"再写回，其他用户留在本机的条目原样保留 */
  const myResults = (store.get('results', []) || []).filter(mineBy);
  myResults.unshift(result); store.set('results', myResults.slice(0, 50));

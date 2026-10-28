@@ -218,6 +218,8 @@ body.answering .wb-app { display: block !important; }
      · unlock.js 保持同步 —— 定义 mtpeBoot 供下方内联脚本调用，且需尽早判登录态。 -->
 <script src="pwa.js" defer></script>
 <script src="unlock.js"></script>
+<script src="supabase.js" defer></script>
+<script src="supabase-sync.js?v=17b" defer></script>
 <script src="help.js" defer></script>
 <!-- secure.js（密钥环 + 元数据片，约 10KB）不在这里加载：已登录时用不到它，
      只有输入口令时 unlock.js 才按需拉取，页面空下来后会自动预取。

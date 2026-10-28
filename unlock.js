@@ -153,6 +153,9 @@
       localStorage.setItem('mtpe_nickname_set', '1');
     } catch (e) { return false; }
     if (window.mtpeClaimRecords) window.mtpeClaimRecords(v);
+    /* 云端身份登记（students 表，upsert 幂等）：supabase-sync 已在登录后各页加载，
+       未加载/断网时无 window.mtpeCloudIdentity，静默跳过。 */
+    if (window.mtpeCloudIdentity) window.mtpeCloudIdentity(localStorage.getItem('mtpe_account') || '', v);
     return true;
   };
 
