@@ -161,17 +161,17 @@ textarea.big:focus { outline: none; border-color: var(--primary); }
 }
 .field input:focus, .field select:focus { outline: none; border-color: var(--primary); }
 
-/* 弹窗与 Toast：见 ui.css（.mask / .modal-mask / .modal / #toast 三页同一套） */
+/* 弹窗与 Toast：见 ui.css（.mask / .modal-mask / .modal / #toast 三页同一套）
+   （2026-11-02 快赢批：此处旧 .toast 块已删——ui.css 版是正本，且含 :empty
+   防泄漏修复；双定义曾让底部/内距参数漂移。@keyframes fadeIn 仅它使用，一并删。） */
 .dur-picker { display: flex; gap: 8px; flex-wrap: wrap; }
 .dur-btn { flex: 1; text-align: center; padding: 9px 6px; border: 1.5px solid var(--border); border-radius: var(--r-md); cursor: pointer; font-size: var(--fs-sm); user-select: none; }
 .dur-btn.sel { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 700; }
 
-.toast {
-  position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-  background: #1f2430; color: #fff; padding: 10px 20px; border-radius: var(--r-md); font-size: var(--fs-sm);
-  z-index: 200; box-shadow: 0 8px 24px rgba(0,0,0,.25); animation: fadeIn .2s;
-}
-@keyframes fadeIn { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+/* 步骤徽章色归位（2026-11-02 快赢批）：.wb-mini 曾靠回退色 #0aa574/#4f46e5 兜底，
+   与 token 体系的 --step1(#0f766e)/--step3(#1a5fd0) 形成"同一个①找两个绿"。
+   现把 --s1/--s3 指到正本 token；若 ui.css 未加载则仍回退到原色，不会裸奔。 */
+:root { --s1: var(--step1); --s3: var(--step3); }
 
 .page-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
 .page-title h2 { font-size: var(--fs-lg); }
@@ -290,7 +290,12 @@ body.answering .wb-app { display: block !important; }
   .wb-nav { display: flex; padding: 0; }
   .wb-nav a { margin: 0; padding: 8px 12px; white-space: nowrap; }
   .wb-nav .tag { display: none; }
-  .wb-foot { display: none; }
+  /* ≤900 侧栏脚部与 nav.js 内联版保持一致（2026-11-02 快赢批）：保留帮助/退出 */
+  .wb-foot { display: flex; align-items: center; margin-left: auto; border: none; padding: 0 2px; flex-shrink: 0; }
+  .wb-foot-note { display: none; }
+  .wb-foot-acts { display: flex; flex-direction: row; gap: 2px; margin-bottom: 0; }
+  .wb-foot-acts a { padding: 8px 8px; white-space: nowrap; }
+  .wb-foot-acts .wb-acc { display: none; }
   .wb-main { padding: 18px 14px 40px; }
   .wb-grid3 { grid-template-columns: 1fr; }
 }

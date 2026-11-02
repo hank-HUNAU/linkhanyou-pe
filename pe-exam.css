@@ -103,7 +103,7 @@
 /* ---- v3：真实截图校准（第八届大赛） ---- */
 /* 整页红框：改用 fixed 覆盖层画完整四边。旧写法用 body border，上边线会被吸顶顶栏压掉
    （还显式写了 border-top:none），看起来像没画完。 */
-body.exam-on::after{content:'';position:fixed;inset:0;border:3px solid #e5484d;pointer-events:none;z-index:90}
+body.exam-on::after{content:'';position:fixed;inset:0;border:3px solid var(--red);pointer-events:none;z-index:90}
 .ref-note{max-width:1400px;margin:6px auto 0;padding:0 14px;font-size: var(--fs-2xs);color:var(--mut)}
 
 /* ---- Agent 同榜 ---- */
@@ -156,8 +156,8 @@ body.exam-on::after{content:'';position:fixed;inset:0;border:3px solid #e5484d;p
 /* 顶栏必须吸顶：倒计时与"切屏 N/8"都在这里，滚走就看不见了 */
 .yc-top{position:sticky;top:var(--mtpe-nav-h, 57px)}
 /* 剩余时间放顶栏右端（按官方赛场实拍：右上角「剩余时间 01:27:56」） */
-.yc-top .remain{position:static;transform:none;color:#c0392b;font-weight:800;font-variant-numeric:tabular-nums}
-.yc-top .remain.warn{color:#c0392b}
+.yc-top .remain{position:static;transform:none;color:var(--red);font-weight:800;font-variant-numeric:tabular-nums}
+.yc-top .remain.warn{color:var(--red)}
 .seg-table tr.cur td{box-shadow:inset 0 0 0 1px var(--yc)}
 .seg-table tr.cur td:first-child{box-shadow:inset 1px 0 0 0 var(--yc),inset 0 1px 0 0 var(--yc),inset 0 -1px 0 0 var(--yc)}
 .seg-table tr.cur td:last-child{box-shadow:inset -1px 0 0 0 var(--yc),inset 0 1px 0 0 var(--yc),inset 0 -1px 0 0 var(--yc)}

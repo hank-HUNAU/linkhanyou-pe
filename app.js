@@ -479,6 +479,7 @@ function onBeforeUnload(e) { if (S && !S.done) { e.preventDefault(); e.returnVal
 
 function stopSession(clearDraft) {
  if (S && S.timer) clearInterval(S.timer);
+ if (S && S.draftSaveTm) clearTimeout(S.draftSaveTm); /* 挂起的草稿防抖一并取消：S 已作废，回调里再读 S.answers 会炸 */
  if (S && S.mode === 'competition') {
  document.removeEventListener('visibilitychange', onVisChange);
  window.removeEventListener('beforeunload', onBeforeUnload);
@@ -524,6 +525,7 @@ function onAnswerInput(i, val) {
  if (S.mode !== 'demo') {
  clearTimeout(S.draftSaveTm);
  S.draftSaveTm = setTimeout(() => {
+ if (!S || S.done) return; /* 竞态守卫：600ms 内交卷/离开，S 已作废就别再写草稿 */
  const done = S.answers.filter((a, k) => a && a.trim() && a.trim() !== (S.task.segs[k].mt || '').trim()).length;
  const rec = { answers: S.answers, done, savedAt: now(), mode: S.mode, nick: getNick() || '匿名' };
  if (S.mode === 'competition') {

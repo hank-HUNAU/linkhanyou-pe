@@ -16,8 +16,10 @@
 /* 改动站点文件后把版本号 +1：新 SW 激活时会删掉旧缓存，缓存不会越积越旧
    v33（2026-10-27）：首页移除 nav.js（P0-1），CORE 同步去掉 ./nav.js
    v34（2026-10-27）：unlock.js 收口 mtpeSaveNick / mtpeBindInstall，home/settings/stats 改调用
-   v35（2026-10-28）：修复云同步断线回归——CORE 补回 supabase.js / supabase-sync.js */
-const CACHE = 'mtpe-shell-v35';
+   v35（2026-10-28）：修复云同步断线回归——CORE 补回 supabase.js / supabase-sync.js
+   v36（2026-11-02）：UI 评估快赢批 8 项——草稿竞态守卫/--text-1/语义红归 var(--red)/
+     删旧 .toast/徽章色归位 --step1--step3/≤900 侧栏保留帮助+退出/登录显示密码 */
+const CACHE = 'mtpe-shell-v36';
 
 /* 轻外壳：不含 secure.js（按需下载，由 stale-while-revalidate 自动缓存） */
 const CORE = [

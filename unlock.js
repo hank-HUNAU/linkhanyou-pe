@@ -343,8 +343,10 @@
     d.innerHTML = '<div class="mtpe-login-card">'
       + '<div class="mtpe-login-brand"><span class="lg">译</span>译后编辑实训平台</div>'
       + '<div class="mtpe-login-sub">请使用本地内置账号登录后使用（账号由课程负责人发放）</div>'
-      + '<label>账号</label><input id="mtpe-acc" autocomplete="username">'
-      + '<label>密码</label><input id="mtpe-pw" type="password" autocomplete="current-password" placeholder="密码">'
+      + '<label>账号</label><input id="mtpe-acc" autocomplete="username" placeholder="教师发放的账号，如 A01">'
+      + '<label>密码</label><div style="position:relative">'
+      + '<input id="mtpe-pw" type="password" autocomplete="current-password" placeholder="密码" style="padding-right:52px">'
+      + '<button type="button" id="mtpe-pw-eye" aria-label="显示密码" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:none;cursor:pointer;font-size:12.5px;color:#86868b;padding:4px 6px;border-radius:6px">显示</button></div>'
       + '<div id="mtpe-login-err" class="mtpe-login-err"></div>'
       + '<button id="mtpe-login-btn" class="mtpe-login-btn" onclick="mtpeUnlock()">登录</button>'
       + '</div>';
@@ -352,6 +354,15 @@
     const enter = (e) => { if (e.key === 'Enter') window.mtpeUnlock(); };
     ['mtpe-acc', 'mtpe-pw'].forEach(function (x) { const el = document.getElementById(x); if (el) el.addEventListener('keydown', enter); });
     const a = document.getElementById('mtpe-acc'); if (a) a.focus();
+    /* 显示/隐藏密码（2026-11-02 快赢批）：机房手抄口令常抄错，给个明文核对 */
+    const eye = document.getElementById('mtpe-pw-eye');
+    if (eye) eye.addEventListener('click', function () {
+      const pw = document.getElementById('mtpe-pw');
+      const show = pw.type === 'password';
+      pw.type = show ? 'text' : 'password';
+      eye.textContent = show ? '隐藏' : '显示';
+      eye.setAttribute('aria-label', show ? '隐藏密码' : '显示密码');
+    });
   }
 
   if (NO_GATE.indexOf(page()) < 0) {

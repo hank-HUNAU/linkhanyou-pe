@@ -186,6 +186,19 @@ node verify_live.mjs             # 线上文件端到端：登录 → 分片按�
 4. **未做的事**：尚未取得权利人的书面授权。若要进一步降低风险，下一步是**向赛事组委会申请
    教学用途许可**——这是唯一能实质改变风险等级的动作。
 5. 站点是**教学用途的自建软件**，不是任何赛事的官方平台；不使用任何第三方标识与 Logo。
+6. **⚠️ 口令泄露处置（2026-10-29 登记）**：教师口令与 `hunau-pe-01/02` 两个学生共享口令
+   曾被完整印入 WorkBuddy 聊天（其云端会话存储视为不可信副本）＝**视为已泄露**。
+   当前 `mtpe-trainer` 项目处于**休眠**（免费档 2 活跃项目限额，用户决定暂不恢复）——
+   休眠期口令是"死钥"不可用，但**恢复项目的当天必须先轮换再开放使用**：
+   ① Dashboard 或 MCP 打开 SQL：`SELECT * FROM teacher_gate LIMIT 1;`（先认列名）
+   ② 本地生成新口令（`node -e "console.log(require('crypto').randomBytes(24).toString('base64url'))"`），
+      **写进本行下方，不经过任何聊天**
+      - 新教师口令：＿＿＿＿＿＿＿＿（恢复日填写）
+   ③ `UPDATE teacher_gate SET <口令列> = '<新口令>';`
+   ④ 同时轮换学生共享口令：重新运行 `seal_content.mjs` 加封（口令走 `MTPE_SEAL_PW` 环境变量，
+      不进命令行历史），更新 secure.js 并部署；verify_seal.mjs 回归
+   ⑤ teacher.html 会缓存旧口令在 localStorage——告知教师重新输入新口令
+   ⑥ 本行上方"教师口令/学生账号"两处旧值作废后删除或划线标注
 
 ---
 
@@ -246,6 +259,7 @@ node verify_live.mjs             # 线上文件端到端：登录 → 分片按�
    - ⚠️ 遗留：`verify_deploy_sync.mjs` / `verify_live.mjs` 从未持久化到本项目（2026-10-13 已挂账），本次部署以手工 `git hash-object` ↔ 远端 blob SHA 比对替代。
 12. **三页共享逻辑收口（2026-10-27，sw v34）**：首页/统计/设置三页经排查设计层无功能重合（摘要+导流 / 全量分析 / 账号帮助三分），但代码层 3 处重复——①姓名保存+认领双实现 → 收口为 unlock.js `mtpeSaveNick`（settings.js/stats.js 改调用）；②安装按钮显隐双实现 → 收口为 `mtpeInstallSync`（单次同步）+ `mtpeBindInstall`（事件绑定）；③`isExamRecord` 双实现保留（首页刻意不加载 report.js 保轻量），在 home.js 加「口径同步点」联动注释。顺带修一个隐性 bug：首页侧栏 `.wb-acc` 原引用不存在的 `s.nickname` 永远显示空 → 改 `curNick()`，已报到学生姓名现在正常显示。改动文件 unlock/home/settings/stats/sw 五个，全流程冒烟（真实登录→设置改名→回首页看侧栏）通过。
 13. **上线评估 + 云同步断线修复（2026-10-28，sw v35）**：出具 `reports/上线评估_2026-10-28.md`（十维评分：教学 4/5 有条件达线、机构商用 3/5、公开商用 2/5），实锤 P0-1 云同步断线 11 天（证据链与修复六步见报告 §1 与本文件第九节第 0 条）。本日另完成：三页收口见第 12 条；`verify_deploy_sync.mjs` 重建并持久化。
+14. **UI 全栈团评估 + 快赢批 8 项（2026-11-02，sw v36）**：`reports/网站评估_UI全栈团_2026-11-02.md`（总评 7.6/10；跨组根因「一个真理多份拷贝」）。快赢批已全部落地：①根目录 **40 个** `.bak*`/`secure.js.new` 归档 `_archive/`（评审估 20 个是低估）②app.js 草稿防抖回调加 `if(!S||S.done)return` 竞态守卫 + stopSession 清 `draftSaveTm` ③ui.css:155 死变量 `--text-1`→`var(--text-2)` ④pe-exam.css 三处硬编码红（红框 #e5484d / 倒计时 #c0392b ×2）→ `var(--red)` ⑤删 style.css 旧 `.toast` 块与仅它使用的 `@keyframes fadeIn`（正本在 ui.css，含 :empty 修复）⑥style.css 加 `:root{--s1:var(--step1);--s3:var(--step3)}`（原回退色 #0aa574/#4f46e5 与 token #0f766e/#1a5fd0 双轨）⑦≤900 媒体查询不再整块藏 `.wb-foot`：手机侧栏保留「帮助/退出」入口，账号名与备案文案隐藏（nav.js 内联版 + style.css 副本两处同步，备案文案包 `.wb-foot-note` 以便隐藏）⑧登录框账号加示例 placeholder + 密码「显示/隐藏」切换（机房核对口令用，文本按钮无障碍标注 aria-label）。第二批（划选触屏兜底/FILES 自动生成/报到三合一/shared.js 收口）与第三批待排期。
 
 ---
 

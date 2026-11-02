@@ -89,7 +89,7 @@
    +       account
    +       '<a href="#" onclick="mtpeLogout();return false" title="机房共用电脑用完即退，防止记录串号">退出</a>'
    +     '</div>'
-   +     '语料加密封存 · 离线可用'
+   +     '<span class="wb-foot-note">语料加密封存 · 离线可用</span>'
    +   '</div>'
    + '</aside>'
    + '<div class="wb-content"></div>'
@@ -119,7 +119,10 @@
    + 'body.answering .wb-side{display:none!important}'
    + 'body.answering .wb-app{display:block!important}'
    + '.hidden{display:none!important}'
-   + '@media (max-width:900px){.wb-app{display:block}.wb-side{position:sticky;top:0;z-index:60;height:auto;width:100%;flex-direction:row;align-items:center;padding:8px 10px;gap:8px;overflow-x:auto}.wb-logo{border:none;padding:0 10px;display:flex;align-items:center;gap:8px;flex-shrink:0}.wb-logo h1{font-size:14px;white-space:nowrap}.wb-logo p{display:none}.wb-nav{display:flex;padding:0}.wb-nav a{margin:0;padding:8px 12px;white-space:nowrap}.wb-nav .tag{display:none}.wb-foot{display:none}}'
+   + '@media (max-width:900px){.wb-app{display:block}.wb-side{position:sticky;top:0;z-index:60;height:auto;width:100%;flex-direction:row;align-items:center;padding:8px 10px;gap:8px;overflow-x:auto}.wb-logo{border:none;padding:0 10px;display:flex;align-items:center;gap:8px;flex-shrink:0}.wb-logo h1{font-size:14px;white-space:nowrap}.wb-logo p{display:none}.wb-nav{display:flex;padding:0}.wb-nav a{margin:0;padding:8px 12px;white-space:nowrap}.wb-nav .tag{display:none}'
+   /* ≤900 不再整块藏侧栏脚部（2026-11-02 快赢批）：手机端保留「帮助/退出」入口——
+      机房退出防串号在手机上同样需要。改为行内布局，账号名与备案文案隐藏。 */
+   + '.wb-foot{display:flex;align-items:center;margin-left:auto;border:none;padding:0 2px;flex-shrink:0}.wb-foot-note{display:none}.wb-foot-acts{display:flex;flex-direction:row;gap:2px;margin-bottom:0}.wb-foot-acts a{padding:8px 8px;white-space:nowrap}.wb-foot-acts .wb-acc{display:none}}'
    + '</style>';
  }
 
