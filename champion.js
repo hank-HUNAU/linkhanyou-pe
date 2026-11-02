@@ -206,7 +206,7 @@
       + '<h3>' + esc(t.name) + '</h3>'
       + '<p class="c-sub">' + esc(t.sub) + '</p>'
       + '<p class="c-desc">' + esc(t.desc) + '</p>'
-      + '<span class="c-go">开始对标 →</span>'
+      + '<span class="c-go">开始对标 <svg class="ic" viewBox="0 0 20 20" aria-hidden="true">' + (window.mtpeNavIcon ? mtpeNavIcon('arrow') : '') + '</svg></span>'
       + '</a>').join('');
 
     app.innerHTML =

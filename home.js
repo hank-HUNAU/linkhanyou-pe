@@ -131,6 +131,8 @@
     const today = new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' }) + ' 星期' + wk;
     /* 侧栏图标正本在 shared.js mtpeNavIcon（index 已同步接线）；缺失时优雅降级为纯文字 */
     const ic = (n) => { const p = window.mtpeNavIcon ? window.mtpeNavIcon(n) : ''; return p ? '<svg viewBox="0 0 20 20" aria-hidden="true">' + p + '</svg>' : ''; };
+    /* 行内小图标（箭头/帮助/下载）：12px 跟随文字色，样式见 ui.css a svg.ic */
+    const ix = (n) => { const p = window.mtpeNavIcon ? window.mtpeNavIcon(n) : ''; return p ? '<svg class="ic" viewBox="0 0 20 20" aria-hidden="true">' + p + '</svg>' : ''; };
 
     /* 工作台铺满全屏：豁免元素级 main 限宽（style.css 的 main{max-width:1180px}） */
     try { document.body.classList.add('wb-home'); } catch (e) {}
@@ -148,9 +150,9 @@
       </nav>
       <div class="wb-foot">
         <div class="wb-foot-acts">
-          <a href="#" onclick="(window.mtpeHelp||function(){})( );return false" title="帮助：流程说明 / 计分口径 / 常见问题">? 帮助</a>
+          <a href="#" onclick="(window.mtpeHelp||function(){})( );return false" title="帮助：流程说明 / 计分口径 / 常见问题">${ix('help')} 帮助</a>
           <a href="settings.html" title="账号、姓名与登录时长">设置</a>
-          <a href="#" id="mtpe-install" class="hidden" onclick="mtpeInstall();return false" title="装成桌面应用，断网也能用">⬇ 安装到桌面</a>
+          <a href="#" id="mtpe-install" class="hidden" onclick="mtpeInstall();return false" title="装成桌面应用，断网也能用">${ix('download')} 安装到桌面</a>
           ${nx.setupName
             ? '<a href="settings.html" title="共享账号按姓名归属成绩，请先报到">未报到 · 去填写</a>'
             : '<span class="wb-acc" title="按姓名归属成绩">' + esc(curNick()) + '</span>'}
@@ -165,7 +167,7 @@
         ${nx.setupName ? `
         <div class="wb-hero-big">先报上姓名／学号</div>
         <div class="hn-why">共享账号按姓名认人：作业导出与班级汇总都用它。</div>
-        <a class="wb-hero-btn" href="settings.html">去「我的设置」报到 →</a>` : `
+        <a class="wb-hero-btn" href="settings.html">去「我的设置」报到 ${ix('arrow')}</a>` : `
         <div class="wb-hero-big">${esc(nx.cta)}</div>
         <div class="hn-why">${esc(nx.why)}</div>
         <a class="wb-hero-btn" href="${nx.href}">现在开始</a>`}
@@ -187,13 +189,13 @@
       <div class="wb-grid3">
         <div class="wb-mini"><span class="mt m1">① 找 · 标注实训</span>
           <div class="mp">划错定性 · 对照种子 · 查准率 / 查全率 / F1</div>
-          <a href="annotate.html">进入标注实训 →</a></div>
+          <a href="annotate.html">进入标注实训 ${ix('arrow')}</a></div>
         <div class="wb-mini"><span class="mt m2">② 改 · 改译实训</span>
           <div class="mp">机翻逐段润色 · 限时 / 自由 · 修订率与逐段点评</div>
-          <a href="practice.html">进入改译实训 →</a></div>
+          <a href="practice.html">进入改译实训 ${ix('arrow')}</a></div>
         <div class="wb-mini"><span class="mt m3">③ 测 · 仿真训练</span>
           <div class="mp">赛场还原 · 限时交卷 · 评分与四项画像</div>
-          <a href="pe-exam.html">进入仿真训练 →</a></div>
+          <a href="pe-exam.html">进入仿真训练 ${ix('arrow')}</a></div>
       </div>
     </main>
   </div>`;

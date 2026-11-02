@@ -50,7 +50,11 @@ window.mtpeNavIcon = function (name) {
     find: '<circle cx="9" cy="9" r="5.2"/><path d="m12.9 12.9 3.6 3.6"/>',
     edit: '<path d="M13.6 3.4l3 3L7.2 15.8 3.5 16.5l.7-3.7z"/><path d="m12.2 4.8 3 3"/>',
     clock: '<circle cx="10" cy="10" r="7"/><path d="M10 5.6V10l3.1 2"/>',
-    target: '<circle cx="10" cy="10" r="7"/><circle cx="10" cy="10" r="3.2"/><path d="M10 10h.01"/>'
+    target: '<circle cx="10" cy="10" r="7"/><circle cx="10" cy="10" r="3.2"/><path d="M10 10h.01"/>',
+    /* 行内小图标（配 ui.css 的 a svg.ic 规则，12px 跟随文字色） */
+    arrow: '<path d="M4 10h11"/><path d="m11 5.5 4.5 4.5-4.5 4.5"/>',
+    help: '<circle cx="10" cy="10" r="7"/><path d="M8 8a2 2 0 1 1 2.9 1.8c-.6.35-.9.7-.9 1.4"/><path d="M10 13.9h.01"/>',
+    download: '<path d="M10 3.5v8.2"/><path d="m6.5 8.4 3.5 3.5 3.5-3.5"/><path d="M4 16.5h12"/>'
   };
   return P[name] || '';
 };

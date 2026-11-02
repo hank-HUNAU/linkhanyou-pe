@@ -24,8 +24,10 @@
    v38（2026-11-02）：第三批——supabase.js(218KB)+supabase-sync.js 移出 CORE（云同步本就
      需联网，离线预缓存纯属浪费；在线访问经网络优先策略运行时缓存，行为不变）
    v39（2026-11-02）：侧栏改版——emoji 换 stroke SVG 图标（正本 shared.js mtpeNavIcon）+
-     「我的设置」并入页脚账号簇（侧栏 7→6，页脚=帮助/设置/报到/退出）；index 接线 shared.js */
-const CACHE = 'mtpe-shell-v39';
+     「我的设置」并入页脚账号簇（侧栏 7→6，页脚=帮助/设置/报到/退出）；index 接线 shared.js
+   v40（2026-11-02）：行内符号统一图标——「→ ? ⬇」文字符号换 svg.ic 正本图标
+     （链接箭头/帮助/下载，ui.css 10b 统一规则） */
+const CACHE = 'mtpe-shell-v40';
 
 /* 轻外壳：不含 secure.js（按需下载，由 stale-while-revalidate 自动缓存） */
 const CORE = [

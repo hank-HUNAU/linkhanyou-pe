@@ -86,8 +86,8 @@
    +   '<nav class="wb-nav">' + items + '</nav>'
    +   '<div class="wb-foot">'
    +     '<div class="wb-foot-acts">'
-   +       '<a href="#" onclick="' + helpOnclick() + '" title="帮助：流程说明 / 计分口径 / 数据来源 / 常见问题">? 帮助</a>'
-   +       '<a href="#" id="mtpe-install" class="hidden" onclick="mtpeInstall();return false" title="装成桌面应用，断网也能用">⬇ 安装到桌面</a>'
+   +       '<a href="#" onclick="' + helpOnclick() + '" title="帮助：流程说明 / 计分口径 / 数据来源 / 常见问题">' + (function(){ var p = window.mtpeNavIcon ? window.mtpeNavIcon('help') : ''; return p ? '<svg class="ic" viewBox="0 0 20 20" aria-hidden="true">' + p + '</svg>' : '?'; })() + ' 帮助</a>'
+   +       '<a href="#" id="mtpe-install" class="hidden" onclick="mtpeInstall();return false" title="装成桌面应用，断网也能用">' + (function(){ var p = window.mtpeNavIcon ? window.mtpeNavIcon('download') : ''; return p ? '<svg class="ic" viewBox="0 0 20 20" aria-hidden="true">' + p + '</svg>' : '⬇'; })() + ' 安装到桌面</a>'
    +       '<a href="settings.html" title="账号、姓名与登录时长">设置</a>'
    +       account
    +       '<a href="#" onclick="mtpeLogout();return false" title="机房共用电脑用完即退，防止记录串号">退出</a>'

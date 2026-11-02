@@ -783,7 +783,7 @@ function recommendHTML(r){
  <a class="rec-item" href="${it.href}">
  <span class="rec-n">${i + 1}</span>
  <span class="rec-body"><b>${esc(it.title)}</b><span class="muted">${esc(it.desc)}</span></span>
- <span class="rec-go">去练 →</span>
+ <span class="rec-go">去练 <svg class="ic" viewBox="0 0 20 20" aria-hidden="true">${window.mtpeNavIcon ? mtpeNavIcon('arrow') : ''}</svg></span>
  </a>`).join('');
   return `
  <div class="prof-head">下一步练什么 <span class="tag blue">画像 → 推荐 → 回练</span></div>

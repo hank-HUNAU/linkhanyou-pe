@@ -194,6 +194,10 @@ textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2p
    露出深色胶囊（2026-10-19 用户截图）——没有内容就永远不渲染。 */
 #toast:empty,.toast:empty{display:none!important}
 
+/* ---------- 10b. 行内图标（2026-11-02 统一）：链接尾箭头 / 帮助 / 下载等
+   12px 跟随文字色（currentColor），替代散落的「→ ? ⬇」文字符号 ---------- */
+svg.ic{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vertical-align:-1.5px;margin-left:2px}
+
 /* ---------- 11. 空态 ---------- */
 .empty-tip{text-align:center;color:var(--muted);padding:40px 0}
 
