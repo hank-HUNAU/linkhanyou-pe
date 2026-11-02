@@ -177,7 +177,6 @@
           <div class="stat"><div class="n">${num(s.examBest)}</div><div class="l">仿真最高</div></div>
           <div class="stat"><div class="n">${dr.length}</div><div class="l">未完成草稿</div></div>
         </div>
-        <div class="wb-theory">刻意练习：目标明确 · 反馈即时 · 重复针对 <span>— Shreve, 2006（转用 Ericsson et al., 1993）</span></div>
       </section>
 
       <div class="wb-card">
@@ -188,13 +187,10 @@
 
       <div class="wb-grid3">
         <div class="wb-mini"><span class="mt m1">① 找 · 标注实训</span>
-          <div class="mp">划错定性 · 对照种子 · 查准率 / 查全率 / F1</div>
           <a href="annotate.html">进入标注实训 ${ix('arrow')}</a></div>
         <div class="wb-mini"><span class="mt m2">② 改 · 改译实训</span>
-          <div class="mp">机翻逐段润色 · 限时 / 自由 · 修订率与逐段点评</div>
           <a href="practice.html">进入改译实训 ${ix('arrow')}</a></div>
         <div class="wb-mini"><span class="mt m3">③ 测 · 仿真训练</span>
-          <div class="mp">赛场还原 · 限时交卷 · 评分与四项画像</div>
           <a href="pe-exam.html">进入仿真训练 ${ix('arrow')}</a></div>
       </div>
     </main>
