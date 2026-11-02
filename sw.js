@@ -20,8 +20,10 @@
    v36（2026-11-02）：UI 评估快赢批 8 项——草稿竞态守卫/--text-1/语义红归 var(--red)/
      删旧 .toast/徽章色归位 --step1--step3/≤900 侧栏保留帮助+退出/登录显示密码
    v37（2026-11-02）：第二批 4 项——shared.js 收口 store/toast（CORE 新增）/①找触屏划选兜底/
-     报到口径三合一 */
-const CACHE = 'mtpe-shell-v37';
+     报到口径三合一
+   v38（2026-11-02）：第三批——supabase.js(218KB)+supabase-sync.js 移出 CORE（云同步本就
+     需联网，离线预缓存纯属浪费；在线访问经网络优先策略运行时缓存，行为不变） */
+const CACHE = 'mtpe-shell-v38';
 
 /* 轻外壳：不含 secure.js（按需下载，由 stale-while-revalidate 自动缓存） */
 const CORE = [
@@ -39,8 +41,6 @@ const CORE = [
   './app.js',
   './unlock.js',
   './shared.js',
-  './supabase.js',
-  './supabase-sync.js',
   './help.js',
   './mqm.js',
   './report.js',

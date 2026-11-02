@@ -266,6 +266,11 @@ node verify_live.mjs             # 线上文件端到端：登录 → 分片按�
    - **报到口径三合一**：app.js 弹窗文案统一为 stats.js 版（「先填一下姓名／学号」+ 共享账号说明 +「2024级翻译2班 张三」示例），保存统一走 unlock.js `mtpeSaveNick`（保存+认领+云端身份一条路径，app.js 原先绕过云端登记的偏差顺带修正）。
    - **deploy_ghapi.mjs 自动 diff**：FILES 手工白名单退役 → `SITE_MANIFEST`（46 项一次性清单）+ 远端 tree blob SHA 逐文件比对，只推「本地≠远端」，漏列半部署从流程上不可能再发生；启动护栏禁止 `_*`/`*.mjs`/seal_content 入清单；支持 `--dry`。首跑即抓到一个险情：**class.html「教学端（本地）」从未上过线，已明确剔除**（同 预览_工作台.html）。commit message 走 `DEPLOY_MSG` 环境变量。
    - verify_deploy_sync 新增 A4 组断言（六页 shared.js 接线/正本唯一/无重复实现/三前缀保留），本次 31 断言 + 15 文件远端 SHA 全绿。**第三批 4 项**（模态焦点陷阱/supabase 移出 CORE/近白底色收敛/关键 CSS 生成式）仍待排期。
+16. **评估第三批 4 项（2026-11-02，sw v38）**：
+   - **supabase.js(218KB)+supabase-sync.js 移出 SW CORE**：云同步本就需联网，离线预缓存纯属浪费（且 Supabase 当前休眠）；在线访问经 SW 网络优先策略运行时缓存，离线时同步静默降级（既有设计）。verify A3 断言反转（CORE 不得再含二者 + 六页接线仍须保留）。
+   - **模态焦点陷阱（app.js openModal/closeModal）**：打开时焦点移入首控件 + `role=dialog`/`aria-modal`；Tab 循环圈定在弹窗内（首/尾边界反转 + 焦点逃逸拉回）；关闭后还焦到触发元素。Esc 分层关闭（不要动清单）不受影响。
+   - **近白底色收敛**：新增 `--bg-soft:#f7f9fd` 唯一 token，14 处散落变体（#f0f0f2/#f8f9fd/#fcfdff/#fafbfc/#f4f6fb/#fafbfe/#f7f9fd）全部归位；**刻意保留 2 处例外**——style.css 首页 hero 渐变端点 #f6f7fb、pe-exam.css `.seg-row.cur` 当前段蓝底 #f5f9ff（赛场要素）。
+   - **关键 CSS 内联改生成式**：新增 `_sync_inline_css.mjs`——从 ui.css/style.css 按**稳定代码行锚点**（非行号，增删行免疫；锚点行被改则报错退出，宁可失败不可错抄）提取 8 段，整块重写 index.html `<style>`；支持 `--check` 护栏模式；幂等。首跑即把当日 --bg-soft 改动自动流入内联版（人工照抄当场失真的实证），并补齐旧版漏抄的按钮全段。**今后改 ui.css/style.css 的 :root/首帧规则，跑一遍本脚本即可。**
 
 ---
 

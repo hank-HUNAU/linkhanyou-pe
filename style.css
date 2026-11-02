@@ -71,7 +71,7 @@ body.wb-home #app { max-width: none; margin: 0; padding: 0; }
 
 .seg-table { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
 .seg-row { display: grid; grid-template-columns: 44px 1fr 1fr; border-bottom: 1px solid var(--border); }
-.seg-row.header { background: #f8f9fd; font-size: var(--fs-xs); color: var(--muted); font-weight: 600; }
+.seg-row.header { background: var(--bg-soft); font-size: var(--fs-xs); color: var(--muted); font-weight: 600; }
 .seg-row.current { outline: 2px solid var(--primary); outline-offset: -2px; border-radius: var(--r-xs); }
 .seg-num { padding: 12px 8px; text-align: center; color: var(--muted); font-size: var(--fs-sm); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .seg-status { font-size: var(--fs-11); }
@@ -82,7 +82,7 @@ body.wb-home #app { max-width: none; margin: 0; padding: 0; }
 .seg-cell.src mark { background: #fff3bf; padding: 0 2px; border-radius: var(--r-xs); cursor: pointer; }
 .seg-cell textarea {
   width: 100%; min-height: 52px; border: 1px solid var(--border); border-radius: var(--r-sm);
-  padding: 8px 10px; font-family: inherit; font-size: var(--fs-14); line-height: 1.7; resize: none; background: #fcfdff;
+  padding: 8px 10px; font-family: inherit; font-size: var(--fs-14); line-height: 1.7; resize: none; background: var(--bg-soft);
   flex: 1;
 }
 .seg-cell textarea:focus { outline: none; border-color: var(--primary); background: #fff; }
@@ -121,7 +121,7 @@ body.wb-home #app { max-width: none; margin: 0; padding: 0; }
 .mini-tag.edited { background: var(--primary-light); color: var(--primary); }
 .rv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 @media (max-width: 760px) { .rv-grid { grid-template-columns: 1fr; } }
-.rv-cell { background: #f8f9fd; border: 1px solid var(--border); border-radius: var(--r-sm); padding: 9px 12px; font-size: var(--fs-sm); }
+.rv-cell { background: var(--bg-soft); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 9px 12px; font-size: var(--fs-sm); }
 .rv-cell .lab { font-size: var(--fs-11); color: var(--muted); margin-bottom: 3px; font-weight: 600; }
 .rv-cell.full { grid-column: 1 / -1; }
 .diff del { background: var(--red-bg); color: var(--red); text-decoration: line-through; padding: 0 2px; border-radius: var(--r-xs2); }

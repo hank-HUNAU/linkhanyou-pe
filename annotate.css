@@ -17,7 +17,7 @@ select,input[type=number]{border:1px solid var(--bd);border-radius:var(--r-sm);p
 
 /* 标注区 —— 主次分层（2026-10-19）：译文是划选操作对象（17px 白底+蓝左边线），
    原文只是参考（15px 浅灰底），一眼分清该看哪、点哪 */
-.src-box{background:#fafbfc;border:1px solid var(--bd);border-radius:var(--r-md);padding:10px 14px;margin-bottom:10px;font-size:var(--fs-base);line-height:var(--lh-read)}
+.src-box{background:var(--bg-soft);border:1px solid var(--bd);border-radius:var(--r-md);padding:10px 14px;margin-bottom:10px;font-size:var(--fs-base);line-height:var(--lh-read)}
 .mt-box{background:#fff;border:1px solid var(--bd);border-left:3px solid var(--yc);border-radius:var(--r-md);padding:14px 16px;margin-bottom:10px;font-size:var(--fs-read);line-height:var(--lh-read);cursor:text;user-select:text}
 .lab{font-size:var(--fs-2xs);color:var(--mut);font-weight:600;margin-bottom:4px}
 .mt-box:active{border-color:var(--an)}
@@ -49,7 +49,7 @@ body.panel-open .nav-c .btn{opacity:.4}
 .fix-input{flex:1;min-width:200px;border:1px solid var(--bd);border-radius:var(--r-sm);padding:7px 10px;font-family:inherit;font-size:var(--fs-sm)}
 .ann-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 /* 零标注空态：告诉学生标注结果的落点，兼给列表区最小高度（2026-10-19） */
-.ann-empty{color:var(--mut);font-size:var(--fs-sm);text-align:center;padding:16px 12px;border:1px dashed var(--bd);border-radius:var(--r-sm);background:#fafbfc}
+.ann-empty{color:var(--mut);font-size:var(--fs-sm);text-align:center;padding:16px 12px;border:1px dashed var(--bd);border-radius:var(--r-sm);background:var(--bg-soft)}
 .ann-item{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fff;border:1px solid var(--bd);border-radius:var(--r-sm);padding:6px 10px;font-size:var(--fs-sm)}
 .ann-item .del{border:none;background:var(--rb);color:var(--r);border-radius:var(--r-sm2);padding:2px 9px;font-size:var(--fs-2xs)}
 /* 底部操作条：fixed 常驻视口底缘 —— 每句内容高度不同（原文/译文长短、标注多少），
@@ -88,7 +88,7 @@ body.panel-open .pg-dots{opacity:.4}
 .nav-c{grid-column:2;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
 .nav-r{grid-column:3;display:flex;justify-content:flex-end}
 /* 键盘切句提示（键帽样式） */
-.kbd-hint{font-size:var(--fs-2xs);color:var(--mut);border:1px solid var(--bd);border-bottom-width:2px;border-radius:var(--r-sm2);padding:1px 7px;background:#fafbfc;white-space:nowrap}
+.kbd-hint{font-size:var(--fs-2xs);color:var(--mut);border:1px solid var(--bd);border-bottom-width:2px;border-radius:var(--r-sm2);padding:1px 7px;background:var(--bg-soft);white-space:nowrap}
 
 /* 结果 */
 .score-hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}

@@ -21,7 +21,10 @@
   --red:#d70015; --red-bg:#fdeced;
   --amber:#a35a00; --amber-bg:#fdf0e3;
   /* 中性色 */
-  --bg:#f5f5f7; --card:#fff; --border:rgba(0,0,0,.08);
+  --bg:#f5f5f7; --bg-soft:#f7f9fd; --card:#fff; --border:rgba(0,0,0,.08);
+  /* --bg-soft（2026-11-02 第三批）：软内衬底唯一 token——曾散落 5 个近白变体
+     （f0f0f2/f8f9fd/fafbfc/f7f9fd/f4f6fb 等），肉眼难辨却各自漂移。
+     保留例外：style.css 首页 hero 渐变端点、pe-exam.css .seg-row.cur 当前段蓝底。 */
   --text:#1d1d1f; --text-2:#515154; --muted:#6e6e73; --sk:rgba(0,0,0,.06);
   /* 步骤色：只用在 .step-tag，三页一眼看出自己在第几步 */
   --step1:#0f766e; --step1-bg:#e6f5f3;
@@ -135,7 +138,7 @@ textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2p
 .tag.mqm.crit{color:var(--red);background:var(--red-bg)}
 .tag.diff.medium{background:var(--amber-bg);color:var(--amber)}
 .tag.diff.hard{background:var(--red-bg);color:var(--red)}
-.tag.gray{background:#f0f0f2;color:var(--text-2)}
+.tag.gray{background:var(--bg-soft);color:var(--text-2)}
 
 /* ---------- 6. 步骤标签（作答栏左端） ---------- */
 .step-tag{

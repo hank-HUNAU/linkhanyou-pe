@@ -28,43 +28,69 @@
      外部 CSS 异步到达后同值覆盖、零跳动。
      :root 整段照抄 ui.css:16-76 —— 变量单一来源，不省略不剔除。
      ============================================================ -->
-<style>
-/* ---- ui.css:16-76 设计变量（逐字照抄） ---- */
+<style>/* ============================================================
+   首屏关键 CSS —— 由 _sync_inline_css.mjs 从 ui.css / style.css 生成（勿手改）
+   源 CSS 改动后运行：node _sync_inline_css.mjs
+   ============================================================ */
+
+/* ---- ui.css :: :root 设计变量（全站唯一一份） ---- */
 :root{
   /* 主色 */
   --primary:#0071e3; --primary-dark:#0058b0; --primary-light:#eaf3fd;
-  /* 语义色 */
+  /* 语义色（琥珀比原来的 #d97706 深一档：原色配 #fef3e2 底只有 2.90 对比度，小字读不清） */
   --green:#1c6e31; --green-bg:#e6f4ea;
   --red:#d70015; --red-bg:#fdeced;
   --amber:#a35a00; --amber-bg:#fdf0e3;
   /* 中性色 */
-  --bg:#f5f5f7; --card:#fff; --border:rgba(0,0,0,.08);
+  --bg:#f5f5f7; --bg-soft:#f7f9fd; --card:#fff; --border:rgba(0,0,0,.08);
+  /* --bg-soft（2026-11-02 第三批）：软内衬底唯一 token——曾散落 5 个近白变体
+     （f0f0f2/f8f9fd/fafbfc/f7f9fd/f4f6fb 等），肉眼难辨却各自漂移。
+     保留例外：style.css 首页 hero 渐变端点、pe-exam.css .seg-row.cur 当前段蓝底。 */
   --text:#1d1d1f; --text-2:#515154; --muted:#6e6e73; --sk:rgba(0,0,0,.06);
-  /* 步骤色 */
+  /* 步骤色：只用在 .step-tag，三页一眼看出自己在第几步 */
   --step1:#0f766e; --step1-bg:#e6f5f3;
   --step2:#0058b0; --step2-bg:#eaf3fd;
   --step3:#1a5fd0; --step3-bg:#eaf2ff;
   /* 圆角四档 */
   --r-sm:8px; --r-md:10px; --r-lg:14px; --r-pill:999px; --radius:14px;
-  /* 圆角补充档 */
-  --r-xs:3px; --r-sm2:6px; --r-md2:12px; --r-xl:16px; --r-22:22px;
-  /* 字号七档 */
-  --fs-2xs:12px; --fs-xs:12.5px; --fs-sm:13.5px; --fs-base:15px; --fs-read:17px;
-  --fs-lg:20px; --fs-xl:24px;
-  --fs-14:14px; --fs-22:22px; --fs-26:26px; --fs-30:30px; --fs-11:11px; --fs-23:23px;
+  /* 圆角补充档（2026-10-19 扩档）：原先散在页面里的 2/3/6/12px 各有明确用途，
+     不是随手写的，统一收口。命名说明用途，避免"为了套档而套档"。 */
+  --r-xs:3px;   /* 小色块：点阵进度点、选中标记的圆角部分 */
+  --r-sm2:6px;  /* 小标签：.meta .tag、sev-opt未选中态 */
+  --r-md2:12px; /* 中卡片：与 --r-lg 同族，出现在嵌套卡片里 */
+  --r-xl:16px;  /* 大浮层：标注面板（抽屉态圆角） */
+  --r-22:22px;  /* 大圆角浮层：工作台聚焦卡（原 22px 硬编码，第④步 token 收敛） */
+  /* 字号七档（2026-10-19 扩档）
+     五档不够用的原因：①找 作答页要做「主次分层」——原文是参考、译文是操作对象，
+     两者必须不同字号（15 vs 17），且 17px 是中文正文舒适阅读的下限，不宜归并。
+     档位命名按用途而非大小排列，改档时不会误伤主次关系。 */
+  --fs-2xs:12px; /* 极辅助：键位提示、时间戳 */
+  --fs-xs:12.5px; /* 辅助：图例、.muted、元信息 */
+  --fs-sm:13.5px; /* 次要正文：标注列表项 */
+  --fs-base:15px; /* 通用正文：原文、表单控件 */
+  --fs-read:17px; /* ★ 阅读正文：译文（操作对象，全站最大的正文）*/
+  --fs-lg:20px;   /* 小标题 */
+  --fs-xl:24px;   /* 大标题 */
+  --fs-14:14px; --fs-22:22px; --fs-26:26px; --fs-30:30px; --fs-11:11px; --fs-23:23px; /* 收敛 style.css/pe-exam.css 硬编码字号（第④步 token 收敛，2026-10-22） */
   /* 兼容别名：老代码写 --fs-md 的仍指到通用正文 */
   --fs-md:var(--fs-base);
-  /* 行高三档 */
-  --lh-tight:1.4; --lh-normal:1.6; --lh-read:1.8;
-  /* 响应式专用字号三档 */
-  --fs-narrow-ref:14.5px; --fs-narrow-read:16.5px; --fs-touch:16px;
-  --r-xs2:2px;
+  /* 行高三档：与字号配套，避免每处自己写 1.6/1.8 */
+  --lh-tight:1.4;   /* 标签、徽标 */
+  --lh-normal:1.6;  /* 通用正文 */
+  --lh-read:1.8;    /* 长段落阅读（译文用它） */
+  /* 响应式专用字号三档（2026-10-19）
+     只在窄屏断点里用。与主档分开命名，是为了让"改主档"和"改窄屏"互不牵连——
+     窄屏减字号是为了省横向空间，与阅读档位是两件事。 */
+  --fs-narrow-ref:14.5px;  /* 窄屏原文 */
+  --fs-narrow-read:16.5px; /* 窄屏译文（仍 > 原文，主次不能塌） */
+  --fs-touch:16px;         /* 触屏输入框：≥16px 否则 iOS 聚焦时自动放大页面 */
+  --r-xs2:2px;             /* 极小圆角：抽屉抓手条 */
   /* 间距六档 */
   --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px;
   /* 阴影两档 */
   --shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);
   --shadow-lg:0 20px 60px rgba(0,0,0,.2);
-  /* 兼容别名 */
+  /* ---- 兼容别名：页面样式里用的还是这些老名字，指到同一套变量，避免两套色 ---- */
   --yc:var(--primary); --ycd:var(--primary-dark); --ycl:var(--primary-light);
   --bd:var(--border); --tx:var(--text); --tx2:var(--text-2); --mut:var(--muted);
   --g:var(--green); --gb:var(--green-bg);
@@ -73,22 +99,36 @@
   --an:var(--step1); --and:#0d5f59; --anl:var(--step1-bg);
 }
 
-/* ---- ui.css:79-105 基础 + 焦点态（逐字照抄） ---- */
+/* ---- ui.css :: 基础 + 焦点态（2+3 节） ---- */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-/* 滚动条预留位：overflow-y:scroll 全程恒定，全站零布局跳动（2026-10-19） */
+/* 滚动条预留位：展开"更多届次"等内容高度变化导致滚动条出现/消失时，
+   视口宽度不再随之增减 ~15-17px，居中容器不再左右跳动（2026-10-19）。
+   实测（本机有头 Chromium，经典滚动条 15px）：
+   - scrollbar-gutter:stable 在根元素上不预留（Chromium 根元素怪癖，配 overflow-y:auto 也不行）；
+   - overflow-y:scroll 全程恒定（1280 视口下内容区稳定 1265），跳动 0px。
+   代价：短页面右侧常驻一条浅色滚动条轨道，换来全站零布局跳动。
+   移动端浏览器滚动条为 overlay 型，此规则无视觉影响。 */
 html{overflow-y:scroll}
 body{
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","PingFang SC","Helvetica Neue","Microsoft YaHei",sans-serif;
   background:var(--bg); color:var(--text); font-size:var(--fs-md); line-height:1.6;
   -webkit-font-smoothing:antialiased;
 }
+h1,h2,h3{letter-spacing:-.01em;font-weight:600}
 .hidden{display:none!important}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{border-radius:var(--r-md);border:1px solid var(--border);font-family:inherit}
+table{border-collapse:separate;border-spacing:0}
+th,td{border-color:var(--border)}
+img,svg{max-width:100%}
+
+/* ---------- 3. 焦点态：键盘走一遍必须看得见 ---------- */
 :focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,
 textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:var(--r-sm)}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}}
 
-/* ---- ui.css:108-116 按钮 / ui.css:124 标签基（home.js 渲染内容可能先于外部 CSS） ---- */
+/* ---- ui.css :: 按钮基 + 标签基（4 节全 + 5 节首行） ---- */
 .btn{
   border:none;border-radius:var(--r-pill);padding:8px 16px;font-size:var(--fs-sm);font-weight:500;
   display:inline-flex;align-items:center;gap:5px;transition:filter .15s ease,background .15s ease;
@@ -98,17 +138,26 @@ textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2p
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .btn-primary,.btn-p{background:var(--primary);color:#fff}
 .btn-primary:hover,.btn-p:hover{background:var(--primary-dark);filter:none}
+.btn-outline,.btn-o{background:#fff;color:var(--primary-dark);border:1px solid var(--primary)}
+.btn-outline:hover,.btn-o:hover{background:var(--primary-light)}
+.btn-ghost,.btn-g{background:#eef1f7;color:var(--text-2)}
+.btn-ghost:hover,.btn-g:hover{background:#e5e9f3}
+.btn-danger,.btn-r{background:var(--red-bg);color:var(--red)}
+
+/* ---------- 5. 标签 ---------- */
 .tag{display:inline-block;padding:2px 10px;border-radius:var(--r-pill);font-size:var(--fs-xs);font-weight:600;white-space:nowrap}
 
-/* ---- ui.css:185-192 Toast（逐字照抄） ---- */
+/* ---- ui.css :: Toast（含 :empty 防泄漏） ---- */
 .toast,#toast{
   position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1f2430;color:#fff;
-  padding:10px 18px;border-radius:var(--r-md);font-size:13px;z-index:200;
+  padding:10px 18px;border-radius:var(--r-md);font-size:13px;z-index:200;pointer-events:none;
   box-shadow:0 8px 24px rgba(0,0,0,.25);transition:opacity .2s;
 }
+/* 空壳强制隐藏：显隐只靠 opacity 时，空容器（无文字）会在触发竞态/重建瞬间
+   露出深色胶囊（2026-10-19 用户截图）——没有内容就永远不渲染。 */
 #toast:empty,.toast:empty{display:none!important}
 
-/* ---- ui.css:213-218 启动骨架 + 脉动动画 + 减动效（逐字照抄） ---- */
+/* ---- ui.css :: 启动骨架 + 脉动（14 节） ---- */
 .boot-skeleton{max-width:1180px;margin:0 auto;padding:28px 20px}
 .boot-skeleton .sk-t{height:22px;width:190px;border-radius:var(--r-sm);background:var(--sk);margin-bottom:18px}
 .boot-skeleton .sk-c{height:108px;border-radius:var(--r-lg);background:var(--sk);margin-bottom:14px}
@@ -116,16 +165,24 @@ textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2p
 @keyframes sk-pulse{0%,100%{opacity:.55}50%{opacity:1}}
 @media (prefers-reduced-motion:reduce){.boot-skeleton .sk-t,.boot-skeleton .sk-c{animation:none}}
 
-/* ---- ui.css:227-232 @620 骨架收紧（逐字照抄） ---- */
+/* ---- ui.css :: @620 骨架收紧（15 节内） ---- */
 @media (max-width:620px){
+  .task-grid{grid-template-columns:1fr}
+  .task-card{padding:14px 16px}
+  .modal{padding:18px 16px;width:100%}
   .boot-skeleton{padding:20px 14px}
 }
 
-/* ---- style.css:33-37 main 限宽 + 工作台首页豁免（逐字照抄） ---- */
+/* ---- style.css :: main 限宽 + 工作台首页豁免 ---- */
 main { max-width: 1180px; margin: 0 auto; padding: 26px 20px 60px; }
+/* 工作台首页铺满全屏：只豁免外层 <main id=app> 的元素级限宽。
+   不能写 body.wb-home main —— 会连内层 main.wb-main 的限宽/边距一起清零
+   （specificity 0,1,2 盖过 .wb-main 的 0,1,0，2026-10-17 三连误伤教训）。 */
 body.wb-home #app { max-width: none; margin: 0; padding: 0; }
 
-/* ---- style.css:222-296 工作台首页 v2 全段（逐字照抄，含 @1280/@900） ---- */
+/* ---- style.css :: 工作台首页 v2 全段（含 @1280/@900） ---- */
+/* ================= 工作台首页 v2（2026-10-17 本地版，未部署）
+   反向自《四六级工作台》：深靛紫侧边栏 + 浅色主区 + 渐变聚焦横幅 ================= */
 .wb-app { display: flex; min-height: 100vh; background: linear-gradient(180deg, #e9ecf7 0%, #f6f7fb 240px); }
 .wb-side { width: 216px; background: linear-gradient(180deg, #1e1b4b 0%, #14173d 100%); color: #d0d5dd; padding: 22px 0; flex-shrink: 0; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; box-shadow: 4px 0 24px rgba(23, 23, 63, .15); }
 .wb-logo { padding: 0 20px 16px; border-bottom: 1px solid rgba(255, 255, 255, .08); }
@@ -137,22 +194,27 @@ body.wb-home #app { max-width: none; margin: 0; padding: 0; }
 .wb-nav a.on { background: linear-gradient(90deg, #4f46e5, #7c3aed); color: #fff; box-shadow: 0 4px 14px rgba(79, 70, 229, .4); font-weight: 500; }
 .wb-nav .tag { margin-left: auto; background: #2f9e44; color: #fff; font-size: var(--fs-11); padding: 1px 7px; border-radius: var(--r-pill); }
 .wb-foot { padding: 14px 20px 0; border-top: 1px solid rgba(255, 255, 255, .08); font-size: var(--fs-2xs); color: #8b94a7; }
+/* —— 2026-10-18 全局工作台外壳：二级页主区容器 + 侧栏底部操作 —— */
 .wb-content { flex: 1; min-width: 0; }
 .wb-foot-acts { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }
 .wb-foot-acts a, .wb-foot-acts .wb-acc { display: block; padding: 7px 0; font-size: var(--fs-xs); color: #d0d5dd; text-decoration: none; border-radius: var(--r-sm); }
 .wb-foot-acts a:hover { color: #fff; background: rgba(255, 255, 255, .06); padding-left: 8px; padding-right: 8px; }
 .wb-foot-acts .wb-acc { color: #8b94a7; cursor: default; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wb-foot-acts .hidden { display: none; }
+/* 作答态沉浸：侧栏整体让位，主区占满全屏（与 body.answering 隐藏顶栏同口径） */
 body.answering .wb-side { display: none !important; }
 body.answering .wb-app { display: block !important; }
 .wb-app > .wb-content { max-width: none; }
+/* 桌面全尺寸适配：常规屏铺满，超宽屏（2560+/4K）居中防拉伸 */
 .wb-main { flex: 1; padding: 32px 40px 48px; min-width: 0; max-width: 1680px; margin: 0 auto; }
+/* 中小桌面 / 半屏窗口（901–1280）：间距收紧、三卡自动换列 */
 @media (max-width: 1280px) {
   .wb-main { padding: 26px 28px 40px; }
   .wb-hero-stats { gap: 40px; }
   .wb-grid3 { gap: 20px; }
   .wb-card, .wb-mini { margin-top: 20px; }
 }
+/* —— 聚焦横幅（hero）—— */
 .wb-focus { background: linear-gradient(120deg, #4338ca 0%, #6d28d9 55%, #a21caf 100%); color: #fff; border-radius: var(--r-22); padding: 32px 36px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(67, 56, 202, .35); }
 .wb-focus::before { content: ''; position: absolute; left: -40px; bottom: -90px; width: 180px; height: 180px; border-radius: 50%; background: rgba(255, 255, 255, .07); }
 .wb-focus > * { position: relative; }
@@ -169,6 +231,7 @@ body.answering .wb-app { display: block !important; }
 .wb-hero-stats .l { font-size: var(--fs-2xs); opacity: .85; margin-top: 2px; }
 .wb-theory { margin-top: 16px; font-size: var(--fs-xs); color: rgba(255,255,255,.75); }
 .wb-theory span { opacity: .65; margin-left: 6px; font-size: var(--fs-11); }
+/* —— 主区卡片 —— */
 .wb-card { background: #fff; border-radius: var(--r-xl); padding: 24px 26px; box-shadow: 0 1px 3px rgba(16, 24, 40, .08); margin-top: 26px; }
 .wb-card h3 { font-size: var(--fs-base); margin-bottom: 10px; color: var(--text, #1d1d1f); }
 .wb-last { font-size: var(--fs-sm); color: var(--text-2, #6e6e73); line-height: 2; }
@@ -189,7 +252,12 @@ body.answering .wb-app { display: block !important; }
   .wb-nav { display: flex; padding: 0; }
   .wb-nav a { margin: 0; padding: 8px 12px; white-space: nowrap; }
   .wb-nav .tag { display: none; }
-  .wb-foot { display: none; }
+  /* ≤900 侧栏脚部与 nav.js 内联版保持一致（2026-11-02 快赢批）：保留帮助/退出 */
+  .wb-foot { display: flex; align-items: center; margin-left: auto; border: none; padding: 0 2px; flex-shrink: 0; }
+  .wb-foot-note { display: none; }
+  .wb-foot-acts { display: flex; flex-direction: row; gap: 2px; margin-bottom: 0; }
+  .wb-foot-acts a { padding: 8px 8px; white-space: nowrap; }
+  .wb-foot-acts .wb-acc { display: none; }
   .wb-main { padding: 18px 14px 40px; }
   .wb-grid3 { grid-template-columns: 1fr; }
 }

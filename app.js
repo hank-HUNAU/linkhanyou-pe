@@ -264,9 +264,37 @@ function saveNickname() {
 /* ---------------- 弹窗 ---------------- */
 function openModal(html) {
  $('#modal-box').innerHTML = html;
- $('#modal-mask').classList.remove('hidden');
+ const mask = $('#modal-mask');
+ mask.classList.remove('hidden');
+ /* 焦点管理（2026-11-02 第三批，ux Top4）：焦点移入 + Tab 锁在弹窗内 + 关闭后还焦 */
+ openModal._lastFocus = document.activeElement;
+ const box = $('#modal-box');
+ box.setAttribute('role', 'dialog');
+ box.setAttribute('aria-modal', 'true');
+ const first = box.querySelector('input, textarea, select, button');
+ if (first) first.focus();
 }
-function closeModal() { $('#modal-mask').classList.add('hidden'); }
+function closeModal() {
+ $('#modal-mask').classList.add('hidden');
+ const box = $('#modal-box');
+ if (box) { box.removeAttribute('role'); box.removeAttribute('aria-modal'); }
+ if (openModal._lastFocus && document.contains(openModal._lastFocus)) {
+   try { openModal._lastFocus.focus(); } catch (e) {}
+ }
+ openModal._lastFocus = null;
+}
+/* Tab 焦点陷阱：焦点圈定在弹窗内（遮罩后面的内容键盘不可达） */
+document.addEventListener('keydown', (e) => {
+ const mask = document.getElementById('modal-mask');
+ if (!mask || mask.classList.contains('hidden') || e.key !== 'Tab') return;
+ const box = document.getElementById('modal-box');
+ const focusables = box.querySelectorAll('input:not([disabled]), textarea:not([disabled]), select:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])');
+ if (!focusables.length) { e.preventDefault(); return; }
+ const first = focusables[0], last = focusables[focusables.length - 1];
+ if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+ else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+ else if (!box.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+});
 
 /* ---------------- 译后编辑实训 ---------------- */
 function renderPlaza() {
