@@ -57,7 +57,8 @@
     st.id = 'mtpe-help-style';
     st.textContent =
       '#mtpe-help{position:fixed;inset:0;z-index:950;background:rgba(20,26,45,.45);display:flex;align-items:center;justify-content:center;padding:20px}'
-      + '#mtpe-help .hp-card{background:#fff;border-radius:16px;width:min(680px,100%);max-height:86vh;overflow:auto;padding:22px 24px 26px;box-shadow:0 24px 70px rgba(0,0,0,.28);font:15px/1.75 -apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Microsoft YaHei",sans-serif;color:#1d1d1f}'
+      + '#mtpe-help .hp-card{background:#fff;border-radius:16px;width:min(680px,100%);max-height:86vh;overflow:auto;scrollbar-width:none;padding:22px 24px 26px;box-shadow:0 24px 70px rgba(0,0,0,.28);font:15px/1.75 -apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Microsoft YaHei",sans-serif;color:#1d1d1f}'
+      + '#mtpe-help .hp-card::-webkit-scrollbar{display:none}'
       + '#mtpe-help .hp-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}'
       + '#mtpe-help h2{font-size:19px;font-weight:700}'
       + '#mtpe-help .hp-x{border:none;background:rgba(0,0,0,.05);border-radius:999px;width:30px;height:30px;font-size:15px;color:#6e6e73;cursor:pointer;line-height:1}'

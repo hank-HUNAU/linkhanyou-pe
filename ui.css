@@ -179,8 +179,10 @@ textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2p
 }
 .modal{
   background:var(--card);border-radius:var(--r-lg);padding:22px 24px;width:min(440px,92vw);
-  box-shadow:var(--shadow-lg);max-height:86vh;overflow:auto;
+  box-shadow:var(--shadow-lg);max-height:86vh;overflow:auto;scrollbar-width:none;
 }
+/* 弹窗滚动条隐形（2026-11-02）：方形滚动条压在圆角上，四角破相；滚轮/触摸滚动不受影响 */
+.modal::-webkit-scrollbar,#mtpe-help .hp-card::-webkit-scrollbar{display:none}
 .modal h3{font-size:17px;margin-bottom:var(--sp-3)}
 .modal .m-actions{display:flex;gap:var(--sp-2);justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
 
