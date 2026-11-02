@@ -271,6 +271,7 @@ node verify_live.mjs             # 线上文件端到端：登录 → 分片按�
    - **模态焦点陷阱（app.js openModal/closeModal）**：打开时焦点移入首控件 + `role=dialog`/`aria-modal`；Tab 循环圈定在弹窗内（首/尾边界反转 + 焦点逃逸拉回）；关闭后还焦到触发元素。Esc 分层关闭（不要动清单）不受影响。
    - **近白底色收敛**：新增 `--bg-soft:#f7f9fd` 唯一 token，14 处散落变体（#f0f0f2/#f8f9fd/#fcfdff/#fafbfc/#f4f6fb/#fafbfe/#f7f9fd）全部归位；**刻意保留 2 处例外**——style.css 首页 hero 渐变端点 #f6f7fb、pe-exam.css `.seg-row.cur` 当前段蓝底 #f5f9ff（赛场要素）。
    - **关键 CSS 内联改生成式**：新增 `_sync_inline_css.mjs`——从 ui.css/style.css 按**稳定代码行锚点**（非行号，增删行免疫；锚点行被改则报错退出，宁可失败不可错抄）提取 8 段，整块重写 index.html `<style>`；支持 `--check` 护栏模式；幂等。首跑即把当日 --bg-soft 改动自动流入内联版（人工照抄当场失真的实证），并补齐旧版漏抄的按钮全段。**今后改 ui.css/style.css 的 :root/首帧规则，跑一遍本脚本即可。**
+17. **侧栏改版（2026-11-02，sw v39，commit 4e28a96f）**：①**emoji → stroke SVG**——7 个 emoji 图标（🏠📊⚙️🔍✏️⏱️🎯）换 16px 单色 stroke SVG（1.7 圆角线帽，currentColor 随侧栏主题），正本 `shared.js mtpeNavIcon`，nav.js 与 home.js（首页自管侧栏）共用，index 接线 shared.js；图标缺失时优雅降级纯文字（防新旧缓存混跑）。②**「我的设置」并入页脚账号簇**——低频账号操作与 帮助/报到/退出 同类，侧栏 7→6（聚焦首页/我的统计/①找/②改/③测/能力对标），页脚=帮助/设置/报到(或姓名)/退出；手机 ≤900 页脚本就显示链接，无回归。样式同步两处：nav.js shellStyle 内联 + style.css wb 段（改两处的老规矩）。verify 39 断言 + 6 SHA 全绿，线上 emoji 清零。
 
 ---
 
