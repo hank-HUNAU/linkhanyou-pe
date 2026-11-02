@@ -129,6 +129,8 @@
        下方最近成绩与三步说明卡）。数据逻辑不变。 */
     const wk = '日一二三四五六'[new Date().getDay()];
     const today = new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' }) + ' 星期' + wk;
+    /* 侧栏图标正本在 shared.js mtpeNavIcon（index 已同步接线）；缺失时优雅降级为纯文字 */
+    const ic = (n) => { const p = window.mtpeNavIcon ? window.mtpeNavIcon(n) : ''; return p ? '<svg viewBox="0 0 20 20" aria-hidden="true">' + p + '</svg>' : ''; };
 
     /* 工作台铺满全屏：豁免元素级 main 限宽（style.css 的 main{max-width:1180px}） */
     try { document.body.classList.add('wb-home'); } catch (e) {}
@@ -137,24 +139,24 @@
     <aside class="wb-side">
       <div class="wb-logo"><h1>译后编辑实训平台</h1><p id="wb-date">${esc(today)}</p></div>
       <nav class="wb-nav">
-        <a class="on" href="index.html">🏠 聚焦首页</a>
-        <a href="stats.html">📊 我的统计</a>
-        <a href="settings.html">⚙️ 我的设置</a>
-        <a href="annotate.html">🔍 标注实训 <span class="tag">① 找</span></a>
-        <a href="practice.html">✏️ 改译实训 <span class="tag">② 改</span></a>
-        <a href="pe-exam.html">⏱️ 仿真训练 <span class="tag">③ 测</span></a>
-        <a href="champion.html">🎯 能力对标</a>
+        <a class="on" href="index.html">${ic('home')}聚焦首页</a>
+        <a href="stats.html">${ic('chart')}我的统计</a>
+        <a href="annotate.html">${ic('find')}标注实训 <span class="tag">① 找</span></a>
+        <a href="practice.html">${ic('edit')}改译实训 <span class="tag">② 改</span></a>
+        <a href="pe-exam.html">${ic('clock')}仿真训练 <span class="tag">③ 测</span></a>
+        <a href="champion.html">${ic('target')}能力对标</a>
       </nav>
       <div class="wb-foot">
         <div class="wb-foot-acts">
           <a href="#" onclick="(window.mtpeHelp||function(){})( );return false" title="帮助：流程说明 / 计分口径 / 常见问题">? 帮助</a>
+          <a href="settings.html" title="账号、姓名与登录时长">设置</a>
           <a href="#" id="mtpe-install" class="hidden" onclick="mtpeInstall();return false" title="装成桌面应用，断网也能用">⬇ 安装到桌面</a>
           ${nx.setupName
             ? '<a href="settings.html" title="共享账号按姓名归属成绩，请先报到">未报到 · 去填写</a>'
             : '<span class="wb-acc" title="按姓名归属成绩">' + esc(curNick()) + '</span>'}
           <a href="#" onclick="mtpeLogout();return false">退出</a>
         </div>
-        语料加密封存 · 离线可用
+        <span class="wb-foot-note">语料加密封存 · 离线可用</span>
       </div>
     </aside>
     <main class="wb-main">

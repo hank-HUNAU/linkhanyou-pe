@@ -15,15 +15,16 @@
  *   重复调用时把 #app 重新移入 .wb-content，不会产生第二份侧栏。
  * ============================================================ */
 (function () {
- /* 学生端工作台侧栏：顺序 = 首页 → 统计/设置 → 找改测 → 对标（与首页 v2 一致） */
+ /* 学生端工作台侧栏（2026-11-02 收口）：顺序 = 首页 → 统计 → 找改测 → 对标。
+    「我的设置」并入页脚账号簇（低频账号操作与 帮助/报到/退出 同类），侧栏只留学习动线。
+    图标正本在 shared.js mtpeNavIcon（stroke SVG 单色），emoji 已退役。 */
  const ITEMS = [
-   { href: 'index.html',    label: '🏠 聚焦首页' },
-   { href: 'stats.html',    label: '📊 我的统计' },
-   { href: 'settings.html', label: '⚙️ 我的设置' },
-   { href: 'annotate.html', label: '🔍 标注实训', tag: '① 找' },
-   { href: 'practice.html', label: '✏️ 改译实训', tag: '② 改' },
-   { href: 'pe-exam.html',  label: '⏱️ 仿真训练', tag: '③ 测' },
-   { href: 'champion.html', label: '🎯 能力对标' }
+   { href: 'index.html',    label: '聚焦首页', icon: 'home' },
+   { href: 'stats.html',    label: '我的统计', icon: 'chart' },
+   { href: 'annotate.html', label: '标注实训', icon: 'find',   tag: '① 找' },
+   { href: 'practice.html', label: '改译实训', icon: 'edit',   tag: '② 改' },
+   { href: 'pe-exam.html',  label: '仿真训练', icon: 'clock',  tag: '③ 测' },
+   { href: 'champion.html', label: '能力对标', icon: 'target' }
  ];
  const TEACHER = ['teacher.html', 'review.html', 'class.html'];
 
@@ -68,9 +69,10 @@
  function shellHtml(cur) {
    const wk = '日一二三四五六'[new Date().getDay()];
    const today = new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' }) + ' 星期' + wk;
+   const ic = (n) => { const p = window.mtpeNavIcon ? window.mtpeNavIcon(n) : ''; return p ? '<svg viewBox="0 0 20 20" aria-hidden="true">' + p + '</svg>' : ''; };
    const items = ITEMS.map((t) =>
      '<a' + (t.href === cur ? ' class="on"' : '') + ' href="' + t.href + '">'
-     + t.label + (t.tag ? ' <span class="tag">' + t.tag + '</span>' : '') + '</a>').join('');
+     + ic(t.icon) + t.label + (t.tag ? ' <span class="tag">' + t.tag + '</span>' : '') + '</a>').join('');
    /* 身份显示：共享账号体系下学生身份 = 姓名（昵称），账号名对学生无意义（只在设置页出现） */
    let nick = '';
    try { nick = JSON.parse(localStorage.getItem('mtpe_nickname') || '""'); } catch (e) {}
@@ -86,6 +88,7 @@
    +     '<div class="wb-foot-acts">'
    +       '<a href="#" onclick="' + helpOnclick() + '" title="帮助：流程说明 / 计分口径 / 数据来源 / 常见问题">? 帮助</a>'
    +       '<a href="#" id="mtpe-install" class="hidden" onclick="mtpeInstall();return false" title="装成桌面应用，断网也能用">⬇ 安装到桌面</a>'
+   +       '<a href="settings.html" title="账号、姓名与登录时长">设置</a>'
    +       account
    +       '<a href="#" onclick="mtpeLogout();return false" title="机房共用电脑用完即退，防止记录串号">退出</a>'
    +     '</div>'
@@ -108,6 +111,7 @@
    + '.wb-nav{flex:1;overflow-y:auto;padding:10px 0}'
    + '.wb-nav a{display:flex;align-items:center;gap:9px;margin:3px 12px;padding:10px 14px;border-radius:11px;font-size:14px;color:#d0d5dd;text-decoration:none;transition:all .15s ease;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Microsoft YaHei",sans-serif}'
    + '.wb-nav a:hover{color:#fff;background:rgba(255,255,255,.06)}'
+   + '.wb-nav a svg{width:16px;height:16px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;opacity:.88}'
    + '.wb-nav a.on{background:linear-gradient(90deg,#4f46e5,#7c3aed);color:#fff;box-shadow:0 4px 14px rgba(79,70,229,.4);font-weight:500}'
    + '.wb-nav .tag{margin-left:auto;background:#2f9e44;color:#fff;font-size:10.5px;padding:1px 7px;border-radius:99px}'
    + '.wb-foot{padding:14px 20px 0;border-top:1px solid rgba(255,255,255,.08);font-size:12px;color:#8b94a7;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}'

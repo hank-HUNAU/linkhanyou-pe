@@ -39,3 +39,18 @@ function toast(msg) {
   clearTimeout(t._mtpeTm);
   t._mtpeTm = setTimeout(() => { t.style.opacity = '0'; }, 2400);
 }
+
+/* —— 学生侧栏导航图标（2026-11-02：emoji 换 stroke SVG）——
+   单色 currentColor 随侧栏主题（激活态白、常态浅灰），跨平台渲染一致。
+   nav.js（非首页侧栏）与 home.js（首页自管侧栏）共用这一份，勿在页面里再写。 */
+window.mtpeNavIcon = function (name) {
+  const P = {
+    home: '<path d="M3.5 9.5 10 3.5l6.5 6"/><path d="M5.5 8.6v7.9h9V8.6"/>',
+    chart: '<path d="M4 16.5V9.5"/><path d="M10 16.5v-12"/><path d="M16 16.5V12"/><path d="M3 16.5h14"/>',
+    find: '<circle cx="9" cy="9" r="5.2"/><path d="m12.9 12.9 3.6 3.6"/>',
+    edit: '<path d="M13.6 3.4l3 3L7.2 15.8 3.5 16.5l.7-3.7z"/><path d="m12.2 4.8 3 3"/>',
+    clock: '<circle cx="10" cy="10" r="7"/><path d="M10 5.6V10l3.1 2"/>',
+    target: '<circle cx="10" cy="10" r="7"/><circle cx="10" cy="10" r="3.2"/><path d="M10 10h.01"/>'
+  };
+  return P[name] || '';
+};
