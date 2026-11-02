@@ -7,11 +7,7 @@ const $ = (sel) => document.querySelector(sel);
 const app = $('#app');
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-const store = {
- get(k, d) { try { const v = localStorage.getItem('mtpe_' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
- set(k, v) { localStorage.setItem('mtpe_' + k, JSON.stringify(v)); },
- del(k) { localStorage.removeItem('mtpe_' + k); }
-};
+/* store / toast 正本在 shared.js（2026-11-02 收口，勿在本文件再定义） */
 
 /* 写历史的抗爆仓策略：语料明文与作答记录共用同一块 localStorage，
    容量吃紧时逐级丢弃较早记录的逐段明细（分数 / 日期 / 画像保留），
@@ -30,13 +26,7 @@ function saveHistory(list) {
  } catch (e) { return false; }
 }
 
-function toast(msg) {
- const t = $('#toast');
- t.textContent = msg;
- t.classList.remove('hidden');
- clearTimeout(t._tm);
- t._tm = setTimeout(() => t.classList.add('hidden'), 2200);
-}
+/* toast 正本在 shared.js */
 
 /* 分词：CJK 逐字、英文按词、数字（含%/小数）、标点各为一元 */
 function tokenize(s) {
@@ -246,11 +236,13 @@ function updateNickBadge() {
 }
 
 function askNickname(cb) {
+ /* 报到口径三合一（2026-11-02 第二批）：文案与 stats.js/settings.js 统一——
+    账号是课上共享的，不填姓名老师的班级汇总会把全班并成两行 */
  openModal(`
- <h3>设置参赛昵称</h3>
+ <h3>先填一下姓名／学号</h3>
  <div class="field">
- <label>昵称（将用于排行榜与成绩单）</label>
- <input id="nick-input" maxlength="20" placeholder="例如：Hank" value="${esc(getNick())}">
+ <label>姓名／学号（将用于排行榜、成绩单与老师的班级汇总）</label>
+ <input id="nick-input" maxlength="20" placeholder="例如：2024级翻译2班 张三" value="${esc(getNick())}">
  </div>
  <div class="m-actions">
  <button class="btn btn-ghost" onclick="closeModal()">取消</button>
@@ -261,11 +253,9 @@ function askNickname(cb) {
 }
 function saveNickname() {
  const v = $('#nick-input').value.trim();
- if (!v) { toast('昵称不能为空'); return; }
- store.set('nickname', v);
- store.set('nickname_set', 1);
- /* 认领：把登录后带账号名戳的记录改标成刚填的姓名，否则按昵称过滤后看不见 */
- if (window.mtpeClaimRecords) window.mtpeClaimRecords(v);
+ if (!v) { toast('请填写姓名或学号后再保存'); return; }
+ /* 保存+认领+云端身份登记统一走 unlock.js 的 mtpeSaveNick 正本（2026-11-02 报到三合一） */
+ window.mtpeSaveNick(v);
  updateNickBadge();
  closeModal();
  if (window._nickCb) { const cb = window._nickCb; window._nickCb = null; cb(); }

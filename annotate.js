@@ -6,12 +6,8 @@ const $ = (s) => document.querySelector(s);
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const norm = (s) => s.replace(/\s+/g, '').replace(/[“”"'']/g, '"');
 
-const store = {
- get(k, d) { try { const v = localStorage.getItem('ann_' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
- set(k, v) { localStorage.setItem('ann_' + k, JSON.stringify(v)); },
- del(k) { localStorage.removeItem('ann_' + k); }
-};
-function toast(m) { const t = $('#toast'); t.textContent = m; t.style.opacity = '1'; clearTimeout(t._m); t._m = setTimeout(() => t.style.opacity = '0', 2200); }
+/* store/toast 正本在 shared.js；ann_ 前缀是本页独立命名空间，保留键名不动（2026-11-02 收口） */
+const store = mtpeMakeStore('ann_');
 
 /* 词元 diff 相似度（与主平台一致的字符级近似） */
 function tokenize(s) { return (s.match(/[\u4e00-\u9fff]|[A-Za-z]+(?:'[a-z]+)?|\d+(?:\.\d+)?%?|[^\s]/g) || []); }
@@ -328,17 +324,35 @@ function renderMT(mt, anns) {
 
 function bindSelection() {
  const box = $('#mtbox');
- box.addEventListener('mouseup', () => {
- const sel = window.getSelection();
- if (!sel || sel.isCollapsed) return;
- const { start, end, text } = offsetWithin(box, sel);
- if (start === null || end - start < 1) return;
- openPanel({ start, end, text }, null, sel.getRangeAt(0));
+ box.addEventListener('mouseup', () => openFromSelection(box));
+ /* 触屏兜底（2026-11-02 第二批）：iOS/Android 长按划选结束不派发 mouseup，
+    学生在手机上做①找会完全无法弹出标注面板。用 selectionchange 监听兜底：
+    · 仅当最近 1.2s 内发生过触摸才生效（桌面端拖选中途不弹面板）
+    · 去抖 250ms（系统选择手柄拖动会连发 selectionchange） */
+ let touchAt = 0, selTm = null;
+ box.addEventListener('touchstart', () => { touchAt = Date.now(); }, { passive: true });
+ document.addEventListener('selectionchange', () => {
+   if (Date.now() - touchAt > 1200) return;
+   clearTimeout(selTm);
+   selTm = setTimeout(() => openFromSelection(box), 250);
  });
  box.addEventListener('click', (e) => {
  const mark = e.target.closest('mark.mine');
  if (mark) editAnn(parseInt(mark.dataset.i, 10));
  });
+}
+
+function openFromSelection(box) {
+ const sel = window.getSelection();
+ if (!sel || sel.isCollapsed || !sel.rangeCount) { openFromSelection._last = ''; return; }
+ const { start, end, text } = offsetWithin(box, sel);
+ if (start === null || end - start < 1) { openFromSelection._last = ''; return; }
+ /* 防重渲染：同一选段且面板已开着（触屏 selectionchange 连发）就不再 openPanel，
+    否则用户刚点选的标签/严重度会被重置 */
+ const sig = start + ':' + end;
+ if (sig === openFromSelection._last && !$('#sel-panel').classList.contains('hidden')) return;
+ openFromSelection._last = sig;
+ openPanel({ start, end, text }, null, sel.getRangeAt(0));
 }
 
 function offsetWithin(container, sel) {

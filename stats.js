@@ -16,10 +16,7 @@
     if (isExamRecord(h)) return '仿真训练';
     return { competition: '限时练习', practice: '自由练习', demo: '教学演示' }[h.mode] || h.mode;
   };
-  const store = {
-    get(k, d) { try { const v = localStorage.getItem('mtpe_' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
-    set(k, v) { try { localStorage.setItem('mtpe_' + k, JSON.stringify(v)); } catch (e) {} }
-  };
+  /* store/toast 正本在 shared.js（mtpe_ 前缀，本页不再自定义，2026-11-02 收口） */
   const getNick = () => store.get('nickname', '');
   const hasNick = () => !!store.get('nickname_set', 0);
   /* 机房串号修复（2026-10-17）：标注统计/错题本按当前昵称过滤，只算"本人"的。
@@ -33,12 +30,7 @@
     try { return (JSON.parse(localStorage.getItem('ann_wrongbook') || '[]') || []).filter((w) => w && mineNick(w.nick)); } catch (e) { return []; }
   };
   const now = () => new Date().toLocaleString('zh-CN', { hour12: false });
-  function toast(msg) {
-    let t = document.getElementById('toast');
-    if (!t) { t = document.createElement('div'); t.id = 'toast'; document.body.appendChild(t); }
-    t.textContent = msg; t.style.opacity = '1';
-    clearTimeout(t._m); t._m = setTimeout(() => { t.style.opacity = '0'; }, 2400);
-  }
+  /* toast 正本在 shared.js */
 
   /* 交作业前必须填姓名/学号：平台账号是课上共享的，班级汇总按姓名归档。
      本页自带一个极简输入弹窗（不依赖改页的 openModal）。 */

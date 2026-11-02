@@ -11,12 +11,9 @@
 const $ = (s) => document.querySelector(s);
 const esc = (s) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
-const store = {
- get(k,d){ try{const v=localStorage.getItem('ycx_'+k);return v===null?d:JSON.parse(v);}catch(e){return d;} },
- set(k,v){ localStorage.setItem('ycx_'+k, JSON.stringify(v)); },
- del(k){ localStorage.removeItem('ycx_'+k); }
-};
-function toast(m){ const t=$('#toast'); if(!t)return; t.textContent=m; t.style.opacity='1'; clearTimeout(t._m); t._m=setTimeout(()=>t.style.opacity='0',2000); }
+/* store/toast 正本在 shared.js；ycx_ 前缀是本页独立命名空间，保留键名不动（2026-11-02 收口） */
+const store = mtpeMakeStore('ycx_');
+/* toast 正本在 shared.js（本页不再定义） */
 function fmt(s){ const m=Math.floor(s/60),x=s%60; return String(m).padStart(2,'0')+':'+String(x).padStart(2,'0'); }
 /* 机房串号修复（2026-10-17）：数据按当前昵称归属。当前昵称取不到（测试桩/异常环境）时不过滤。 */
 function curNick(){ try{ return JSON.parse(localStorage.getItem('mtpe_nickname')||'"匿名"')||''; }catch(e){ return ''; } }

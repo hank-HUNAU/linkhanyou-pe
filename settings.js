@@ -11,17 +11,7 @@
   const app = document.getElementById('app');
   const esc = (s) => String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  const store = {
-    get(k, d) { try { const v = localStorage.getItem('mtpe_' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
-    set(k, v) { try { localStorage.setItem('mtpe_' + k, JSON.stringify(v)); } catch (e) {} }
-  };
-  function toast(msg) {
-    let t = document.getElementById('toast');
-    if (!t) { t = document.createElement('div'); t.id = 'toast'; document.body.appendChild(t); }
-    t.textContent = msg; t.style.opacity = '1';
-    clearTimeout(t._m); t._m = setTimeout(() => { t.style.opacity = '0'; }, 2400);
-  }
-
+  /* store/toast 正本在 shared.js（mtpe_ 前缀，本页不再自定义，2026-11-02 收口） */
   function render() {
     const acc = (window.mtpeAccount && window.mtpeAccount()) || '（未登录）';
     const nick = store.get('nickname', '') || '';

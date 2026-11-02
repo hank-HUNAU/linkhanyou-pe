@@ -18,16 +18,9 @@
   const app = $('#app');
   const esc = (s) => String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  const store = {
-    get(k, d) { try { const v = localStorage.getItem('mtpe_champ_' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
-    set(k, v) { localStorage.setItem('mtpe_champ_' + k, JSON.stringify(v)); }
-  };
-  function toast(msg) {
-    const t = $('#toast');
-    if (!t) return;
-    t.textContent = msg; t.classList.remove('hidden');
-    clearTimeout(t._tm); t._tm = setTimeout(() => t.classList.add('hidden'), 2200);
-  }
+  /* store 正本在 shared.js；mtpe_champ_ 前缀是本页独立命名空间，保留键名不动（2026-11-02 收口） */
+  const store = mtpeMakeStore('mtpe_champ_');
+  /* toast 正本在 shared.js（本页不再定义） */
 
   /* ---------------- 分词与 diff ---------------- */
   function tokenize(s) {
