@@ -120,8 +120,7 @@ function renderSetup() {
  <div class="wrap">
   <div class="plaza-head">
   <h2>① 找 · 标注实训</h2>
-  <p>在机翻译文中<b>选中错误片段</b>并标注类别与严重度；交卷后与种子标注对比，计算查准率 / 查全率 / F1。
-  ｜ <a href="MQM错误类型参考手册.html">MQM 错误类型参考手册</a></p>
+  
   </div>
  ${fromLink ? `<div class="page-s" style="margin-bottom:10px">已按练习建议预置筛选条件${pre.dim ? '：错误维度「' + esc(pre.dim) + '」' : ''}${pre.ed ? ' · 第' + esc(pre.ed) + '届' + esc(pre.stage || '') : ''}。</div>` : ''}
  <div class="card">
@@ -151,14 +150,14 @@ function renderSetup() {
  <label class="muted" style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;margin-top:8px">
  <input type="checkbox" id="f-blind"> 种子不足时补盲标句对（不计分）
  </label>
-  <div class="muted" style="font-size:12.5px;margin-top:6px">默认只出<b>种子对照卷</b>（交卷计分）。</div>
+  <div class="muted" style="font-size:12.5px;margin-top:6px"></div>
  <div id="compose-out" class="page-s" style="margin-top:10px"></div>
  </div>
  ${(() => {
    const cards = SPECIAL_PAPERS.map((sp) => ({ sp, n: specialPairs(sp).length })).filter((x) => x.n >= 3);
    if (!cards.length) return '';
    return `<div class="card"><h3>专项训练（围绕同一术语的整篇一致性）</h3>
-    <div class="page-s" style="margin-bottom:10px">专项卷把同一术语 / 专名的整篇相关句对集中练一遍，<b>不计入常规 F1</b>。</div>
+    <div class="page-s" style="margin-bottom:10px">专项成绩<b>不计入常规 F1</b>。</div>
    ${cards.map(({ sp, n }) => `<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--bd)">
    <div style="flex:1;min-width:0"><b style="font-size:13.5px">${esc(sp.name)}</b> <span class="muted" style="font-size:12.5px">· ${n} 句</span>
    <div class="muted" style="font-size:12.5px;margin-top:2px">${esc(sp.desc)}</div></div>
@@ -167,7 +166,7 @@ function renderSetup() {
    </div>`;
  })()}
  ${wbN ? `<div class="card"><h3> 错题本（${wbN} 句 / ${wb.length} 处待回练）</h3>
-  <div class="page-s">只重做你以往<b>漏检</b>或<b>标签判错</b>的句子，交卷同样计分。</div>
+  <div class="page-s">错题回练 · 交卷计分。</div>
  <ul style="margin:0 0 10px 18px;font-size:13px;color:var(--tx2)">${wb.slice(0, 6).map(w => `<li>${esc(w.k)} ｜「${esc(String(w.span).slice(0, 24))}」 → 应为 <b>${TAG_LABEL[w.tag] || w.tag}</b> · ${w.sev} <span class="muted">（${w.kind}）</span></li>`).join('')}</ul>
  ${wb.length > 6 ? `<div class="muted" style="margin-bottom:8px">…… 其余 ${wb.length - 6} 处</div>` : ''}
  <button class="btn btn-p" onclick="composeWrong()">错题回练（${wbN} 句）</button>
@@ -626,7 +625,7 @@ function renderResult(r) {
  </div>
  ${(r.wrongAdded || r.wrongTotal) ? `<div class="card" style="border-color:#f0d9a8;background:#fffdf7">
  <h3> 错题本已更新</h3>
- <div class="page-s" style="margin-bottom:8px">本次新增 <b>${r.wrongAdded || 0}</b> 处，错题本共 <b>${r.wrongTotal || 0}</b> 句待回练——含漏检、标签判错与严重度判偏。回练只重做这些句子，形成"暴露 → 回练 → 复测"的闭环。</div>
+ <div class="page-s" style="margin-bottom:8px">本次新增 <b>${r.wrongAdded || 0}</b> 处，错题本共 <b>${r.wrongTotal || 0}</b> 句待回练。</div>
  <button class="btn btn-p" onclick="renderSetup()">去错题回练</button>
  </div>` : ''}
  ${r.perPair.map(x => `

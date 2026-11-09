@@ -105,9 +105,8 @@ function renderExams(){
   <div class="wrap wide">
   <div class="plaza-head">
   <h2>③ 测 · 仿真训练</h2>
-  <p>限时交卷，给出综合评分与错误维度、编辑倾向、速度稳定性、参照系四项画像。</p>
   </div>
-  <div class="page-s" style="margin:14px 0 18px">教学仿真工具，题目内容与正式测评无关 ｜ 每卷最多进入 3 次（对齐真实赛制）</div>
+  <div class="page-s" style="margin:14px 0 18px">教学仿真工具，题目内容与正式测评无关</div>
   <div class="task-grid">${main.map(card).join('')}</div>
  ${hist.length?`<details class="adv" style="margin:16px 0"><summary>更多届次：第 1–6 届真题 ${hist.length} 套（整卷，按官方对照表归并句段）</summary>
  <div class="task-grid" style="margin-top:12px">${hist.map(card).join('')}</div></details>`:''}
@@ -703,7 +702,7 @@ function profileHTML(r){
  ${radarSVG(fixRates(p), '#2b7cff')}
  <div class="prof-legend"><span><i style="background:#2b7cff"></i>该维度已改对率</span></div>
  ${dimTable(p.draft, p.out)}
-  <div class="prof-note">机翻底稿共 ${p.draftTotal} 处问题 → 你的译文献余 ${p.outTotal} 处（启发式初筛，见帮助）。</div>
+  <div class="prof-note">机翻底稿共 ${p.draftTotal} 处问题 → 你的译文献余 ${p.outTotal} 处。</div>
  </div>
  <div class="prof-card">
  <h3>② 编辑倾向定位</h3>

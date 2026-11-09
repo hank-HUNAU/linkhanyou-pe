@@ -165,7 +165,6 @@
       <section class="wb-focus">
         <div class="hn-tag">聚焦 · 下一步</div>
         ${nx.setupName ? `
-        <div class="wb-hero-big">先报上姓名／学号</div>
         <div class="hn-why">共享账号按姓名认人：作业导出与班级汇总都用它。</div>
         <a class="wb-hero-btn" href="settings.html">去「我的设置」报到 ${ix('arrow')}</a>` : `
         <div class="wb-hero-big">${esc(nx.cta)}</div>
@@ -182,16 +181,16 @@
       <div class="wb-card">
         <h3>最近成绩</h3>
         ${lastBits.length ? `<div class="wb-last">${lastBits.join('<br>')}</div>`
-          : '<div class="wb-last">还没有记录，先去「标注实训」练一卷。</div>'}
+          : '<div class="wb-last">还没有记录。</div>'}
       </div>
 
       <div class="wb-grid3">
         <div class="wb-mini"><span class="mt m1">① 找 · 标注实训</span>
-          <a href="annotate.html">进入标注实训 ${ix('arrow')}</a></div>
+          <a href="annotate.html">进入 ${ix('arrow')}</a></div>
         <div class="wb-mini"><span class="mt m2">② 改 · 改译实训</span>
-          <a href="practice.html">进入改译实训 ${ix('arrow')}</a></div>
+          <a href="practice.html">进入 ${ix('arrow')}</a></div>
         <div class="wb-mini"><span class="mt m3">③ 测 · 仿真训练</span>
-          <a href="pe-exam.html">进入仿真训练 ${ix('arrow')}</a></div>
+          <a href="pe-exam.html">进入 ${ix('arrow')}</a></div>
       </div>
     </main>
   </div>`;

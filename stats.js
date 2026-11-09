@@ -69,7 +69,7 @@
     try { hasAnn = myAnnStats('mtpe_ann_stats').length > 0; } catch (e) {}
     if (!hs.length && !hasAnn) {
       app.innerHTML = `<div class="page-title"><h2>我的统计</h2></div>
- <div class="empty-tip">还没有作答记录，去<a href="practice.html">译后编辑练习</a>开始第一次练习，或去<a href="annotate.html">标注实训</a>完成一卷错误标注。</div>`;
+ <div class="empty-tip">还没有作答记录 · <a href="practice.html">② 改</a> · <a href="annotate.html">① 找</a></div>`;
       return;
     }
     /* 口径分离：②改 的练习（限时 + 自由）与 ③测 的仿真训练不是一个尺子，分开算 */
@@ -99,7 +99,7 @@
  <div class="stat-box"><div class="v green">${avgOn(practice, 'score')}</div><div class="l">「改」平均得分</div></div>
  <div class="stat-box"><div class="v amber">${avgOn(practice, 'ter')}${practice.length ? '%' : ''}</div><div class="l">「改」平均修订率</div></div>
  </div>
- <div class="board-note" style="margin-bottom:18px">以上仅统计 <b>② 改</b> 的练习（限时与自由），<b>不含 ③ 测 的仿真训练</b>——两者口径不同，不能混算、也不能横向比。仿真训练见下方画像，逐次明细在 <a href="pe-exam.html">③ 测</a>。　记录按「姓名/学号」归属：换电脑或清缓存后，可用之前导出的作业文件「导入作业 JSON」恢复。</div>
+ <div class="board-note" style="margin-bottom:18px">以上仅统计 <b>② 改</b> 的练习（限时与自由），<b>不含 ③ 测 的仿真训练</b>——两者口径不同，不能混算、也不能横向比。仿真训练见下方画像，逐次明细在 <a href="pe-exam.html">③ 测</a>。</div>
  ${annStatsHTML()}
  ${examProfileHTML(hs)}
  <div class="board"><h3> ${trendCaliber}</h3>
@@ -144,7 +144,7 @@
     const recs = (hs || []).filter((h) => h && h.profile);
     if (!recs.length) {
       return `<div class="board"><h3>仿真训练结果画像</h3>
- <div class="empty-tip" style="padding:16px 0">暂无仿真训练记录。去 <a href="pe-exam.html">仿真训练</a> 交一次卷，这里会汇总你的编辑倾向（精准型 / 过度编辑型 / 保守型 / 鲁莽型）、编辑命中率与后半程稳定性。</div></div>`;
+ <div class="empty-tip" style="padding:16px 0">暂无仿真训练记录。去 <a href="pe-exam.html">仿真训练</a> 交一次卷。</div></div>`;
     }
     const avg = (k) => Math.round(recs.reduce((s, h) => s + (Number(h.profile[k]) || 0), 0) / recs.length * 10) / 10;
     const QUADS = ['精准型', '过度编辑型', '保守型', '鲁莽型'];
