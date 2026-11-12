@@ -190,10 +190,10 @@
  </div>`;
   }
 
- /* ⑧ 防篡改校验和：导出时给作业文件加 HMAC-SHA256 签名（canonical + 内置密钥）。
+ /* ⑧ 完整性自检（仅挡随手改，非安全边界）：导出时给作业文件加 HMAC-SHA256 签名（canonical + 内置密钥）。
  诚实边界：密钥在客户端 JS 里（可逆向提取），只挡「随手改 localStorage 抬高分数」，
  挡不住刻意攻击者；真正防篡改靠 Supabase attempts 表（服务端时间戳、不可改）。 */
- const MTPE_INTEGRITY_KEY = 'mtpe-hw-integrity-v1-7f3a9c2e'; // 仅客户端混淆用，非安全边界
+ const MTPE_INTEGRITY_KEY = 'b743af657dc4846ffc17c968cb0191f1e6da8fa01a38119d'; // 仅客户端混淆用，非安全边界
  async function hmacSha256(msg, key) {
  if (!crypto || !crypto.subtle) return null;
  const ec = new TextEncoder();
@@ -253,7 +253,7 @@
  try { payload.sig = await hmacSha256(canonicalOf(payload), MTPE_INTEGRITY_KEY); payload.signedAt = new Date().toISOString(); } catch (e) { payload.sig = null; }
  const name = 'MTPE作业_' + String(account).replace(/[^\w-]/g, '') + '_' + new Date().toISOString().slice(0, 10) + '.json';
  window.mtpeDownload(name, JSON.stringify(payload, null, 1), 'application/json');
- toast('已导出作业：' + name + (payload.sig ? '（含防篡改校验和）' : '（本环境不支持签名）') + '　请交给老师汇总');
+ toast('已导出作业：' + name + (payload.sig ? '（含完整性自检（仅挡随手改，非安全边界））' : '（本环境不支持签名）') + '　请交给老师汇总');
  };
 
   /* 导入作业 JSON（P0-2，2026-10-17）：学生清缓存 / 换电脑后，用导出的作业文件

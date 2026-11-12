@@ -26,8 +26,10 @@
    v39（2026-11-02）：侧栏改版——emoji 换 stroke SVG 图标（正本 shared.js mtpeNavIcon）+
      「我的设置」并入页脚账号簇（侧栏 7→6，页脚=帮助/设置/报到/退出）；index 接线 shared.js
    v40（2026-11-02）：行内符号统一图标——「→ ? ⬇」文字符号换 svg.ic 正本图标
-     （链接箭头/帮助/下载，ui.css 10b 统一规则） */
-const CACHE = 'mtpe-shell-v40';
+     （链接箭头/帮助/下载，ui.css 10b 统一规则）
+   v41（2026-11-13）：P0-1 凭据轮换——内容密钥 CK 全换、三片重封、两个共享账号换口令；
+     unlock.js 增加 mtpe_ck_ver 校验（换钥后旧 CK 自动作废并回登录框）；stats.js 换完整性密钥 */
+const CACHE = 'mtpe-shell-v41';
 
 /* 轻外壳：不含 secure.js（按需下载，由 stale-while-revalidate 自动缓存） */
 const CORE = [

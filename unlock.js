@@ -20,6 +20,7 @@
   const KEY = 'mtpe_account';        // 当前账号
   const CK = 'mtpe_ck';              // 内容密钥（base64），不是明文语料
   const CKTS = 'mtpe_ck_ts';         // 解锁时刻
+  const CKVER = 'mtpe_ck_ver';       // 解锁时的密钥环 ver（换钥后旧 CK 自动作废）
   const TTL = 12 * 60 * 60 * 1000;   // 有效期：12 小时
   const SEAL_SRC = 'secure.js';      // 密钥环 + meta 片：只在"登录解锁"时需要
   const SHARD_SRC = (n) => 's-' + n + '.js';
@@ -71,6 +72,13 @@
           localStorage.removeItem(CK); localStorage.removeItem(CKTS);
           return null;
         }
+        /* 换钥后旧 CK 作废（2026-11-13 P0-1）：密钥环 ver 变了就要求重新登录，
+           否则学生会卡在「语料没有加载出来」而不是干净地回到登录框。 */
+        const s = sealNow();
+        if (s && localStorage.getItem(CKVER) !== s.ver) {
+          localStorage.removeItem(CK); localStorage.removeItem(CKTS); localStorage.removeItem(CKVER);
+          return null;
+        }
         return await crypto.subtle.importKey('raw', b64d(v), 'AES-GCM', false, ['decrypt']);
       } catch (e) { return null; }
     })();
@@ -82,7 +90,10 @@
     try {
       const v = localStorage.getItem(CK);
       const ts = parseInt(localStorage.getItem(CKTS) || '0', 10);
-      return !!(v && ts && Date.now() - ts <= TTL && Date.now() >= ts);
+      if (!(v && ts && Date.now() - ts <= TTL && Date.now() >= ts)) return false;
+      const s = sealNow();
+      if (s && localStorage.getItem(CKVER) !== s.ver) return false;
+      return true;
     } catch (e) { return false; }
   };
 
@@ -96,7 +107,7 @@
   };
 
   window.mtpeLogout = function () {
-    try { localStorage.removeItem(CK); localStorage.removeItem(CKTS); } catch (e) {}
+    try { localStorage.removeItem(CK); localStorage.removeItem(CKTS); localStorage.removeItem(CKVER); } catch (e) {}
     try { localStorage.removeItem(KEY); } catch (e) {}
     /* 机房串号修复（2026-10-17）：昵称一并清掉 → 下一个登录者不会看到上一人的
        记录（各页按昵称过滤读取）。草稿等带 nick 戳的数据留在本机，本人下次
@@ -215,7 +226,15 @@
       const ck = await window.mtpeKey();
       if (!ck) throw new Error('本机没有内容密钥：请重新登录');
       const open = async function (nonce, data) {
-        const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64d(nonce) }, ck, b64d(data));
+        let plain;
+        try {
+          plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64d(nonce) }, ck, b64d(data));
+        } catch (e) {
+          /* 换钥或密文被改：清掉本机 CK，回到登录框
+             （否则学生看到的是「语料没有加载出来」，分不清是没登录还是真坏了） */
+          try { localStorage.removeItem(CK); localStorage.removeItem(CKTS); localStorage.removeItem(CKVER); } catch (e2) {}
+          throw new Error('登录凭据已更新，请重新登录');
+        }
         const bytes = await unzipIfNeeded(plain);
         return JSON.parse(new TextDecoder().decode(bytes));
       };
@@ -243,6 +262,8 @@
       document.head.appendChild(s);
     }).catch(function (e) {
       if (window.console) console.error('页面启动失败：', e);
+      /* 换钥 / 密钥过期 / 分片解不开：给一个明确的登录入口，不留白屏 */
+      window.mtpeShowLogin();
     });
   };
 
@@ -300,6 +321,7 @@
       const raw64 = btoa(String.fromCharCode.apply(null, new Uint8Array(rawKey)));
       localStorage.setItem(CK, raw64);
       localStorage.setItem(CKTS, String(Date.now()));
+      localStorage.setItem(CKVER, seal.ver);
       localStorage.setItem(KEY, id);
       localStorage.setItem('mtpe_nickname', JSON.stringify(id));
       /* 机房串号修复：新登录者先回到"未报到"状态——首页会再问一次姓名/学号。
